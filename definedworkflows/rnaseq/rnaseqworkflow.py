@@ -194,12 +194,12 @@ class BaseWorkflow:
             setattr(self, k, v)
         return
 
-    def create_catalog(self):
-        engine = create_engine(self.run_parms['db'] + ":///" + self.run_parms['db_loc'])  # , echo=True)
-        cb.Base.metadata.create_all(engine, checkfirst=True)
-        Session = sessionmaker(bind=engine)
-        self.session = Session()
-        return
+    # def create_catalog(self):
+    #     engine = create_engine(self.run_parms['db'] + ":///" + self.run_parms['db_loc'])  # , echo=True)
+    #     cb.Base.metadata.create_all(engine, checkfirst=True)
+    #     Session = sessionmaker(bind=engine)
+    #     self.session = Session()
+    #     return
 
 
 class RnaSeqFlow(BaseWorkflow):
@@ -234,7 +234,7 @@ class RnaSeqFlow(BaseWorkflow):
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
 
-        self.create_catalog()
+        #self.create_catalog()
         return
 
     def parse_sample_info_from_file(self):
