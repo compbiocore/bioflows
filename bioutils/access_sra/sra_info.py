@@ -3,7 +3,7 @@ from lxml import etree
 import pandas as pd
 from Bio import Entrez
 import numpy as np
-from biobrewliteutils import utils
+from bioflowsutils import utils
 
 
 class sramethods:
