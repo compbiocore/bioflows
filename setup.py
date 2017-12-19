@@ -6,7 +6,7 @@ setup(
     packages=['tests', 'tests.test_catalog', 'tests.test_wrappers', 'tests.test_rnaseq_workflow', 'bioutils',
               'bioutils.access_sra', 'bioutils.parse_fastqc', 'bioflowutils', 'definedworkflows',
               'definedworkflows.rnaseq'],
-    #install_requires= [luigi, saga-python, lxml, biopython, jsonpickle, pyyaml],
+    #install_requires= [luigi, saga-python, radical-utils, lxml, biopython, jsonpickle, pyyaml],
     url='',
     license='GPLv2',
     author='Ashok Ragavendran',

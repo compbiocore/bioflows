@@ -276,7 +276,7 @@ class TestRnaSeqFlowSRALocalSlurmPE(TestCase):
 
 class TestRnaSeqFlowSRALocalSlurmSEDual(TestCase):
     def setUp(self):
-        self.parmsfile = "test_run_sra_localhost_slurm_se_mus_spnuemonia.yaml"
+        self.parmsfile = "test_run_sra_localhost_slurm_se_mus_spneumonia.yaml"
         self.rw1 = rsw(self.parmsfile)
 
     def test_parse_config(self):
