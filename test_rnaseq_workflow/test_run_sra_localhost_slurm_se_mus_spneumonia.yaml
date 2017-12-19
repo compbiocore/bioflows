@@ -1,5 +1,5 @@
-bioproject: Project_test_localhost # Project Name  Required
-experiment: rnaseq_pilot # Experiment type  Required
+bioproject: PRJNA316337 # Project Name  Required
+experiment: dual_rnaseq_pilot # Experiment type  Required
 sample_manifest:
 # This section outlines how the sample information is linked to the raw data. The Sample information should have two parts
 #   a) A link of sample ids to the raw fastqs
@@ -26,11 +26,11 @@ sample_manifest:
     entrez_email: ashok.ragavendran@gmail.com
 run_parms:
   conda_command: source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda
-  work_dir: /gpfs/scratch/aragaven/test_workflow_sra_local_pe_mus
+  work_dir: /gpfs/scratch/aragaven/test_workflow_sra_local_se_mus_spneumonia
   log_dir: logs
   paired_end: False
   #local_targets: False
-  luigi_local_path: /Users/aragaven/scratch
+  luigi_local_path: /gpfs/scratch/aragaven/scr_mus_spnue
   #luigi_local_path: /home/aragaven/scratch/test_workflow
   db: sqlite
   db_loc: ':memory:'
