@@ -1,0 +1,32 @@
+bioproject: Project_nm_1
+experiment: rnaseq_pilot
+sample_manifest:
+  fastq_file: sampl_manifest_min_se_mus.csv
+  metadata:
+run_parms:
+  conda_command: source activate cbc_conda
+  work_dir: /gpfs/scratch/aragaven/test_workflow_se_mus
+  log_dir: logs
+  paired_end: False
+  local_targets: True
+  luigi_local_path: /Users/aragaven/scratch/test_workflow_se_mus
+  # saga parms
+  saga_host: ssh.ccv.brown.edu
+  ssh_user: aragaven
+  saga_scheduler: slurm+ssh
+  gtf_file: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf
+  genome_file:
+  # Need this for now to run .. needs to be refactored
+  db: sqlite
+  db_loc: ':memory:'
+workflow_sequence:
+  fastqc: default
+  gsnap:
+      options:
+        -d: Ensembl_Mus_musculus_GRCm38
+        -s: Mus_musculus.GRCm38.88.splicesites.iit
+      job_params:
+        mem: 40000
+        ncpus: 8
+        time: 600
+  qualimap_rnaseq: default

@@ -1,0 +1,52 @@
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
+sample_manifest:
+# This section outlines how the sample information is linked to the raw data. The Sample information should have two parts
+#   a) A link of sample ids to the raw fastqs
+#   b)  An optional metadata associated with each sample Id
+# Currently there are two options:
+#   1) You can either specify an acceptable SRA ID using the sra_id slot, which will automatically populate the metadata
+#   2) You can provide upto two csv files, the first of which has two columns 'SampleID, path_to_fastq', used in
+#      the fastq_file slot and the second optional file  which has multiple columns 'SampleID, col1,,,coln' used in the
+#      optional metadata slot.
+#  At least one of the sra_id or fastq_file slots must be present and the metadata slot is optional if using the fastq_file slot
+#  The metadate slot will be ignored if using the sra_id slot
+#  sra:
+#    id: SRS2340773
+#    #id: SRS2432454
+#    #id: SRP069872
+#
+#    Test ids: Mus: SE: SRS2506568 PE: SRS2496962
+#
+#    entrez_email: ashok.ragavendran@gmail.com
+  fastq_file: sampl_manifest_min_se_mus.csv
+  metadata:
+run_parms:
+  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda
+  work_dir: /gpfs/scratch/aragaven/test_workflow_local_se_mus
+  log_dir: logs
+  paired_end: False
+  #local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  #luigi_local_path: /home/aragaven/scratch/test_workflow
+  db: sqlite
+  db_loc: ':memory:'
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  gtf_file: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf
+workflow_sequence:
+  fastqc: default
+  gsnap:
+    options:
+      -d: Ensembl_mus_GRCm38.p5_rel89
+      -s: Mus_musculus.GRCm38.89.splicesites.iit
+    job_params:
+      ncpus: 16
+      mem: 40000
+      time: 60
+  qualimap_rnaseq: default
+  salmon:
+    options:
+      -g: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf
+      -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/Mus_musculus.GRCm38.cdna.all_transcripts_sal_index
