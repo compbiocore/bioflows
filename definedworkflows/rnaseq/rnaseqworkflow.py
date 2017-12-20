@@ -479,7 +479,7 @@ class RnaSeqFlow(BaseWorkflow):
                                           self.fastq_dir, ";",
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
-                                          "echo DONE:", fileName[0], ">> "]))
+                                          "echo DONE:", fileName[0], "> "]))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
                 else:
                     sra_name = os.path.basename(fileName[0])
@@ -492,7 +492,7 @@ class RnaSeqFlow(BaseWorkflow):
                                           os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
-                                          "echo DONE:", fileName[0], ">> "]))
+                                          "echo DONE:", fileName[0], "> "]))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
             else:
@@ -505,7 +505,7 @@ class RnaSeqFlow(BaseWorkflow):
                                               self.fastq_dir, ";",
                                               " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
-                                              "echo DONE:", srr_file, ">> "]))
+                                              "echo DONE:", srr_file, "> "]))
                         num += 1
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
                 else:
@@ -526,7 +526,7 @@ class RnaSeqFlow(BaseWorkflow):
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                               "rm",
                                               os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")), ";",
-                                              "echo DONE:", srr_file, ">> "]))
+                                              "echo DONE:", srr_file, "> "]))
                         num += 1
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
