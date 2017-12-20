@@ -209,6 +209,7 @@ class RnaSeqFlow(BaseWorkflow):
     allTasks = []
     progs_job_parms = dict()
     base_kwargs = dict()
+    self.logger = ""
 
     def __init__(self, parmsfile):
         self.init(parmsfile)
@@ -224,7 +225,7 @@ class RnaSeqFlow(BaseWorkflow):
             self.job_params['saga_scheduler'] = 'fork'
 
         if 'conda_command' not in self.run_parms.keys():
-            self.run_parms['conda_command'] = 'source activate /gpfs/runtime/opt/conda/envs/cbc_conda_test/bin'
+            self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
         self.paired_end = False
         self.setup_paths()
         self.set_base_kwargs()
@@ -254,6 +255,10 @@ class RnaSeqFlow(BaseWorkflow):
         return
 
     def parse_sample_info_from_sra(self):
+        """
+        Read in the sample attributes from an SRA id and create the sample to fastq as a dictionary with
+        the sample id as the key
+        """
         sra_info = self.sample_manifest['sra'].copy()
         sample_sra = SraUtils(sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
@@ -383,7 +388,94 @@ class RnaSeqFlow(BaseWorkflow):
 
         return
 
-    def download_sra_cmds(self):
+
+    # def download_sra_cmds(self):
+    #     '''
+    #     Download sra based on ftp urls and process to fastq
+    #     :return:
+    #     '''
+    #     cmds = []
+    #     # Add commands to the command list
+    #
+    #     for samp, fileName in self.sample_fastq.iteritems():
+    #         self.sample_fastq_work[samp] = []
+    #         # Test if there are multiple runs per sample
+    #         if len(fileName) < 2:
+    #             if not self.paired_end:
+    #                 sra_name = os.path.basename(fileName[0])
+    #
+    #                 cmds.append(' '.join([self.run_parms['conda_command'], ";",
+    #                                       'wget', '-P', self.sra_dir, fileName[0], ";",
+    #                                       "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+    #                                       self.fastq_dir, ";",
+    #                                       " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+    #                                       os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
+    #                                       "echo DONE:", fileName[0], ">> "]))
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
+    #             else:
+    #                 sra_name = os.path.basename(fileName[0])
+    #
+    #                 cmds.append(' '.join([self.run_parms['conda_command'], ";",
+    #                                       'wget', '-P', self.sra_dir, fileName[0], ";",
+    #                                       "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
+    #                                       '-O',
+    #                                       self.fastq_dir, ";",
+    #                                       " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
+    #                                       os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
+    #                                       " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
+    #                                       os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
+    #                                       "echo DONE:", fileName[0], ">> "]))
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
+    #         else:
+    #             if not self.paired_end:
+    #                 num = 1
+    #                 for srr_file in fileName:
+    #                     sra_name = os.path.basename(srr_file)
+    #                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
+    #                                           'wget', '-P', self.sra_dir, srr_file, ";",
+    #                                           "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+    #                                           self.fastq_dir, ";",
+    #                                           " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+    #                                           ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
+    #                                           "echo DONE:", srr_file, ">> "]))
+    #                     num += 1
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
+    #             else:
+    #                 num = 1
+    #                 for srr_file in fileName:
+    #                     sra_name = os.path.basename(srr_file)
+    #                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
+    #                                           'wget', '-P', self.sra_dir, srr_file, ";",
+    #                                           "fastq-dump", "--gzip", "--split_files",
+    #                                           os.path.join(self.sra_dir, sra_name), '-O',
+    #                                           self.fastq_dir, ";",
+    #                                           "cat",
+    #                                           os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
+    #                                           ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
+    #                                           "rm",
+    #                                           os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")), ";",
+    #                                           "cat",
+    #                                           os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
+    #                                           ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
+    #                                           "rm",
+    #                                           os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")), ";",
+    #                                           "echo DONE:", srr_file, ">> "]))
+    #                     num += 1
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
+    #                 self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
+    #     print cmds
+    #
+    #     # Create a dictionary of Sample and commands
+    #     cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+    #     self.symlink_fastqs_submit_jobs(cmds_dict)
+    #     for k, v in self.sample_fastq_work.iteritems():
+    #         print k, ":", v, "\n"
+    #
+    #     return
+
+
+    def convert_sra_to_fastq_cmds(self):
         '''
         Download sra based on ftp urls and process to fastq
         :return:
@@ -398,7 +490,6 @@ class RnaSeqFlow(BaseWorkflow):
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          'wget', '-P', self.sra_dir, fileName[0], ";",
                                           "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
                                           self.fastq_dir, ";",
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
@@ -409,7 +500,6 @@ class RnaSeqFlow(BaseWorkflow):
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          'wget', '-P', self.sra_dir, fileName[0], ";",
                                           "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
@@ -426,7 +516,6 @@ class RnaSeqFlow(BaseWorkflow):
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              'wget', '-P', self.sra_dir, srr_file, ";",
                                               "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
                                               " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
@@ -439,7 +528,6 @@ class RnaSeqFlow(BaseWorkflow):
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              'wget', '-P', self.sra_dir, srr_file, ";",
                                               "fastq-dump", "--gzip", "--split_files",
                                               os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
@@ -459,12 +547,20 @@ class RnaSeqFlow(BaseWorkflow):
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
         print cmds
 
-        self.symlink_fastqs_submit_jobs(cmds)
+        # Create a dictionary of Sample and commands
+        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        self.symlink_fastqs_submit_jobs(cmds_dict)
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
+
         return
 
     def symlink_fastqs_submit_jobs(self, cmds):
+        """
+        take in a dictionary of sample and associated commands to run for the sample and submit each command as a job
+        :param cmds:
+        :return:
+        """
         # setup remote session
         remote_dirs = False
         remote_path = self.run_parms['work_dir']
@@ -485,8 +581,8 @@ class RnaSeqFlow(BaseWorkflow):
         jd.wall_time_limit = 1500
         # jd.output = os.path.join(log_dir, "symlink.stdout")
         # jd.error = os.path.join(log_dir, "symlink.stderr")
-        job_output = os.path.join(self.log_dir, "symlink.stdout")
-        job_error = os.path.join(self.log_dir, "symlink.stderr")
+        # job_output = os.path.join(self.log_dir, "symlink.stdout")
+        # job_error = os.path.join(self.log_dir, "symlink.stderr")
 
         # Setup the saga host to use
 
@@ -509,12 +605,14 @@ class RnaSeqFlow(BaseWorkflow):
         # Submit jobs
 
         jobs = []
-        for cmd in cmds:
+        for samp,cmd in cmds.iteritems():
+            job_output = os.path.join(self.log_dir, samp +".symlink.stdout")
+            #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
             jd.arguments = cmd + job_output
             myjob = js.create_job(jd)
             myjob.run()
             jobs.append(myjob)
-        print ' * Submitted %s. Output will be written to: %s' % (myjob.id, job_output)
+            print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
 
         # Wait for all jobs to finish
 

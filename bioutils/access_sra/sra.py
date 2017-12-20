@@ -37,6 +37,10 @@ class SraUtils:
     sample_to_name = dict()
 
     def __init__(self, sra_info):
+        """
+        Inititate the class with a dictionary containing necessary elements to query sra
+        :param sra_info: A dict containing the the following keys entrez_email and ids
+        """
         Entrez.email = sra_info['entrez_email']
         self.check_email()
         self.all_ids(sra_info['id'])
@@ -213,4 +217,5 @@ class Sra_Element:
 if __name__ == '__main__':
     # ids = all_ids('SRP008975')
     # SraUtils({'id':'SRS1283645', 'entrez_email':'ashok.ragavendran@gmail.com'})
-    SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
+    #SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
+    SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
