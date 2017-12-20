@@ -123,11 +123,11 @@ class SraUtils:
         elif 'PAIRED' in self.sra_records[key]['library_type']:
             print "PE library\n"
 
-        # for key, val in self.sample_to_file.iteritems():
-        #     print key, ": ", val, "\n"
-        #
-        # for key, val in self.sample_to_name.iteritems():
-        #     print key, ": ", val, "\n"
+        for key, val in self.sample_to_file.iteritems():
+            print key, ": ", val, "\n"
+
+        for key, val in self.sample_to_name.iteritems():
+            print key, ": ", val, "\n"
         return
 
 
@@ -218,4 +218,5 @@ if __name__ == '__main__':
     # ids = all_ids('SRP008975')
     # SraUtils({'id':'SRS1283645', 'entrez_email':'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
-    SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
+    #SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
+    SraUtils({'id': 'SRR3291472', 'entrez_email': 'ashok.ragavendran@gmail.com'})
