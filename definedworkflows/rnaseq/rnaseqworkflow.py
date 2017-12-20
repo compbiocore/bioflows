@@ -2,7 +2,7 @@ import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys, logging
 from collections import OrderedDict
 import bioflowsutils.wrappers as wr
 from bioutils.access_sra.sra import SraUtils
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename="debug.log")
 
 def ordered_load(stream, loader=yaml.Loader, object_pairs_hook=OrderedDict):
     '''
@@ -544,8 +544,8 @@ class RnaSeqFlow(BaseWorkflow):
                         num += 1
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
-        print cmds
-
+        #print cmds
+        logging.info("commands:" + '\n'.join(cmds))
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
         self.symlink_fastqs_submit_jobs(cmds_dict)
@@ -622,7 +622,7 @@ class RnaSeqFlow(BaseWorkflow):
                 if jobstate in [saga.job.DONE, saga.job.FAILED]:
                     jobs.remove(job)
             print ""
-            time.sleep(5)
+            time.sleep(60)
         js.close()
         return
 
