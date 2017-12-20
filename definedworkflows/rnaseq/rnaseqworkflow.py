@@ -390,7 +390,7 @@ class RnaSeqFlow(BaseWorkflow):
 
     def download_sra_cmds(self):
         '''
-        Download sra based on ftp urls and process to fastq
+        Download sra based on ftp urls using lftp
         :return:
         '''
         cmds = []

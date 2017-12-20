@@ -295,7 +295,7 @@ class TestRnaSeqFlowSRALocalSlurmSEDual(TestCase):
     def test_run_chain_commands(self):
         self.rw1.parse_prog_info()
         self.rw1.test_paths()
-        #self.rw1.download_sra_cmds()
+        self.rw1.download_sra_cmds()
         self.rw1.convert_sra_to_fastq_cmds()
         # self.rw1.symlink_fastqs()
         # self.rw1.set_base_kwargs()
