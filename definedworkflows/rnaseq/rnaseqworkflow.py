@@ -209,7 +209,6 @@ class RnaSeqFlow(BaseWorkflow):
     allTasks = []
     progs_job_parms = dict()
     base_kwargs = dict()
-    self.logger = ""
 
     def __init__(self, parmsfile):
         self.init(parmsfile)
