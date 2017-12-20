@@ -1,8 +1,8 @@
-import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
+import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys, logging
 from collections import OrderedDict
 import bioflowsutils.wrappers as wr
 from bioutils.access_sra.sra import SraUtils
-
+logging.basicConfig(level=logging.INFO)
 
 def ordered_load(stream, loader=yaml.Loader, object_pairs_hook=OrderedDict):
     '''
@@ -209,7 +209,7 @@ class RnaSeqFlow(BaseWorkflow):
     allTasks = []
     progs_job_parms = dict()
     base_kwargs = dict()
-
+    logger = ""
     def __init__(self, parmsfile):
         self.init(parmsfile)
         if 'saga_host' in self.run_parms.keys():
