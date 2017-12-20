@@ -482,7 +482,7 @@ class RnaSeqFlow(BaseWorkflow):
         jd = saga.job.Description()
         jd.executable = ''
         jd.working_directory = self.run_parms['work_dir']
-        jd.wall_time_limit = 300
+        jd.wall_time_limit = 1500
         # jd.output = os.path.join(log_dir, "symlink.stdout")
         # jd.error = os.path.join(log_dir, "symlink.stderr")
         job_output = os.path.join(self.log_dir, "symlink.stdout")
