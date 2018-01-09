@@ -21,7 +21,7 @@ class bamtofastq:
     def parse_sample(self, bamlist):
         for line in open(bamlist,'r').readlines():
             tmpline = line.strip('\n').split(',')
-            self.sample_list[line[0]] = line[1]
+            self.sample_list[tmpline[0]] = tmpline[1]
         return
 
     def picard_converter(self):
