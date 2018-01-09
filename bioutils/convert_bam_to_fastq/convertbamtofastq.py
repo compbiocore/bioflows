@@ -31,7 +31,7 @@ class bamtofastq:
 
         for samp,filepath in self.sample_list.iteritems():
             cmd = " sbatch -t 15:00:00 --mem=10g -n 2 --wrap='source activate cbc_conda;"
-            cmd = cmd + " picard -Xmx 10000m SamToFastq I=" + file  +  " "
+            cmd = cmd + " picard -Xmx 10000m SamToFastq I=" + filepath  +  " "
             cmd = cmd + " F="  + self.output_folder + "/pic_" + samp + "_r1.fq "
             cmd = cmd + " F2=" + self.output_folder + "/pic_" + samp + "_r2.fq "
             cmd = cmd + " FU=" + self.output_folder + "/pic_" + samp + "_up.fq ;"
