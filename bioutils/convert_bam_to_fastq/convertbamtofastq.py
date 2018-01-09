@@ -1,4 +1,4 @@
-import subprocess as sp, sys,
+import subprocess as sp, sys
 
 class bamtofastq:
     sample_list=dict()
