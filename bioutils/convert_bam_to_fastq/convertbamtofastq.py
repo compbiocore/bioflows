@@ -38,7 +38,7 @@ class bamtofastq:
             cmd = cmd + " gzip " + self.output_folder + "/pic_" + samp + "_r1.fq ;"
             cmd = cmd + " gzip " + self.output_folder + "/pic_" + samp + "_r2.fq ;"
             cmd = cmd + " gzip " + self.output_folder + "/pic_" + samp + "_up.fq'"
-            sp.getoutput(cmd, shell=True)
+            sp.check_output(cmd, shell=True)
             f.write(cmd + '\n')
         f.close()
 
@@ -54,7 +54,7 @@ class bamtofastq:
             cmd = cmd + " O="  + self.output_folder + "/bb_" + samp + "_um_r1.fq.gz "
             cmd = cmd + " O2=" + self.output_folder + "/bb_" + samp + "_um_r2.fq.gz "
             cmd = cmd + " filename=" + filepath + " gz=1'"
-            sp.getoutput(cmd, shell=True)
+            sp.check_output(cmd, shell=True)
             f.write(cmd + '\n')
         f.close()
         return
