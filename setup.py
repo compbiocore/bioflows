@@ -3,8 +3,8 @@ from setuptools import setup
 setup(
     name='bioflows',
     version='0.99',
-    packages=['tests', 'tests.test_catalog', 'tests.test_wrappers', 'tests.test_rnaseq_workflow', 'bioutils',
-              'bioutils.access_sra', 'bioutils.parse_fastqc', 'bioflowutils', 'definedworkflows',
+    packages=['test_others','test_wrappers', 'test_rnaseq_workflow', 'bioutils',
+              'bioutils.access_sra', 'bioutils.parse_fastqc', 'bioutils.convert_bam_fastq', 'bioflowutils', 'definedworkflows',
               'definedworkflows.rnaseq'],
     # install_requires= [luigi, saga-python, radical-utils, lxml, biopython, jsonpickle, pyyaml, xz, lftp],
     url='',
