@@ -563,12 +563,53 @@ class QualiMapRnaSeq(BaseWrapper):
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 8})
             self.args += [' -Xmx10000M']
 
+        self.args += [name.split('_')[1]]
         gtf = kwargs.get('gtf_file')
-        self.args += [name.split('_')[1],
+        self.args += [" -gtf ", gtf,
                       " -bam ", os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
-                      " -gtf ", gtf,
                       " -outdir ", os.path.join(kwargs.get('work_dir'), "qc", input)]
         self.args += args
+        rename_results = ' '.join([" cp ", os.path.join(kwargs.get('qc_dir'), input, "qualimapReport.html "),
+                                   os.path.join(kwargs.get('qc_dir'), input, input + "_qualimapReport.html ")])
+        self.setup_run(add_command=rename_results)
+        return
+
+class QualiMap(BaseWrapper):
+    """
+    A wrapper for the running qualimap QC suite for RNAseq
+
+    """
+
+    cmd = ''
+    args = []
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+        kwargs['target'] = input + '.qualimapReport.' + hashlib.sha224(
+            input + '.qualimapReport.html').hexdigest() + ".txt"
+        new_name = name.split('_')[0]
+        self.init(new_name, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+
+            ## Update memory requirements for job if needed
+            if 'mem' in kwargs.get('add_job_parms').keys():
+                self.args += [' -Xmx' + str(kwargs.get('add_job_parms')['mem']) + 'M']
+        else:
+            # Set default memory options
+            self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 8})
+            self.args += [' -Xmx10000M']
+        self.args += [name.split('_')[1]]
+        self.args += args
+
+        if name.split("_")[1] == "rnaseq":
+            gtf = kwargs.get('gtf_file')
+            self.args += [" -gtf ", gtf]
+
+        self.args += [ " -bam ", os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+
+                      " -outdir ", os.path.join(kwargs.get('work_dir'), "qc", input)]
         rename_results = ' '.join([" cp ", os.path.join(kwargs.get('qc_dir'), input, "qualimapReport.html "),
                                    os.path.join(kwargs.get('qc_dir'), input, input + "_qualimapReport.html ")])
         self.setup_run(add_command=rename_results)
@@ -651,6 +692,50 @@ class HtSeqCounts(BaseWrapper):
         self.setup_run()
         return
 
+class Bwa(BaseWrapper):
+    """
+    A wrapper for BWA
+
+    """
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+
+        ## set the checkpoint target file
+        kwargs['target'] = input + '.sam.' + hashlib.sha224(input + '.sam').hexdigest() + ".txt"
+        new_name = ' '.join(name.split("_"))
+        self.init(new_name, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
+        else:
+            self.job_parms.update({'mem': 4000, 'time': 80, 'ncpus': 12})
+            self.args += ['-t 12']
+
+        if self.paired_end:
+            kwargs['source'] = hashlib.sha224(input + '_2_fastqc.gzip').hexdigest() + ".txt"
+        else:
+            kwargs['source'] = hashlib.sha224(input + '_fastqc.gzip').hexdigest() + ".txt"
+
+        #self.setup_args()
+
+        self.args += args
+
+        if self.paired_end:
+            self.args.append(os.path.join(self.cwd, 'fastq', input + "_1.fq.gz"))
+            self.args.append(os.path.join(self.cwd, 'fastq', input + "_2.fq.gz"))
+        else:
+            self.args.append(os.path.join(self.cwd, 'fastq', input + ".fq.gz"))
+        # self.cmd = ' '.join(chain(self.cmd, map(str, self.args), map(str,input)))
+
+        self.setup_run()
+        return
+
+    # def setup_args(self):
+    #     self.args += ["--gunzip", "-A sam", "-N1", "--use-shared-memory=0"]
+    #     return
 
 class BedtoolsCounts(BaseWrapper):
     """

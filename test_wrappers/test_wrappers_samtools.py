@@ -83,5 +83,6 @@ class TestSamtoolsIndex(unittest.TestCase):
         # for k, v in self.samtoolsindex_test.__dict__.iteritems():
         #     print k + ": " + str(v) +  "\n"
 
+
 if __name__ == '__main__':
     unittest.main()

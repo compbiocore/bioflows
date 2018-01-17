@@ -1,0 +1,44 @@
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
+sample_manifest:
+  fastq_file: sampl_manifest_min_pe_celegans.csv
+  metadata:
+run_parms:
+  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda
+  work_dir: /gpfs/scratch/
+  log_dir: logs
+  paired_end: True
+  #local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  #luigi_local_path: /home/aragaven/scratch/test_workflow
+  db: sqlite
+  db_loc: ':memory:'
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  gtf_file: /gpfs/scratch/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+workflow_sequence:
+  fastqc: default
+  gsnap:
+    options:
+      -d: c_elegans_Ws8
+      -s: caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit
+    job_params:
+      ncpus: 16
+      mem: 40000
+      time: 60
+  qualimap_rnaseq: default
+  qualimap_bamqc:
+    options:
+      -nr: 10000
+      -c:
+  salmon:
+    options:
+      -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+      -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
+  htseq-count: default
+  bwa_mem:
+    options:
+      index.db:
+    job_params:
+      ncpus: 16

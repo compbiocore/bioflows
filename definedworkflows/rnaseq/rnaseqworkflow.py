@@ -138,7 +138,6 @@ class TaskSequence(luigi.Task, BaseTask):
         self.setup()
         self.__class__.__name__ = str(self.name)
         if self.parms.local_target:
-            # lcs.RemoteFileSystem("ssh.ccv.brown.edu").get( self.parms.luigi_target,self.parms.luigi_local_target)
             return luigi.LocalTarget(self.parms.luigi_local_target)
         else:
             return luigi.LocalTarget(self.parms.luigi_target)
@@ -158,12 +157,18 @@ class TaskFlow(luigi.WrapperTask):
 
 
 class BaseWorkflow:
+    base_kwargs = dict()
+    sample_fastq = dict()
+    sample_fastq_work = dict()
+    progs = OrderedDict()
+
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
         self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
                               'gsnap': wr.Gsnap,
                               'fastqc': wr.FastQC,
-                              'qualimap_rnaseq': wr.QualiMapRnaSeq,
+                              'qualimap_rnaseq': wr.QualiMap,
+                              'qualimap_bamqc': wr.QualiMap,
                               'samtobam': wr.SamToBam,
                               'bamtomapped': wr.BamToMappedBam,
                               'bamtounmapped': wr.BamToUnmappedBam,
@@ -171,20 +176,36 @@ class BaseWorkflow:
                               'samsort': wr.SamToolsSort,
                               'bammarkduplicates2': wr.BiobambamMarkDup,
                               'salmon': wr.SalmonCounts,
-                              'htseq-count': wr.HtSeqCounts
+                              'htseq-count': wr.HtSeqCounts,
+                               'bwa_mem': wr.Bwa
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
                            'mem': 3000
                            }
-        self.session = None
-        self.main_table = None
+
+        # Check and make sure both fastq_file and sra don't exist
+        if 'fastq_file' in self.sample_manifest.keys():
+            self.parse_sample_info_from_file()
+        elif 'sra' in self.sample_manifest.keys():
+            self.parse_sample_info_from_sra()
+
+        # Setup saga parameters
+        self.set_saga_parms()
+
+        # Setup the Conda PATH
+        if 'conda_command' not in self.run_parms.keys():
+            self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
+
+        self.paired_end = False
+        self.set_paths()
+        self.set_base_kwargs()
+        self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
+                         self.fastq_dir, self.align_dir, self.qc_dir]
         return
 
     """A shortcut for calling the BaseWrapper __init__ from a subclass."""
     init = __init__
-
-
 
     def parse_config(self, fileHandle):
         """
@@ -194,25 +215,13 @@ class BaseWorkflow:
             setattr(self, k, v)
         return
 
-    # def create_catalog(self):
-    #     engine = create_engine(self.run_parms['db'] + ":///" + self.run_parms['db_loc'])  # , echo=True)
-    #     cb.Base.metadata.create_all(engine, checkfirst=True)
-    #     Session = sessionmaker(bind=engine)
-    #     self.session = Session()
-    #     return
 
+    def set_saga_parms(self):
+        """
+            setup the parameters needed for the saga interface
+        :return:
+        """
 
-class RnaSeqFlow(BaseWorkflow):
-    sample_fastq = dict()
-    sample_fastq_work = dict()
-    progs = OrderedDict()
-    allTasks = []
-    progs_job_parms = dict()
-    base_kwargs = dict()
-    logger = ""
-
-    def __init__(self, parmsfile):
-        self.init(parmsfile)
         if 'saga_host' in self.run_parms.keys():
             self.job_params['saga_host'] = self.run_parms['saga_host']
         else:
@@ -224,25 +233,40 @@ class RnaSeqFlow(BaseWorkflow):
         else:
             self.job_params['saga_scheduler'] = 'fork'
 
-        if 'conda_command' not in self.run_parms.keys():
-            self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
-        self.paired_end = False
-        self.setup_paths()
-        self.set_base_kwargs()
-        if 'fastq_file' in self.sample_manifest.keys():
-            # Need to check and make sure both fastq_file and sra don't exist
-            self.parse_sample_info_from_file()
-        elif 'sra' in self.sample_manifest.keys():
-            self.parse_sample_info_from_sra()
+        return
 
-        #self.create_catalog()
+    def set_base_kwargs(self):
+        """
+        Setup basic keyword arguments for the wrappers to use
+        :return:
+        """
+        self.base_kwargs['cwd'] = self.work_dir
+        self.base_kwargs['align_dir'] = self.align_dir
+        self.base_kwargs['qc_dir'] = self.qc_dir
+        self.base_kwargs['work_dir'] = self.work_dir
+        self.base_kwargs['log_dir'] = self.log_dir
+        self.base_kwargs['checkpoint_dir'] = self.checkpoint_dir
+        self.base_kwargs['sra_dir'] = self.sra_dir
+        self.base_kwargs['fastq_dir'] = self.fastq_dir
+        self.base_kwargs['align_dir'] = self.align_dir
+
+        self.base_kwargs['conda_command'] = self.run_parms.get('conda_command', 'source activate cbc_conda')
+        self.base_kwargs['job_parms'] = self.job_params
+        self.base_kwargs['job_parms_type'] = "default"
+        self.base_kwargs['add_job_parms'] = None
+        self.base_kwargs['log_dir'] = self.log_dir
+        self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', False)
+        self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
+        self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
+        self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
+        self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
         return
 
     def parse_sample_info_from_file(self):
         """
         Read in the sample attributes from file as a dictionary with
         the sample id as the key
-        :return: 
+        :return:
         """
         for line in open(self.sample_manifest['fastq_file'], 'r'):
             tmpline = line.strip('\n').split(',')
@@ -275,67 +299,26 @@ class RnaSeqFlow(BaseWorkflow):
             self.paired_end = True
         return
 
-    def parse_prog_info(self):
-        """
-        Read in the sequence of programs to be run for the current workflow
-         and their specified parameters
-        :return: 
-        """
-
-        ##******************************************
-        ## This whole section needs to be refactored
-        ## to allow for program options to be updated
-
-        for k, v in self.workflow_sequence.iteritems():
-            self.progs[k] = []
-            print k, v
-            if isinstance(v, dict):
-                # Add the specific program options
-                # Need to modify to dict so that default values can be updated
-                if 'options' in v.keys():
-                    for k1, v1 in v['options'].iteritems():
-                        # Should we test for flag options?
-                        self.progs[k].append("%s %s" % (k1, v1))
-                else:
-                    self.progs[k].append('')
-                # Add the specific program job parameters
-                if 'job_params' in v.keys():
-                    self.progs_job_parms[k] = v['job_params']
-                else:
-                    self.progs_job_parms[k] = 'default'
-            elif v == 'default':
-                self.progs[k].append('')
-
-                # self.progs[k].append(v1)
-        self.progs = OrderedDict(reversed(self.progs.items()))
-        return
-
-    def symlink_fastqs_local(self):
-        """
-        Create symlinks to the original fastqs locally renaming with given sample ids using the os module
-        :return: 
-        """
-        for samp, fileName in self.sample_fastq.iteritems():
-            self.sample_fastq_work[samp] = []
-            if len(fileName) < 2:
-                symlnk_name = os.path.join(os.path.dirname(fileName[0]), samp + ".fq.gz")
-                os.symlink(symlnk_name, fileName)
-                self.sample_fastq_work[samp].append(symlnk_name)
-            else:
-                num = 1
-                for file in fileName:
-                    symlnk_name = os.path.join(os.path.dirname(file), samp + "_" + num + ".fq.gz")
-                    os.symlink(symlnk_name, file)
-                    self.sample_fastq_work[samp].append(symlnk_name)
-                    num += 1
+    def set_paths(self):
+        '''
+        Setup all the values for the minimum required paths for the analysis
+        :return:
+        '''
+        self.work_dir = self.run_parms['work_dir']
+        self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
+        self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
+        self.sra_dir = os.path.join(self.work_dir, 'sra')
+        self.fastq_dir = os.path.join(self.work_dir, 'fastq')
+        self.align_dir = os.path.join(self.work_dir, 'alignments')
+        self.qc_dir = os.path.join(self.work_dir, 'qc')
         return
 
     def check_paths(self, path, remote=False):
         """
         Check if the directory exists, remote and local, using the saga module.
-        :param path: 
-        :param remote: 
-        :return: 
+        :param path:
+        :param remote:
+        :return:
         """
         if remote:
             session = saga.Session()
@@ -354,28 +337,12 @@ class RnaSeqFlow(BaseWorkflow):
                 os.mkdir(path)
         return
 
-    def setup_paths(self):
-        '''
-        Setup all the required paths for the analysis
-        :return:
-        '''
-        self.work_dir = self.run_parms['work_dir']
-        self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
-        self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
-        self.sra_dir = os.path.join(self.work_dir, 'sra')
-        self.fastq_dir = os.path.join(self.work_dir, 'fastq')
-        self.align_dir = os.path.join(self.work_dir, 'alignments')
-        self.expression_dir = os.path.join(self.work_dir, 'expression')
-        self.qc_dir = os.path.join(self.work_dir, 'qc')
-        return
-
     def test_paths(self):
         '''
         Check that all the required paths exist either locally or remotely
         :return:
         '''
-        paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
-                         self.fastq_dir, self.align_dir, self.expression_dir, self.qc_dir]
+
         remote_dirs_flag = False
         if self.run_parms['saga_host'] != "localhost":
             remote_dirs_flag = True
@@ -387,7 +354,6 @@ class RnaSeqFlow(BaseWorkflow):
             self.check_paths(p, remote_dirs_flag)
 
         return
-
 
     def download_sra_cmds(self):
         '''
@@ -410,7 +376,6 @@ class RnaSeqFlow(BaseWorkflow):
             print k, ":", v, "\n"
 
         return
-
 
     def convert_sra_to_fastq_cmds(self):
         '''
@@ -569,7 +534,7 @@ class RnaSeqFlow(BaseWorkflow):
     def symlink_fastqs(self):
         """
         Create soft links to original fastqs by renaming, local or remote, using the given sample IDs and the saga module
-        :return: 
+        :return:
         """
         # command list
         cmds = []
@@ -654,34 +619,68 @@ class RnaSeqFlow(BaseWorkflow):
         js.close()
         return
 
-    def set_base_kwargs(self):
-        self.base_kwargs['cwd'] = self.work_dir
-        self.base_kwargs['align_dir'] = self.align_dir
-        self.base_kwargs['qc_dir'] = self.qc_dir
-        self.base_kwargs['work_dir'] = self.work_dir
-        self.base_kwargs['log_dir'] = self.log_dir
-        self.base_kwargs['checkpoint_dir'] = self.checkpoint_dir
-        self.base_kwargs['sra_dir'] = self.sra_dir
-        self.base_kwargs['fastq_dir'] = self.fastq_dir
-        self.base_kwargs['align_dir'] = self.align_dir
-        self.base_kwargs['expression_dir'] = self.expression_dir
+    def symlink_fastqs_local(self):
+        """
+        Create symlinks to the original fastqs locally renaming with given sample ids using the os module
+        :return:
+        """
+        for samp, fileName in self.sample_fastq.iteritems():
+            self.sample_fastq_work[samp] = []
+            if len(fileName) < 2:
+                symlnk_name = os.path.join(os.path.dirname(fileName[0]), samp + ".fq.gz")
+                os.symlink(symlnk_name, fileName)
+                self.sample_fastq_work[samp].append(symlnk_name)
+            else:
+                num = 1
+                for file in fileName:
+                    symlnk_name = os.path.join(os.path.dirname(file), samp + "_" + num + ".fq.gz")
+                    os.symlink(symlnk_name, file)
+                    self.sample_fastq_work[samp].append(symlnk_name)
+                    num += 1
+        return
 
-        self.base_kwargs['conda_command'] = self.run_parms.get('conda_command', 'source activate cbc_conda')
-        self.base_kwargs['job_parms'] = self.job_params
-        self.base_kwargs['job_parms_type'] = "default"
-        self.base_kwargs['add_job_parms'] = None
-        self.base_kwargs['log_dir'] = self.log_dir
-        self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', 'False')
-        self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
-        self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
-        self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
-        self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
+    def parse_prog_info(self):
+        """
+        Read in the sequence of programs to be run for the current workflow
+         and their specified parameters
+        :return:
+        """
+
+        ##******************************************
+        ## This whole section needs to be refactored
+        ## to allow for program options to be updated
+
+        for k, v in self.workflow_sequence.iteritems():
+            self.progs[k] = []
+            print k, v
+            if isinstance(v, dict):
+                # Add the specific program options
+                # Need to modify to dict so that default values can be updated
+                if 'options' in v.keys():
+                    for k1, v1 in v['options'].iteritems():
+                        # Should we test for flag options?
+                        if v1 is not None:
+                            self.progs[k].append("%s %s" % (k1, v1))
+                        else:
+                            self.progs[k].append("%s" % (k1))
+                else:
+                    self.progs[k].append('')
+                # Add the specific program job parameters
+                if 'job_params' in v.keys():
+                    self.progs_job_parms[k] = v['job_params']
+                else:
+                    self.progs_job_parms[k] = 'default'
+            elif v == 'default':
+                self.progs[k].append('')
+
+                # self.progs[k].append(v1)
+        self.progs = OrderedDict(reversed(self.progs.items()))
         return
 
     def chain_commands(self):
         """
         Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
-        :return: 
+        :return:
         """
 
         for samp, file in self.sample_fastq_work.iteritems():
@@ -795,12 +794,31 @@ class RnaSeqFlow(BaseWorkflow):
         return
 
     def update_job_parms(self, key):
-
         new_base_kwargs = copy.deepcopy(self.base_kwargs)
         if self.progs_job_parms[key] != 'default':
             new_base_kwargs['job_parms_type'] = "custom"
             new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
         return new_base_kwargs
+
+
+
+class RnaSeqFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create Expression quantification directory for RNASeq
+        self.expression_dir = os.path.join(self.work_dir, 'expression')
+
+        # Update kwargs to include directory for expression quantification
+        self.base_kwargs['expression_dir'] = self.expression_dir
+
+        # Update paths to check to include directory for expression quantification
+        self.paths_to_test += self.expression_dir
+
+        return
 
 
 def main():
@@ -819,6 +837,7 @@ def main():
     # for k, v in rw1.sample_fastq.iteritems():
     #     print k, v
     #
+
     rw1.parse_prog_info()
     # print "\n***** Printing Progs dict ******\n"
     # for k, v in rw1.progs.iteritems():
@@ -837,9 +856,7 @@ def main():
     rw1.chain_commands()
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
                 workers=len(rw1.sample_fastq_work.keys()), lock_size=1)
-    # luigi.build([TaskFlow(tasks=rw1.allTasks)], local_scheduler=False, workers=2, lock_size=3)
-    # luigi.build(self.rw1.allTasks, local_scheduler=False, workers=3, lock_size=3)
-
+    return
 
 if __name__ == '__main__':
     main()
