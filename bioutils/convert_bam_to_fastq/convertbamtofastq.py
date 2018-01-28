@@ -45,7 +45,6 @@ class bamtofastq:
         return
 
     def biobambam_converter(self):
-        f = open("bam_fastq_biobambam_commands.log", 'w')
         f.write("*** Convert Bam to Fastq Using BioBamBam ***\n")
         for samp,filepath in self.sample_list.iteritems():
             cmd = " sbatch -t 15:00:00 --mem=10g -n 2 --wrap='source activate cbc_conda; bamtofastq"

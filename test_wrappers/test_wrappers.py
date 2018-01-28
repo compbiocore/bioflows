@@ -207,15 +207,41 @@ class TestBwaMem(unittest.TestCase):
         # for k, v in self.gsnap_test.__dict__.iteritems():
         #     print k + ": " + str(v) +  "\n"
 
+class TestPicard(unittest.TestCase):
+
+    def setUp(self):
+        self.parmsfile = "test_wrappers_pe.yaml"
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'picard_CollectWgsMetrics'
+        self.add_args = self.rw1.progs[self.wrapper_name]
+        #use  *self.add_args to unroll the list
+        self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.add_args,
+                                   **dict(self.rw1.base_kwargs))
+
+
+    def test_picard_wrapper(self):
+        print "\n***** Testing Picard_wrapper command *****\n"
+        print self.picard_test.run_command
+        print self.picard_test.job_parms
+        #out_command = "gsnap  -t 8 --gunzip -A sam -N1 --use-shared-memory=0 -d Ensembl_Mus_musculus_GRCm38 -s Mus_musculus.GRCm38.88.splicesites.iit /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_gsnap_err.log 1>/gpfs/scratch/aragaven/test_workflow/alignments/gsnap.sam"
+        #self.assertEqual(self.gsnap_test.run_command, out_command)
+        # print "\n***** Testing Gsnap_wrapper *****\n"
+        # for k, v in self.gsnap_test.__dict__.iteritems():
+        #     print k + ": " + str(v) +  "\n"
+
+
 if __name__ == '__main__':
     # unittest.main()
     suite = unittest.TestSuite()
     suite.addTest(TestBwaMem("test_bwa_wrapper"))
-    suite.addTest(TestQualimap("test_qualimap_wrapper"))
+    suite.addTest(TestPicard("test_picard_wrapper"))
+    #suite.addTest(TestQualimap("test_qualimap_wrapper"))
     #suite.addTest(TestHtSeq("test_htseq_counts_wrapper"))
     # suite.addTest(TestSalmon("test_salmon_counts_wrapper"))
     # suite.addTest(TestSamMarkDup("test_sammarkdup_wrapper"))
-    suite.addTest(TestQualimapRna("test_qualimap_wrapper"))
+    #suite.addTest(TestQualimapRna("test_qualimap_wrapper"))
     #suite.addTest(TestFastqc("test_fastqc_wrapper"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

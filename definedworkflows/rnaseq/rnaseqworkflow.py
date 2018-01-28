@@ -177,7 +177,8 @@ class BaseWorkflow:
                               'bammarkduplicates2': wr.BiobambamMarkDup,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
-                               'bwa_mem': wr.Bwa
+                               'bwa_mem': wr.Bwa,
+                               'picard_WgsCollectMetrics': wr.Picard
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -259,6 +260,7 @@ class BaseWorkflow:
         self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
         self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
         self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
+        self.base_kwargs['ref_fasta_path'] = self.run_parms.get('reference_fasta_path', None)
         self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
         return
 

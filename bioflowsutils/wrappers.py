@@ -771,3 +771,50 @@ class FeatureCounts(BaseWrapper):
         self.args += args
         self.setup_run()
         return
+
+class Picard(BaseWrapper):
+    """
+        A wrapper for picardtools
+        picard CollectWgsMetrics \
+        INPUT=$mysamplebase"_sorted.bam" \ OUTPUT=$mysamplebase"_stats_picard.txt"\
+        REFERENCE_SEQUENCE=$myfasta \
+        MINIMUM_MAPPING_QUALITY=20 \
+        MINIMUM_BASE_QUALITY=20 \
+        VALIDATION_STRINGENCY=LENIENT
+    """
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+
+        ## set the checkpoint target file
+        kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+        new_name = ' '.join(name.split("_"))
+        self.init(new_name, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+
+            ## Update threads if cpus given
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
+
+            ## Update memory requirements  if needed
+            if 'mem' in kwargs.get('add_job_parms').keys():
+                self.args += [' -Xmx ' + str(kwargs.get('add_job_parms')['mem']) + 'M']
+
+        else:
+            # Set default memory and cpu options
+            self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
+            self.args += [' -Xmx 10000M']
+            self.args += ['-t 8']
+
+        kwargs['source'] = input + '.dup.srtd.bam'+ hashlib.sha224(input + '.dup.srtd.bam').hexdigest() + ".txt"
+        ref_fasta = kwargs.get("ref_fasta_path")
+        self.args += args
+        self.args += ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+                      "OUTPUT="+os.path.join(kwargs.get('qc_dir'),input + '._wgs_stats_picard.txt'),
+                      "REFERENCE_SEQUENCE="+ref_fasta, "MINIMUM_MAPPING_QUALITY="+"20","MINIMUM_BASE_QUALITY="+"20",
+                      "COUNT_UNPAIRED=true", "VALIDATION_STRINGENCY="+"LENIENT"]
+
+        self.setup_run()
+        return

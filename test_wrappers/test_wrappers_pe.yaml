@@ -17,6 +17,7 @@ run_parms:
   #ssh_user: aragaven
   saga_scheduler: slurm
   gtf_file: /gpfs/scratch/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+  reference_fasta_path: /gpfs/scratch/test.fa
 workflow_sequence:
   fastqc: default
   gsnap:
@@ -42,3 +43,4 @@ workflow_sequence:
       index.db:
     job_params:
       ncpus: 16
+  picard_CollectWgsMetrics: default
