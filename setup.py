@@ -13,6 +13,7 @@ setup(
     author_email='ashok_ragavendran@brown.edu',
     description='',
     entry_points={
-        'console_scripts': ['bioflow-rnaseq = definedworkflows.rnaseq.rnaseqworkflow:main'],
+        'console_scripts': ['bioflows-rnaseq = definedworkflows.rnaseq.rnaseqworkflow:rna_seq_main'],
+        'console_scripts': ['bioflows-dnaseq = definedworkflows.rnaseq.rnaseqworkflow:dna_seq_main'],
     }
 )

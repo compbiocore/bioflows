@@ -822,10 +822,29 @@ class RnaSeqFlow(BaseWorkflow):
 
         return
 
+class DnaSeqFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
 
-def main():
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create Expression quantification directory for RNASeq
+        #self.expression_dir = os.path.join(self.work_dir, 'expression')
+
+        # Update kwargs to include directory for expression quantification
+        #self.base_kwargs['expression_dir'] = self.expression_dir
+
+        # Update paths to check to include directory for expression quantification
+        #self.paths_to_test += self.expression_dir
+
+        return
+
+
+def rna_seq_main():
+
     print "success intall worked"
-    sys.exit(0)
+    #sys.exit(0)
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     rw1 = RnaSeqFlow(parmsfile)
@@ -859,6 +878,45 @@ def main():
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
                 workers=len(rw1.sample_fastq_work.keys()), lock_size=1)
     return
+
+
+def dna_seq_main():
+    print "success intall worked"
+    # sys.exit(0)
+    # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
+    parmsfile = sys.argv[1]
+    workflow = DnaSeqFlow(parmsfile)
+    #
+    # print "\n***** Printing config Parsing ******\n"
+    # for k, v in rw1.__dict__.iteritems():
+    #     print k, v
+    #     #
+    #
+    # print "\n***** Printing Sample Info ******\n"
+    # for k, v in rw1.sample_fastq.iteritems():
+    #     print k, v
+    #
+
+    workflow.parse_prog_info()
+    # print "\n***** Printing Progs dict ******\n"
+    # for k, v in rw1.progs.iteritems():
+    #     print k, v
+    #
+    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
+    # print "\n***** Printing Progs dict in reverse ******\n"
+    # for k, v in rev_progs.iteritems():
+    #     print k, v
+
+    print "\n***** Printing Chained Commands ******\n"
+
+    # Actual jobs start here
+    workflow.test_paths()
+    workflow.symlink_fastqs()
+    workflow.chain_commands()
+    luigi.build([TaskFlow(tasks=workflow.allTasks, task_name=workflow.bioproject)], local_scheduler=True,
+                workers=len(workflow.sample_fastq_work.keys()), lock_size=1)
+    return
+
 
 if __name__ == '__main__':
     main()
