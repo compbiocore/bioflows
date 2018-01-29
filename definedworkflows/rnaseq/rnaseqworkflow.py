@@ -1,8 +1,7 @@
-import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys, logging
+import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
 from collections import OrderedDict
 import bioflowsutils.wrappers as wr
 from bioutils.access_sra.sra import SraUtils
-logging.basicConfig(level=logging.INFO, filename="debug.log")
 
 def ordered_load(stream, loader=yaml.Loader, object_pairs_hook=OrderedDict):
     '''
@@ -1037,8 +1036,7 @@ def dna_seq_main():
 
 
 if __name__ == '__main__':
-    main()
-
+    rna_seq_main()
 
 
  # BAD CODING KEEP function
