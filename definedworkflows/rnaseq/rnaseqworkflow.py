@@ -345,6 +345,7 @@ class BaseWorkflow:
         '''
 
         remote_dirs_flag = False
+        paths_to_test = self.paths_to_test
         if self.run_parms['saga_host'] != "localhost":
             remote_dirs_flag = True
             remote_prefix = "sftp://" + self.run_parms['saga_host']
