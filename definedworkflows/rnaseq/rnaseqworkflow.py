@@ -3,7 +3,7 @@ from collections import OrderedDict
 import bioflowsutils.wrappers as wr
 from bioutils.access_sra.sra import SraUtils
 
-def ordered_load(stream, loader=yaml.Loader, object_pairs_hook=OrderedDict):
+def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     '''
      Load YAML as an Ordered Dict
     :param stream:
@@ -348,7 +348,7 @@ class BaseWorkflow:
         if self.run_parms['saga_host'] != "localhost":
             remote_dirs_flag = True
             remote_prefix = "sftp://" + self.run_parms['saga_host']
-            paths_to_test = [remote_prefix + "/" + x for x in paths_to_test]
+            paths_to_test = [remote_prefix + "/" + x for x in self.paths_to_test]
             print paths_to_test
 
         for p in paths_to_test:
