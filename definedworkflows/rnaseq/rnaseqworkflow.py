@@ -176,8 +176,8 @@ class BaseWorkflow:
                               'bammarkduplicates2': wr.BiobambamMarkDup,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
-                               'bwa_mem': wr.Bwa,
-                               'picard_WgsCollectMetrics': wr.Picard
+                              'bwa_mem': wr.Bwa,
+                              'picard_CollectWgsMetrics': wr.Picard
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
