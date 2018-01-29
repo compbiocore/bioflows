@@ -679,6 +679,33 @@ class BaseWorkflow:
         self.progs = OrderedDict(reversed(self.progs.items()))
         return
 
+    def update_job_parms(self, key):
+        new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        if self.progs_job_parms[key] != 'default':
+            new_base_kwargs['job_parms_type'] = "custom"
+            new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
+        return new_base_kwargs
+
+
+
+class RnaSeqFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create Expression quantification directory for RNASeq
+        self.expression_dir = os.path.join(self.work_dir, 'expression')
+
+        # Update kwargs to include directory for expression quantification
+        self.base_kwargs['expression_dir'] = self.expression_dir
+
+        # Update paths to check to include directory for expression quantification
+        self.paths_to_test += self.expression_dir
+
+        return
+
     def chain_commands(self):
         """
         Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
@@ -692,6 +719,142 @@ class BaseWorkflow:
             for key in self.progs.keys():
 
                 if key == 'gsnap':
+                    # update job parms
+                    new_base_kwargs = self.update_job_parms(key)
+                    # Add additional samtools processing steps to GSNAP output
+
+                    tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
+                                                                        stdout=os.path.join(self.log_dir,
+                                                                                            samp + '_bamdup.log'),
+                                                                        **dict(self.base_kwargs)
+                                                                        )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samindex']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir, samp + '_bamidx.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samsort']('samtools', samp,
+                                                             stdout=os.path.join(self.log_dir, samp + '_bamsrt.log'),
+                                                             **dict(new_base_kwargs)
+                                                             )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtomapped']('samtools', samp,
+                                                                 stdout=os.path.join(self.log_dir,
+                                                                                     samp + '_bamtomappedbam.log'),
+                                                                 **dict(self.base_kwargs)
+                                                                 )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtounmapped']('samtools', samp,
+                                                                   stdout=os.path.join(self.log_dir,
+                                                                                       samp + '_bamtounmappedbam.log'),
+                                                                   **dict(self.base_kwargs)
+                                                                   )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samtobam']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir,
+                                                                                  samp + '_samtobam.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.align_dir, samp + '.sam'),
+                                                       **dict(new_base_kwargs))
+
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
+                                                                           self.run_parms['log_dir'],
+                                                                           samp + '_' + key + '.log'),
+                                                       **dict(self.base_kwargs)
+                                                       )
+
+                    print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+                    # print self.job_params
+                    # tmp_prog.job_parms['mem'] = 1000
+                    # tmp_prog.job_parms['time'] = 80
+                    # tmp_prog.job_parms['ncpus'] = 1
+                    ## Need to fix to read in options and parms
+
+            # Remove the first job and re-add it without any targets
+
+            # del samp_progs[-1]
+            # tmp_prog = self.prog_wrappers[key](key, samp,
+            #                                    stdout=os.path.join(self.log_dir,samp + '_' + key + '.log'),
+            #                                    **dict(self.base_kwargs)
+            #                                    )
+            # tmp_prog.luigi_source = "None"
+            # samp_progs.append(jsonpickle.encode(tmp_prog))
+            # print "\n**** Command after removal *** \n"
+            # print tmp_prog.run_command
+            # for k,v in tmp_prog.__dict__.iteritems():
+            #     print k,v
+            # # print self.job_params
+            # # print tmp_prog.job_parms
+            # print tmp_prog.luigi_source
+            # self.allTasks.append(TaskSequence(samp_progs))
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+            # print self.allTasks
+
+        return
+
+
+class DnaSeqFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create Expression quantification directory for RNASeq
+        #self.expression_dir = os.path.join(self.work_dir, 'expression')
+
+        # Update kwargs to include directory for expression quantification
+        #self.base_kwargs['expression_dir'] = self.expression_dir
+
+        # Update paths to check to include directory for expression quantification
+        #self.paths_to_test += self.expression_dir
+
+        return
+
+    def chain_commands(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        for samp, file in self.sample_fastq_work.iteritems():
+            print "\n *******Commands for Sample:%s ***** \n" % (samp)
+            samp_progs = []
+
+            for key in self.progs.keys():
+
+                if key == 'bwa':
                     # update job parms
                     new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
@@ -795,51 +958,6 @@ class BaseWorkflow:
 
         return
 
-    def update_job_parms(self, key):
-        new_base_kwargs = copy.deepcopy(self.base_kwargs)
-        if self.progs_job_parms[key] != 'default':
-            new_base_kwargs['job_parms_type'] = "custom"
-            new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
-        return new_base_kwargs
-
-
-
-class RnaSeqFlow(BaseWorkflow):
-    allTasks = []
-    progs_job_parms = dict()
-
-    def __init__(self, parmsfile):
-        self.init(parmsfile)
-
-        # Create Expression quantification directory for RNASeq
-        self.expression_dir = os.path.join(self.work_dir, 'expression')
-
-        # Update kwargs to include directory for expression quantification
-        self.base_kwargs['expression_dir'] = self.expression_dir
-
-        # Update paths to check to include directory for expression quantification
-        self.paths_to_test += self.expression_dir
-
-        return
-
-class DnaSeqFlow(BaseWorkflow):
-    allTasks = []
-    progs_job_parms = dict()
-
-    def __init__(self, parmsfile):
-        self.init(parmsfile)
-
-        # Create Expression quantification directory for RNASeq
-        #self.expression_dir = os.path.join(self.work_dir, 'expression')
-
-        # Update kwargs to include directory for expression quantification
-        #self.base_kwargs['expression_dir'] = self.expression_dir
-
-        # Update paths to check to include directory for expression quantification
-        #self.paths_to_test += self.expression_dir
-
-        return
-
 
 def rna_seq_main():
 
@@ -885,7 +1003,7 @@ def dna_seq_main():
     # sys.exit(0)
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
-    workflow = DnaSeqFlow(parmsfile)
+    dw1 = DnaSeqFlow(parmsfile)
     #
     # print "\n***** Printing config Parsing ******\n"
     # for k, v in rw1.__dict__.iteritems():
@@ -897,7 +1015,7 @@ def dna_seq_main():
     #     print k, v
     #
 
-    workflow.parse_prog_info()
+    dw1.parse_prog_info()
     # print "\n***** Printing Progs dict ******\n"
     # for k, v in rw1.progs.iteritems():
     #     print k, v
@@ -910,11 +1028,11 @@ def dna_seq_main():
     print "\n***** Printing Chained Commands ******\n"
 
     # Actual jobs start here
-    workflow.test_paths()
-    workflow.symlink_fastqs()
-    workflow.chain_commands()
-    luigi.build([TaskFlow(tasks=workflow.allTasks, task_name=workflow.bioproject)], local_scheduler=True,
-                workers=len(workflow.sample_fastq_work.keys()), lock_size=1)
+    dw1.test_paths()
+    dw1.symlink_fastqs()
+    dw1.chain_commands()
+    luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
+                workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
     return
 
 
