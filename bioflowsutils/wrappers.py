@@ -800,12 +800,12 @@ class Picard(BaseWrapper):
 
             ## Update memory requirements  if needed
             if 'mem' in kwargs.get('add_job_parms').keys():
-                self.args += [' -Xmx ' + str(kwargs.get('add_job_parms')['mem']) + 'M']
+                self.args += [' -Xmx' + str(kwargs.get('add_job_parms')['mem']) + 'M']
 
         else:
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
-            self.args += [' -Xmx 10000M']
+            self.args += [' -Xmx10000M']
             self.args += ['-t 8']
 
         kwargs['source'] = input + '.dup.srtd.bam'+ hashlib.sha224(input + '.dup.srtd.bam').hexdigest() + ".txt"
