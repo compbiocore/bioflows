@@ -202,7 +202,7 @@ class BaseWorkflow:
         self.set_base_kwargs()
         self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
                          self.fastq_dir, self.align_dir, self.qc_dir]
-        if 'sra' in self.sample_manifest.keys() and self.manifest['downloads']:
+        if 'sra' in self.sample_manifest.keys() and self.sample_manifest['downloads']:
             self.download_sra_cmds()
             sys.exit(0)
         return
