@@ -202,6 +202,9 @@ class BaseWorkflow:
         self.set_base_kwargs()
         self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
                          self.fastq_dir, self.align_dir, self.qc_dir]
+        if 'sra' in self.sample_manifest.keys() and self.manifest['downloads']:
+            self.download_sra_cmds()
+            sys.exit(0)
         return
 
     """A shortcut for calling the BaseWrapper __init__ from a subclass."""
@@ -373,9 +376,10 @@ class BaseWorkflow:
 
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds, 60))
-        self.symlink_fastqs_submit_jobs(cmds_dict, "sra.log")
+        self.symlink_fastqs_submit_jobs(cmds_dict, os.path.join(self.log_dir,"sra.log"))
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
+        self.convert_sra_to_fastq_cmds()
 
         return
 
@@ -450,7 +454,6 @@ class BaseWorkflow:
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
         #print cmds
-        logging.info("commands:" + '\n'.join(cmds))
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds,300))
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout")
