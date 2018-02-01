@@ -287,7 +287,7 @@ class BaseWorkflow:
         the sample id as the key
         """
         self.sra_info = self.sample_manifest['sra'].copy()
-        self.sra_info['outfile'] = os.path.join(self.work_dir,"sra_manifest.csv")
+        self.sra_info['outfile'] = os.path.join(self.run_parms['work_dir'],"sra_manifest.csv")
         sample_sra = SraUtils(self.sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
         print self.sample_fastq
