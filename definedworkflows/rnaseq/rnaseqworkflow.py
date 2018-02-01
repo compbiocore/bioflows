@@ -457,7 +457,7 @@ class BaseWorkflow:
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout", 300)
-        f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv",'w'))
+        f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv"),'w')
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
             f.write(k + "," + str(v) + "\n")
