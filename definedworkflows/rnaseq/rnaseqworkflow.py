@@ -460,7 +460,8 @@ class BaseWorkflow:
         f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv"),'w')
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
-            f.write(k + "," + str(v) + "\n")
+            outstring = k + "," + ','.join(v)
+            f.write( outstring.strip(',')+ "\n")
         f.close()
         return
 
