@@ -198,7 +198,7 @@ class BaseWorkflow:
         if 'conda_command' not in self.run_parms.keys():
             self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
 
-        self.paired_end = False
+        #self.paired_end = False
         self.set_paths()
         self.set_base_kwargs()
         self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
