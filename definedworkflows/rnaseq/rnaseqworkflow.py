@@ -375,8 +375,8 @@ class BaseWorkflow:
         print cmds
 
         # Create a dictionary of Sample and commands
-        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds, 60))
-        self.symlink_fastqs_submit_jobs(cmds_dict, os.path.join(self.log_dir,"sra.log"))
+        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",60)
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
         self.convert_sra_to_fastq_cmds()
@@ -455,9 +455,9 @@ class BaseWorkflow:
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
         #print cmds
         # Create a dictionary of Sample and commands
-        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds,300))
-        self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout")
-        f=open(os.path.join(self.work_dir,"sra_sample_fastq.csv",'w'))
+        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout", 300)
+        f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv",'w'))
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
             f.write(k + "," + str(v) + "\n")
