@@ -135,13 +135,21 @@ class SraUtils:
         if outfile is not None:
             f= open(outfile,'w')
             for k,v in self.sra_records.iteritems():
-                f.write(k + "," + ','.join([k1 + ":" + ';'.join([v2.encode("utf-8") for v2 in v1] ) for k1, v1 in v.iteritems()]) +"\n")
+                f.write(k + "," + ','.join([k1 + ":" + self.check_str(v1) for k1, v1 in v.iteritems()]) +"\n")
             f.close()
 
         for k, v in self.sra_records.iteritems():
             print k,v
 
         return
+
+    def check_str(self, val):
+        out = ''
+        if type(val) == list:
+            out = ';'.join([v.encode("utf-8") for v in val])
+        else:
+            out = val.encode("utf-8")
+        return out
 
 class Sra_Element:
     record = dict()
