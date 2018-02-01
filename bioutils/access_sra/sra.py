@@ -135,7 +135,7 @@ class SraUtils:
         if outfile is not None:
             f= open(outfile,'w')
             for k,v in self.sra_records.iteritems():
-                f.write(k + "," + ','.join([k1 + ":" + str(v1) for k1, v1 in v.iteritems()]) +"\n")
+                f.write(k + "," + ','.join([k1 + ":" + (';'.join([v2.encode("utf-8") for v2 in v1] ) for k1, v1 in v.iteritems())]) +"\n")
             f.close()
 
         for k, v in self.sra_records.iteritems():
