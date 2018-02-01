@@ -47,6 +47,7 @@ class SraUtils:
         print self.accession_record_ids
         self.download_xmls(self.accession_record_ids)
         self.get_sra_records()
+        self.write_records(sra_info['outfile'])
         return
 
     def check_email(self):
@@ -130,6 +131,17 @@ class SraUtils:
             print key, ": ", val, "\n"
         return
 
+    def write_records(self, outfile):
+        if outfile is not None:
+            f= open(outfile,'w')
+            for k,v in self.sra_records.iteritems():
+                f.write(k + "," + ','.join([k1 + ":" + str(v1) for k1, v1 in v.iteritems()]) +"\n")
+            f.close()
+
+        for k, v in self.sra_records.iteritems():
+            print k,v
+
+        return
 
 class Sra_Element:
     record = dict()
@@ -219,4 +231,4 @@ if __name__ == '__main__':
     # SraUtils({'id':'SRS1283645', 'entrez_email':'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
-    SraUtils({'id': 'SRR3291472', 'entrez_email': 'ashok.ragavendran@gmail.com'})
+    SraUtils({'id': 'PRJNA177403', 'entrez_email': 'ashok.ragavendran@gmail.com','outfile':'/Users/aragaven/temp.csv'})

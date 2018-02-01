@@ -160,6 +160,7 @@ class BaseWorkflow:
     sample_fastq = dict()
     sample_fastq_work = dict()
     progs = OrderedDict()
+    sra_info = ''
 
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
@@ -202,9 +203,7 @@ class BaseWorkflow:
         self.set_base_kwargs()
         self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
                          self.fastq_dir, self.align_dir, self.qc_dir]
-        if 'sra' in self.sample_manifest.keys() and self.sample_manifest['downloads']:
-            self.download_sra_cmds()
-            sys.exit(0)
+
         return
 
     """A shortcut for calling the BaseWrapper __init__ from a subclass."""
@@ -287,8 +286,9 @@ class BaseWorkflow:
         Read in the sample attributes from an SRA id and create the sample to fastq as a dictionary with
         the sample id as the key
         """
-        sra_info = self.sample_manifest['sra'].copy()
-        sample_sra = SraUtils(sra_info)
+        self.sra_info = self.sample_manifest['sra'].copy()
+        self.sra_info['outfile'] = os.path.join(self.work_dir,"sra_manifest.csv")
+        sample_sra = SraUtils(self.sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
         print self.sample_fastq
         # need to check that all samples are SE or PE
@@ -457,9 +457,11 @@ class BaseWorkflow:
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds,300))
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout")
+        f=open(os.path.join(self.work_dir,"sra_sample_fastq.csv",'w'))
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
-
+            f.write(k + "," + str(v) + "\n")
+        f.close()
         return
 
     def symlink_fastqs_submit_jobs(self, cmds, job_output_suffix, run_time):
@@ -994,7 +996,12 @@ def rna_seq_main():
 
     # Actual jobs start here
     rw1.test_paths()
-    rw1.symlink_fastqs()
+    if 'sra' in rw1.sample_manifest.keys():
+        rw1.download_sra_cmds()
+        if rw1.sra_info['downloads']:
+            sys.exit(0)
+    else:
+        rw1.symlink_fastqs()
     rw1.chain_commands()
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
                 workers=len(rw1.sample_fastq_work.keys()), lock_size=1)
@@ -1032,7 +1039,12 @@ def dna_seq_main():
 
     # Actual jobs start here
     dw1.test_paths()
-    dw1.symlink_fastqs()
+    if 'sra' in dw1.sample_manifest.keys():
+        dw1.download_sra_cmds()
+        if dw1.sra_info['downloads']:
+            sys.exit(0)
+    else:
+        dw1.symlink_fastqs()
     dw1.chain_commands()
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
                 workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
