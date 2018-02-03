@@ -376,7 +376,7 @@ class BaseWorkflow:
 
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
-        self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",60)
+        self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",300)
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
         self.convert_sra_to_fastq_cmds()
@@ -408,7 +408,7 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
+                                          "fastq-dump", "--gzip", "--split-splot", os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
@@ -456,6 +456,11 @@ class BaseWorkflow:
         #print cmds
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        f=open(os.path.join(self.run_parms['work_dir'],"sra_run_cmds.txt"),'w')
+        for samp,cmds in cmds_dict.iteritems():
+            f.write(samp + ":" + cmds)
+        f.close()
+
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout", 300)
         f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv"),'w')
         for k, v in self.sample_fastq_work.iteritems():
