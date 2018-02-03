@@ -100,17 +100,18 @@ class SraUtils:
             key = test_record.record['paths'][0]
             self.sample_to_file[test_record.record['sample_primary_id']] = [self.ftp_url(key)]
             self.sra_records[key] = copy.deepcopy(test_record.record)
-            if 'source_name' in test_record.record.keys():
-                self.sample_to_name[test_record.record['sample_primary_id']] = test_record.record['source_name']
+            if 'sample_name' in test_record.record.keys():
+                self.sample_to_name[test_record.record['sample_primary_id']] = test_record.record['sample_name']
             else:
-                self.sample_to_name[test_record.record['sample_primary_id']] = "Unknown_" + str(counter)
+                #self.sample_to_name[test_record.record['sample_primary_id']] = "Unknown_" + str(counter)
+                self.sample_to_name[test_record.record['sample_primary_id']] = test_record.record['sample_primary_id']
                 counter += 1
             if len(test_record.record['paths']) > 1:
                 key = test_record.record['paths'][1]
                 self.sample_to_file[test_record.record['sample_primary_id']].append(self.ftp_url(key))
                 self.sra_records[key] = copy.deepcopy(test_record.record)
 
-        # Pretty Print XML
+        #Pretty Print XML
         # print etree.tostring(test_record.package, pretty_print=True)
         #
         # for key, val in self.sra_records.iteritems():
@@ -126,7 +127,7 @@ class SraUtils:
 
         for key, val in self.sample_to_file.iteritems():
             print key, ": ", val, "\n"
-
+        "\nPrinting Sample to Name\n"
         for key, val in self.sample_to_name.iteritems():
             print key, ": ", val, "\n"
         return
@@ -138,8 +139,8 @@ class SraUtils:
                 f.write(k + "," + ','.join([k1 + ":" + self.check_str(v1) for k1, v1 in v.iteritems()]) +"\n")
             f.close()
 
-        for k, v in self.sra_records.iteritems():
-            print k,v
+        # for k, v in self.sra_records.iteritems():
+        #     print k,v
 
         return
 
@@ -189,7 +190,7 @@ class Sra_Element:
         """
         parser = etree.XMLParser(remove_blank_text=True)
         self.package = etree.parse(xml, parser)
-        # print(etree.tostring(self.package, pretty_print=True))
+        #print(etree.tostring(self.package, pretty_print=True))
 
         base = '//EXPERIMENT_PACKAGE_SET/EXPERIMENT_PACKAGE'
         # Parse the sample attributes first, in case a key is defined that
@@ -214,7 +215,8 @@ class Sra_Element:
                 base + '/EXPERIMENT/DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_LAYOUT')[0]])
 
         # Find other fields for populating the BioLite catalog.
-        self.get_text('sample_primary_id', base, '/SAMPLE/IDENTIFIERS/PRIMARY_ID')
+        self.get_text('sample_primary_id', base, '/EXPERIMENT/DESIGN/SAMPLE_DESCRIPTOR/IDENTIFIERS/PRIMARY_ID')
+        #self.get_text('sample_primary_id', base, '/SAMPLE/IDENTIFIERS/PRIMARY_ID')
         self.get_text('species', base, '/SAMPLE/SAMPLE_NAME/SCIENTIFIC_NAME')
         self.get_text('ncbi_id', base, '/SAMPLE/SAMPLE_NAME/TAXON_ID')
         self.get_text('library_source', base, '/EXPERIMENT/DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_SOURCE')
@@ -229,9 +231,20 @@ class Sra_Element:
         if self.record.get('note', 'None') == 'None': self.record['note'] = None
 
         self.get_text('sample_prep', base, '/EXPERIMENT/DESIGN/DESIGN_DESCRIPTION')
+        self.get_text('sample_name', base, '/EXPERIMENT/DESIGN/DESIGN_DESCRIPTION/SAMPLE_DESCRIPTOR/IDENTIFIERS/SUBNITTER_ID')
+        #self.record['sample_name'] = self.package.xpath(base + '/SAMPLE/IDENTIFIERS/SUBNITTER_ID')
+        #self.get_sample_name(base)
 
         return
 
+    def get_sample_name(self, base):
+        '''
+        Need to build tbis function which will find the appropriate Sample Name based on the Sample ID
+        :return:
+        '''
+        if  self.record['sample_name'] != '' :
+            return
+        return
 
 # Test
 if __name__ == '__main__':
@@ -239,4 +252,4 @@ if __name__ == '__main__':
     # SraUtils({'id':'SRS1283645', 'entrez_email':'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
-    SraUtils({'id': 'PRJNA177403', 'entrez_email': 'ashok.ragavendran@gmail.com','outfile':'/Users/aragaven/temp.csv'})
+    SraUtils({'id': 'SRP004072', 'entrez_email': 'ashok.ragavendran@gmail.com','outfile':'/Users/aragaven/temp.csv'})
