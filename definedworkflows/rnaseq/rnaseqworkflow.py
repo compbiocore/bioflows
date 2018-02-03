@@ -290,11 +290,16 @@ class BaseWorkflow:
         self.sra_info['outfile'] = os.path.join(self.run_parms['work_dir'],"sra_manifest.csv")
         sample_sra = SraUtils(self.sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
+
+        self.write_cmds(self.sample_fastq,os.path.join(self.run_parms['work_dir'], "sra_sample_fastq.txt"))
+
         print self.sample_fastq
+
         # need to check that all samples are SE or PE
         key = self.sample_fastq.keys()[0]
         query_val = os.path.basename(self.sample_fastq[key][0])
         query_val = query_val.replace('.sra', '')
+
         if 'SINGLE' in sample_sra.sra_records[query_val]['library_type']:
             print "SE library\n"
             self.paired_end = False
@@ -372,11 +377,14 @@ class BaseWorkflow:
             cmds.append(' '.join([self.run_parms['conda_command'], ";",
                                   'lftp', '-e "get ', fileName[0], '-o ', self.sra_dir, '; bye"',
                                   'ftp://ftp-trace.ncbi.nlm.nih.gov > ']))
-        print cmds
 
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+
+        self.write_cmds(cmds_dict,os.path.join(self.run_parms['work_dir'], "sra_download_cmds.txt"))
+
         self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",300)
+
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
         self.convert_sra_to_fastq_cmds()
@@ -456,10 +464,8 @@ class BaseWorkflow:
         #print cmds
         # Create a dictionary of Sample and commands
         cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
-        f=open(os.path.join(self.run_parms['work_dir'],"sra_run_cmds.txt"),'w')
-        for samp,cmds in cmds_dict.iteritems():
-            f.write(samp + ":" + cmds)
-        f.close()
+
+        self.write_cmds(cmds_dict,os.path.join(self.run_parms['work_dir'], "sra_run_cmds.txt"))
 
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout", 300)
         f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv"),'w')
@@ -467,6 +473,19 @@ class BaseWorkflow:
             print k, ":", v, "\n"
             outstring = k + "," + ','.join(v)
             f.write( outstring.strip(',')+ "\n")
+        f.close()
+        return
+
+    def write_cmds(self,cmds, outfile):
+        """
+        Utility functon to write dictionary of commands to file
+        :param cmds:
+        :param outfile:
+        :return:
+        """
+        f = open(outfile, 'w')
+        for samp, cmds in cmds_dict.iteritems():
+            f.write(samp + ":" + cmds + "\n")
         f.close()
         return
 
