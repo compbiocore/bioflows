@@ -476,15 +476,15 @@ class BaseWorkflow:
         f.close()
         return
 
-    def write_cmds(self,cmds, outfile):
+    def write_cmds(self,cmds_set, outfile):
         """
         Utility functon to write dictionary of commands to file
-        :param cmds:
+        :param cmds_set:
         :param outfile:
         :return:
         """
         f = open(outfile, 'w')
-        for samp, cmds in cmds_dict.iteritems():
+        for samp, cmds in cmds_set.iteritems():
             f.write(samp + ":" + cmds + "\n")
         f.close()
         return
