@@ -485,7 +485,11 @@ class BaseWorkflow:
         """
         f = open(outfile, 'w')
         for samp, cmds in cmds_set.iteritems():
-            f.write(samp + ":" + cmds + "\n")
+            if type(cmds) == list:
+                f.write(samp + ":" + '; '.join(cmds) + "\n")
+            else:
+                f.write(samp + ":" + cmds + "\n")
+
         f.close()
         return
 
