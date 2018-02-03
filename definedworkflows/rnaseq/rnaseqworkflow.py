@@ -416,12 +416,12 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", "--split-spot", os.path.join(self.sra_dir, sra_name),
+                                          "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
+                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
+                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
@@ -444,16 +444,16 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", "--split-spot",
+                                              "fastq-dump", "--gzip", "--split-files",
                                               os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
                                               "rm",
-                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")), ";",
+                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")), ";",
                                               "cat",
-                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
+                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                               "rm",
                                               os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")), ";",
