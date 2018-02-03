@@ -408,7 +408,7 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", "--split-splot", os.path.join(self.sra_dir, sra_name),
+                                          "fastq-dump", "--gzip", "--split-spot", os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
@@ -436,7 +436,7 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", "--split_files",
+                                              "fastq-dump", "--gzip", "--split-spot",
                                               os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
                                               "cat",
