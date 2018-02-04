@@ -374,8 +374,9 @@ class BaseWorkflow:
         # Add commands to the command list
 
         for samp, fileName in self.sample_fastq.iteritems():
-            cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                  'lftp', '-e "get ', fileName[0], '-o ', self.sra_dir, '; bye"',
+            for srr_file in fileName:
+                cmds.append(' '.join([self.run_parms['conda_command'], ";",
+                                  'lftp', '-e "get ', srr_file, '-o ', self.sra_dir, '; bye"',
                                   'ftp://ftp-trace.ncbi.nlm.nih.gov > ']))
 
         # Create a dictionary of Sample and commands

@@ -32,7 +32,7 @@ class SraUtils:
     # Entrez.email = "ashok.ragavendran@gmail.com"
     sra_records = dict()
     downloaded_xmls = ''
-    accession_record_ids = ''
+    accession_record_ids = []
     sample_to_file = dict()
     sample_to_name = dict()
 
@@ -74,9 +74,15 @@ class SraUtils:
         Queries SRA via Entrez and returns all accession IDs associated with the
         given accession `id`.
         """
-        handle = Entrez.esearch(db=db, MaxRet=1000, term=id)
-        record = Entrez.read(handle)
-        self.accession_record_ids = record['IdList']
+        if type(id)== list:
+            for i in id:
+                handle = Entrez.esearch(db=db, RetMax=1000, term=i)
+                record = Entrez.read(handle)
+                self.accession_record_ids += record['IdList']
+        else:
+            handle = Entrez.esearch(db=db, RetMax=1000, term=id)
+            record = Entrez.read(handle)
+            self.accession_record_ids = record['IdList']
         return
 
     def download_xmls(self, ids, db='sra'):
@@ -97,19 +103,25 @@ class SraUtils:
             # x = etree.parse(xml)
             # print etree.tostring(x, pretty_print = True)
             test_record = Sra_Element(xml)
-            key = test_record.record['paths'][0]
-            self.sample_to_file[test_record.record['sample_primary_id']] = [self.ftp_url(key)]
-            self.sra_records[key] = copy.deepcopy(test_record.record)
+            key_url = test_record.record['paths'][0]
+            key_name = test_record.record['sample_primary_id'] + "_" + test_record.record['experiment_id']
+            test_record.record['manifest_name'] = key_name
             if 'sample_name' in test_record.record.keys():
-                self.sample_to_name[test_record.record['sample_primary_id']] = test_record.record['sample_name']
+                self.sample_to_name[key_name] = test_record.record['sample_name']
             else:
                 #self.sample_to_name[test_record.record['sample_primary_id']] = "Unknown_" + str(counter)
-                self.sample_to_name[test_record.record['sample_primary_id']] = test_record.record['sample_primary_id']
-                counter += 1
+                self.sample_to_name[key_name] = test_record.record['sample_primary_id']
+
+            #self.sample_to_file[test_record.record['sample_primary_id']] = [self.ftp_url(key_url)]
+            self.sample_to_file[key_name] = [self.ftp_url(key_url)]
+            self.sra_records[key_url] = copy.deepcopy(test_record.record)
+
             if len(test_record.record['paths']) > 1:
-                key = test_record.record['paths'][1]
-                self.sample_to_file[test_record.record['sample_primary_id']].append(self.ftp_url(key))
-                self.sra_records[key] = copy.deepcopy(test_record.record)
+                for i in xrange(1,len(test_record.record['paths'])):
+                    key_url = test_record.record['paths'][i]
+                    #self.sample_to_file[test_record.record['sample_primary_id']].append(self.ftp_url(key_url))
+                    self.sample_to_file[key_name].append(self.ftp_url(key_url))
+                    self.sra_records[key_url] = copy.deepcopy(test_record.record)
 
         #Pretty Print XML
         # print etree.tostring(test_record.package, pretty_print=True)
@@ -120,9 +132,9 @@ class SraUtils:
         #         print '\t',k,":",v,'\n'
         #     print self.ftp_url(key), "\n"
 
-        if 'SINGLE' in self.sra_records[key]['library_type']:
+        if 'SINGLE' in self.sra_records[key_url]['library_type']:
             print "SE library\n"
-        elif 'PAIRED' in self.sra_records[key]['library_type']:
+        elif 'PAIRED' in self.sra_records[key_url]['library_type']:
             print "PE library\n"
 
         for key, val in self.sample_to_file.iteritems():
@@ -231,7 +243,7 @@ class Sra_Element:
         if self.record.get('note', 'None') == 'None': self.record['note'] = None
 
         self.get_text('sample_prep', base, '/EXPERIMENT/DESIGN/DESIGN_DESCRIPTION')
-        self.get_text('sample_name', base, '/EXPERIMENT/DESIGN/DESIGN_DESCRIPTION/SAMPLE_DESCRIPTOR/IDENTIFIERS/SUBNITTER_ID')
+        self.get_text('sample_name', base, '/EXPERIMENT/DESIGN/DESIGN_DESCRIPTION/SAMPLE_DESCRIPTOR/IDENTIFIERS/SUBMITTER_ID')
         #self.record['sample_name'] = self.package.xpath(base + '/SAMPLE/IDENTIFIERS/SUBNITTER_ID')
         #self.get_sample_name(base)
 
@@ -252,4 +264,10 @@ if __name__ == '__main__':
     # SraUtils({'id':'SRS1283645', 'entrez_email':'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'ERS1051222', 'entrez_email': 'ashok.ragavendran@gmail.com'})
     #SraUtils({'id': 'SRP072326', 'entrez_email': 'ashok.ragavendran@gmail.com'})
-    SraUtils({'id': 'SRP004072', 'entrez_email': 'ashok.ragavendran@gmail.com','outfile':'/Users/aragaven/temp.csv'})
+    SraUtils({'id': ["SRX040903","SRX040904","SRX040905","SRX040906","SRX040907","SRX040908","SRX041958",
+                     "SRX041959","SRX041961","SRX041962","SRX041963","SRX041964","SRX041965","SRX041966",
+                     "SRX041968","SRX041969","SRX041970","SRX041971","SRX041972","SRX041973","SRX041974",
+                     "SRX041975","SRX041976","SRX041977","SRX041978","SRX041979","SRX041980","SRX041981",
+                     "SRX041982","SRX041983","SRX043720","SRX043721","SRX043722","SRX043723","SRX043724",
+                     "SRX655426","SRX655464", "SRX655475"],
+                    'entrez_email': 'ashok.ragavendran@gmail.com','outfile':'/Users/aragaven/temp.csv'})
