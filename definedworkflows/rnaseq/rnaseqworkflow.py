@@ -889,7 +889,7 @@ class DnaSeqFlow(BaseWorkflow):
 
             for key in self.progs.keys():
 
-                if key == 'bwa':
+                if key == 'bwa_mem':
                     # update job parms
                     new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
@@ -1075,6 +1075,7 @@ def dna_seq_main():
             sys.exit(0)
     else:
         dw1.symlink_fastqs()
+
     dw1.chain_commands()
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
                 workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
