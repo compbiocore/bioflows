@@ -795,8 +795,8 @@ class Picard(BaseWrapper):
             self.job_parms.update(kwargs.get('add_job_parms'))
 
             ## Update threads if cpus given
-            if 'ncpus' in kwargs.get('add_job_parms').keys():
-                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
+            # if 'ncpus' in kwargs.get('add_job_parms').keys():
+            #     self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
 
             ## Update memory requirements  if needed
             if 'mem' in kwargs.get('add_job_parms').keys():
@@ -806,7 +806,6 @@ class Picard(BaseWrapper):
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
             self.args += [' -Xmx10000M']
-            self.args += ['-t 8']
 
         kwargs['source'] = input + '.dup.srtd.bam'+ hashlib.sha224(input + '.dup.srtd.bam').hexdigest() + ".txt"
         ref_fasta = kwargs.get("ref_fasta_path")
