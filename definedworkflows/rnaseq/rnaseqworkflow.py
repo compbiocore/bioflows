@@ -391,7 +391,7 @@ class BaseWorkflow:
 
         self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",300)
 
-        f = open(os.path.join(self.run_parms["work_dir"]),"debug.txt",'a')
+        f = open(os.path.join(self.run_parms["work_dir"],"debug.txt"),'a')
         f.write ("\n******* End Test1 ******** \n")
 
         for k, v in self.sample_fastq_work.iteritems():
