@@ -291,7 +291,7 @@ class BaseWorkflow:
         sample_sra = SraUtils(self.sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
 
-        self.write_cmds(self.sample_fastq,os.path.join(self.run_parms['work_dir'], "sra_sample_fastq.txt"))
+        self.write_cmds(self.sample_fastq,os.path.join(self.run_parms['work_dir'], "sra_to_sample.txt"))
 
         print self.sample_fastq
 
