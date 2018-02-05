@@ -1,5 +1,5 @@
 import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import bioflowsutils.wrappers as wr
 from bioutils.access_sra.sra import SraUtils
 
@@ -372,22 +372,35 @@ class BaseWorkflow:
         '''
         cmds = []
         # Add commands to the command list
-
+        samp_list = []
         for samp, fileName in self.sample_fastq.iteritems():
             for srr_file in fileName:
                 cmds.append(' '.join([self.run_parms['conda_command'], ";",
                                   'lftp', '-e "get ', srr_file, '-o ', self.sra_dir, '; bye"',
                                   'ftp://ftp-trace.ncbi.nlm.nih.gov > ']))
+                samp_list.append(samp)
 
         # Create a dictionary of Sample and commands
-        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        #cmds_dict = dict(zip(samp_list,cmds))
+
+        cmds_dict = defaultdict(list)
+        for samp,cmd in zip(samp_list,cmds):
+            cmds_dict[samp].append(cmd)
 
         self.write_cmds(cmds_dict,os.path.join(self.run_parms['work_dir'], "sra_download_cmds.txt"))
 
         self.symlink_fastqs_submit_jobs(cmds_dict, "_sra_download.log",300)
 
+        f = open(os.path.join(self.run_parms["work_dir"]),"debug.txt",'a')
+        f.write ("\n******* End Test1 ******** \n")
+
         for k, v in self.sample_fastq_work.iteritems():
-            print k, ":", v, "\n"
+            #print k, ":", v, "\n"
+            f.write(k + ":"+ str(v) + "\n")
+        f.write("n******* End Test1 ******** \n")
+
+        f.close()
+
         self.convert_sra_to_fastq_cmds()
 
         return
@@ -399,7 +412,7 @@ class BaseWorkflow:
         '''
         cmds = []
         # Add commands to the command list
-
+        samp_list =[]
         for samp, fileName in self.sample_fastq.iteritems():
             self.sample_fastq_work[samp] = []
             if len(fileName) < 2:
@@ -412,6 +425,7 @@ class BaseWorkflow:
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
+                    samp_list.append(samp)
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
                 else:
                     sra_name = os.path.basename(fileName[0])
@@ -425,6 +439,8 @@ class BaseWorkflow:
                                           " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
+                    samp_list.append(samp)
+
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
             else:
@@ -438,6 +454,7 @@ class BaseWorkflow:
                                               " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                               "echo DONE:", srr_file, "> "]))
+                        samp_list.append(samp)
                         num += 1
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
                 else:
@@ -459,16 +476,23 @@ class BaseWorkflow:
                                               "rm",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")), ";",
                                               "echo DONE:", srr_file, "> "]))
+                        samp_list.append(samp)
                         num += 1
+
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
         #print cmds
         # Create a dictionary of Sample and commands
-        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
+        #cmds_dict = dict(zip(samp_list,cmds))
+
+        cmds_dict = defaultdict(list)
+        for samp,cmd in zip(samp_list,cmds):
+            cmds_dict[samp].append(cmd)
 
         self.write_cmds(cmds_dict,os.path.join(self.run_parms['work_dir'], "sra_run_cmds.txt"))
 
         self.symlink_fastqs_submit_jobs(cmds_dict, "symlink.stdout", 300)
+
         f=open(os.path.join(self.run_parms['work_dir'],"sra_sample_fastq.csv"),'w')
         for k, v in self.sample_fastq_work.iteritems():
             print k, ":", v, "\n"
@@ -485,7 +509,7 @@ class BaseWorkflow:
         :return:
         """
         f = open(outfile, 'w')
-        for samp, cmds in cmds_set.iteritems():
+        for samp, cmds in cmds_set:
             if type(cmds) == list:
                 f.write(samp + ":" + '; '.join(cmds) + "\n")
             else:
@@ -545,16 +569,18 @@ class BaseWorkflow:
 
         jobs = []
         for samp,cmd in cmds.iteritems():
-            job_output = os.path.join(self.log_dir, samp + job_output_suffix)
-            #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
+            num = 1
+            for c in cmd:
+                job_output = os.path.join(self.log_dir, samp + "_" + str(num) + "_" + job_output_suffix)
+                #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
 
-            ## Always redirect stderr to stdout in this case
-            jd.arguments = cmd + job_output + " 2>&1 "
-            myjob = js.create_job(jd)
-            myjob.run()
-            jobs.append(myjob)
-            print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
-
+                ## Always redirect stderr to stdout in this case
+                jd.arguments = c + job_output + " 2>&1 "
+                myjob = js.create_job(jd)
+                myjob.run()
+                jobs.append(myjob)
+                print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
+                num += 1
         # Wait for all jobs to finish
 
         while len(jobs) > 0:
