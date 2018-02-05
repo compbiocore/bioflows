@@ -509,7 +509,7 @@ class BaseWorkflow:
         :return:
         """
         f = open(outfile, 'w')
-        for samp, cmds in cmds_set:
+        for samp, cmds in cmds_set.iteritems():
             if type(cmds) == list:
                 f.write(samp + ":" + '; '.join(cmds) + "\n")
             else:
