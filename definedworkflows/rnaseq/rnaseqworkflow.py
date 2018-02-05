@@ -449,7 +449,7 @@ class BaseWorkflow:
                                               os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
                                               "cat",
-                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
+                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
                                               "rm",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")), ";",
@@ -457,7 +457,7 @@ class BaseWorkflow:
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                               "rm",
-                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")), ";",
+                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")), ";",
                                               "echo DONE:", srr_file, "> "]))
                         num += 1
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
