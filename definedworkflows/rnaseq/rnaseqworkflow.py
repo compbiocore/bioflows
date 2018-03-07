@@ -210,9 +210,8 @@ class BaseWorkflow:
     init = __init__
 
     def parse_config(self, fileHandle):
-        """
-              Parse the YAML file and create workflow class attributes accordingly.
-        """
+
+
         for k, v in ordered_load(open(fileHandle, 'r'), yaml.SafeLoader).iteritems():
             setattr(self, k, v)
         return

@@ -407,7 +407,7 @@ class SamToBam(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
         else:
-            self.job_parms.update({'mem': 2000, 'time': 80, 'ncpus': 1})
+            self.job_parms.update({'mem': 2000, 'time': 300, 'ncpus': 1})
 
         self.args = ["-Sbh ", "-o", os.path.join(self.align_dir, input + ".bam")]
         self.args += args
@@ -430,7 +430,7 @@ class BamToMappedBam(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
         else:
-            self.job_parms.update({'mem': 2000, 'time': 80, 'ncpus': 1})
+            self.job_parms.update({'mem': 2000, 'time': 300, 'ncpus': 1})
 
         self.args = ["-F 0x4", "-bh ", "-o", os.path.join(self.align_dir, input + ".mapped.bam")]
         self.args += args
@@ -453,7 +453,7 @@ class BamToUnmappedBam(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
         else:
-            self.job_parms.update({'mem': 2000, 'time': 80, 'ncpus': 1})
+            self.job_parms.update({'mem': 2000, 'time': 300, 'ncpus': 1})
 
         self.args = ["-f 0x4", "-bh ", "-o", os.path.join(self.align_dir, input + ".unmapped.bam")]
         self.args += args
@@ -481,7 +481,7 @@ class SamToolsSort(BaseWrapper):
             if 'ncpus' in kwargs.get('add_job_parms').keys():
                 self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
         else:
-            self.job_parms.update({'mem': 4000, 'time': 80, 'ncpus': 1})
+            self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
 
         self.args = ["-o", os.path.join(self.align_dir, input + ".srtd.bam")]
         self.args += args
