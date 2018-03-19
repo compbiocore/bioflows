@@ -1,0 +1,6 @@
+mus_N1,/gpfs/data/cbc/rnaseq_test/SE_mus/N1-BC1_AACCAG_R1.10000.fastq.gz
+mus_N3,/gpfs/data/cbc/rnaseq_test/SE_mus/N3-BC3_AGTGAG_R1.10000.fastq.gz
+mus_N4,/gpfs/data/cbc/rnaseq_test/SE_mus/N4-BC5_ACCTCA_R1.10000.fastq.gz
+mus_N6,/gpfs/data/cbc/rnaseq_test/SE_mus/N6-BC2_TGGTGA_R1.10000.fastq.gz
+mus_N7,/gpfs/data/cbc/rnaseq_test/SE_mus/N7-BC4_GCACTA_R1.10000.fastq.gz
+mus_N8,/gpfs/data/cbc/rnaseq_test/SE_mus/N8-BC6_GTGCTT_R1.10000.fastq.gz
