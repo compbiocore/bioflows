@@ -525,7 +525,7 @@ class BiobambamMarkDup(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
         else:
-            self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 1})
+            self.job_parms.update({'mem': 10000, 'time': 300, 'ncpus': 1})
 
         self.args = ["index=0",
                      "I=" + os.path.join(self.align_dir, input + ".srtd.bam"),
