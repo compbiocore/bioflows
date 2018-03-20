@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='bioflows',
     version='0.99',
-    packages=['bioflows.test_others','bioflows.test_wrappers', 'bioflows.test_rnaseq_workflow', 'bioflows.bioutils',
+    packages=['bioflows','bioflows.test_others','bioflows.test_wrappers', 'bioflows.test_rnaseq_workflow', 'bioflows.bioutils',
               'bioflows.bioutils.access_sra', 'bioflows.bioutils.parse_fastqc', 'bioflows.bioutils.convert_bam_to_fastq',
               'bioflows.bioflowsutils', 'bioflows.definedworkflows',
               'bioflows.definedworkflows.rnaseq'],
