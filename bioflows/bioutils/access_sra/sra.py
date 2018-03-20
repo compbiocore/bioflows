@@ -23,7 +23,7 @@ import copy
 from Bio import Entrez
 from lxml import etree
 
-from bioflowsutils import utils
+from bioflows.bioflowsutils import utils
 
 
 class SraUtils:

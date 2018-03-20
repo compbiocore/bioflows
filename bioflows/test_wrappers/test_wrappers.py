@@ -1,7 +1,7 @@
-import bioflowsutils.wrappers as wr
+import bioflows.bioflowsutils.wrappers as wr
 import unittest, os, saga
-from definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwflw
-from definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwflw
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
 
 
 #

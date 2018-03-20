@@ -1,8 +1,8 @@
 import unittest, saga, luigi
 from unittest import TestCase
-from definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
 from collections import OrderedDict
-from definedworkflows.rnaseq.rnaseqworkflow import TaskFlow
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import TaskFlow
 import luigi.contrib.ssh as lcs
 
 

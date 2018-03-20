@@ -1,6 +1,6 @@
 from unittest import TestCase
 import unittest,saga
-from definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwf
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwf
 
 class TestBaseWorkflow(TestCase):
 

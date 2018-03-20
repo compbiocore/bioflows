@@ -1,5 +1,5 @@
 import unittest, os, sys
-import bioutils.convert_bam_to_fastq as cbf
+import bioflows.bioutils.convert_bam_to_fastq as cbf
 
 
 class TestConverter(unittest.TestCase):

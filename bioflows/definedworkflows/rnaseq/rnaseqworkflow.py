@@ -1,7 +1,7 @@
 import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
 from collections import OrderedDict, defaultdict
-import bioflowsutils.wrappers as wr
-from bioutils.access_sra.sra import SraUtils
+import bioflows.bioflowsutils.wrappers as wr
+from bioflows.bioutils.access_sra.sra import SraUtils
 
 def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     '''
