@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>1 INTRODUCTION &mdash; BioFLows alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="BioFLows alpha documentation" href="index.html"/>
+        <link rel="next" title="2 BioFlows Tutorials" href="tutorials.html"/>
+        <link rel="prev" title="Welcome to BioFLows’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> BioFLows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.99
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1 INTRODUCTION</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#conda-package-management">1.1 CONDA PACKAGE MANAGEMENT</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">2 BioFlows Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wrappers.html">3 Wrappers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BioFLows</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>1 INTRODUCTION</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">aragaven</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#introduction" id="id1">1 INTRODUCTION</a><ul>
+<li><a class="reference internal" href="#conda-package-management" id="id2">1.1 CONDA PACKAGE MANAGEMENT</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h1><a class="toc-backref" href="#id1">1 INTRODUCTION</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>This document provides a guide to using the bioflows package for various
+workflows to analyse NGS datasets. Currently, we have implemented one
+standard RNA-seq workflow and a tutorial is included for analysis of
+RNA-seq data using this package.</p>
+<p>One primary objective of the Core is to enable reproducibility in
+computational analysis of NGS data and critical to this objective is to
+provide a consistent software environment across multiple platforms. The
+achieve this goal we are using the following approaches:</p>
+<ul class="simple">
+<li>Container based approach using <a class="reference external" href="https://www.docker.com">docker</a> for managing the analysis environment</li>
+<li><a class="reference external" href="https://conda.io/docs/">CONDA</a> package management system for managing software tools</li>
+<li>BioFlows workflow tool to ensure consistency in analysis steps and stages with interoperability</li>
+</ul>
+<p>across multiple job submission systems</p>
+<div class="section" id="conda-package-management">
+<h2><a class="toc-backref" href="#id2">1.1 CONDA PACKAGE MANAGEMENT</a><a class="headerlink" href="#conda-package-management" title="Permalink to this headline">¶</a></h2>
+<p>CONDA is a system agnostic software package management system based on
+the Anaconda python distribution to ensure that a software and all its
+dependencies are bundled together. These conda packages can be
+downloaded from various publicly available repositories called
+<em>channels</em> and one such channel for bio-informatics tools is bioconda.</p>
+<p>For ensuring reproducibily, we have established a publicly accessible
+channel for all programs that are included with wrappers within the
+bioflows tool accessible through the <a class="reference external" href="https://anaconda.org/compbiocore/">compbiocore channel</a>. In this channel, we have provided conda packages of all software used including
+the bioflows package itself. To download the packages or the bioflows tool use the command into your conda environment:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">compbiocore</span> <span class="o">/</span><span class="n">pkg_name</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>More detailed instructions on how to install anaconda and use the conda
+environments can be found in the anaconda documentation for:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://docs.anaconda.com/anaconda/install.html">Installation</a></li>
+<li><a class="reference external" href="https://docs.anaconda.com/anaconda/user-guide/getting-started.html">Getting started</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorials.html" class="btn btn-neutral float-right" title="2 BioFlows Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to BioFLows’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Ashok Ragavendran.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'alpha',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
