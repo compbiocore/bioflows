@@ -782,13 +782,16 @@ class Picard(BaseWrapper):
         MINIMUM_BASE_QUALITY=20 \
         VALIDATION_STRINGENCY=LENIENT
     """
+    target =''
+    add_args = ''
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
 
         ## set the checkpoint target file
-        kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
         new_name = ' '.join(name.split("_"))
+        # kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+        self.make_target(input,**kwargs)
         self.init(new_name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -808,12 +811,62 @@ class Picard(BaseWrapper):
             self.args += [' -Xmx10000M']
 
         kwargs['source'] = input + '.dup.srtd.bam'+ hashlib.sha224(input + '.dup.srtd.bam').hexdigest() + ".txt"
-        ref_fasta = kwargs.get("ref_fasta_path")
+        #ref_fasta = kwargs.get("ref_fasta_path")
         self.args += args
-        self.args += ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
-                      "OUTPUT="+os.path.join(kwargs.get('qc_dir'),input + '._wgs_stats_picard.txt'),
-                      "REFERENCE_SEQUENCE="+ref_fasta, "MINIMUM_MAPPING_QUALITY="+"20","MINIMUM_BASE_QUALITY="+"20",
-                      "COUNT_UNPAIRED=true", "VALIDATION_STRINGENCY="+"LENIENT"]
+        self.args += self.add_args
+        # self.args += ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+        #               "OUTPUT=" + os.path.join(kwargs.get('qc_dir'),input + '._wgs_stats_picard.txt'),
+        #               "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
+        #               "MINIMUM_MAPPING_QUALITY="+"20","MINIMUM_BASE_QUALITY="+"20",
+        #               "COUNT_UNPAIRED=true", "VALIDATION_STRINGENCY="+"LENIENT"]
 
         self.setup_run()
+        return
+
+    def make_target(self, name, input, **kwargs):
+        if name.split('_')[1] == "CollectWgsMetrics":
+            self.target = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+            self.add_args_collect_wgs_metrics(input,**kwargs)
+        elif name.split('_')[1] == "MeanQualityByCycle":
+            self.target = input + '._read_qual_by_cycle_picard.' + hashlib.sha224(input + '._read_qual_by_cycle_picard.txt').hexdigest() + ".txt"
+        elif name.split('_')[1] == "QualityScoreDistribution":
+            self.target = input + '._read_qual_overall_picard.' + hashlib.sha224(input + '._read_qual_overall_picard.txt').hexdigest() + ".txt"
+        elif name.split('_')[1] == "MarkDuplicates":
+            self.target = input + '._mark_dup_picard.' + hashlib.sha224(input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+        return
+
+    def add_args_collect_wgs_metrics(self,input,**kwargs):
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+                      "OUTPUT=" + os.path.join(kwargs.get('qc_dir'),input + '._wgs_stats_picard.txt'),
+                      "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
+                      "MINIMUM_MAPPING_QUALITY="+"20","MINIMUM_BASE_QUALITY="+"20",
+                      "COUNT_UNPAIRED=true", "VALIDATION_STRINGENCY="+"LENIENT"]
+        return
+
+    def add_args_mean_quality_by_cycle(self,input,**kwargs):
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+                      "OUTPUT=" + os.path.join(kwargs.get('qc_dir'),input + '._read_qual_by_cycle_picard.txt'),
+                      "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
+                      "CHART_OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + '._mean_qual_by_cycle.pdf') ,
+                      "VALIDATION_STRINGENCY="+"LENIENT"]
+        return
+
+    def add_args_quality_score_distribution(self,input,**kwargs):
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+                      "OUTPUT=" + os.path.join(kwargs.get('qc_dir'),input + '._read_qual_overall_picard.txt'),
+                      "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
+                      "CHART_OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + '._mean_qual_overall.pdf') ,
+                      "VALIDATION_STRINGENCY="+"LENIENT"]
+        return
+
+    def add_args_markduplicates(self,input,**kwargs):
+
+        ##TODO: Name dup output based on REMOVE_DUPLICATES Attr
+
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+                          "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.srtd.bam"),
+                           "M=" + os.path.join(kwargs.get('qc_dir'),input + '._mark_duplicates_picard.txt'),
+                          "REMOVE_DUPLICATES=" + kwargs.get("REMOVE_DUPLICATES","true") ,
+                          "CREATE_INDEX=" + kwargs.get("CREATE_INDEX","true"),
+                          "VALIDATION_STRINGENCY="+"LENIENT"]
         return
