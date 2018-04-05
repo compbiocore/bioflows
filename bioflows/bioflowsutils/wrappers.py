@@ -862,7 +862,6 @@ class Picard(BaseWrapper):
     def add_args_markduplicates(self,input,**kwargs):
 
         ##TODO: Name dup output based on REMOVE_DUPLICATES Attr
-
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
                           "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.srtd.bam"),
                            "M=" + os.path.join(kwargs.get('qc_dir'),input + '._mark_duplicates_picard.txt'),
@@ -870,3 +869,152 @@ class Picard(BaseWrapper):
                           "CREATE_INDEX=" + kwargs.get("CREATE_INDEX","true"),
                           "VALIDATION_STRINGENCY="+"LENIENT"]
         return
+
+class Gatk(BaseWrapper):
+        """
+            A wrapper for picardtools
+            picard CollectWgsMetrics \
+            INPUT=$mysamplebase"_sorted.bam" \ OUTPUT=$mysamplebase"_stats_picard.txt"\
+            REFERENCE_SEQUENCE=$myfasta \
+            MINIMUM_MAPPING_QUALITY=20 \
+            MINIMUM_BASE_QUALITY=20 \
+            VALIDATION_STRINGENCY=LENIENT
+        """
+        target = ''
+        add_args = ''
+
+        def __init__(self, name, input, *args, **kwargs):
+            self.input = input
+
+            ## set the checkpoint target file
+            new_name = ' '.join(name.split("_"))
+            # kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+            self.make_target(input, **kwargs)
+            self.init(new_name, **kwargs)
+
+            if kwargs.get('job_parms_type') != 'default':
+                self.job_parms.update(kwargs.get('add_job_parms'))
+
+                ## Update threads if cpus given
+                # if 'ncpus' in kwargs.get('add_job_parms').keys():
+                #     self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
+
+                ## Update memory requirements  if needed
+                if 'mem' in kwargs.get('add_job_parms').keys():
+                    self.args += [' -Xmx' + str(kwargs.get('add_job_parms')['mem']) + 'M']
+
+            else:
+                # Set default memory and cpu options
+                self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
+                self.args += [' -Xmx10000M']
+
+            kwargs['source'] = input + '.dedup.srtd.bam' + hashlib.sha224(input + '.dedup.rg.srtd.bam').hexdigest() + ".txt"
+            # ref_fasta = kwargs.get("ref_fasta_path")
+            self.args += args
+            self.args += self.add_args
+            # self.args += ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dup.srtd.bam"),
+            #               "OUTPUT=" + os.path.join(kwargs.get('qc_dir'),input + '._wgs_stats_picard.txt'),
+            #               "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
+            #               "MINIMUM_MAPPING_QUALITY="+"20","MINIMUM_BASE_QUALITY="+"20",
+            #               "COUNT_UNPAIRED=true", "VALIDATION_STRINGENCY="+"LENIENT"]
+
+            self.setup_run()
+            return
+
+        def make_target(self, name, input, **kwargs):
+            if name.split('_')[1] == "RealignerTargetCreator":
+                self.target = input + '._wgs_stats_picard.' + hashlib.sha224(
+                    input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+                self.add_args_realigner_target_creator(input, **kwargs)
+
+            elif name.split('_')[1] == "IndelRealigner":
+                self.target = input + '._read_qual_by_cycle_picard.' + hashlib.sha224(
+                    input + '._read_qual_by_cycle_picard.txt').hexdigest() + ".txt"
+
+            elif name.split('_')[1] == "BaseRecalibrator":
+                self.target = input + '._read_qual_overall_picard.' + hashlib.sha224(
+                    input + '._read_qual_overall_picard.txt').hexdigest() + ".txt"
+
+            elif name.split('_')[1] == "PrintReads":
+                self.target = input + '._mark_dup_picard.' + hashlib.sha224(
+                    input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+
+            elif name.split('_')[1] == "HaplotypeCaller":
+                self.target = input + '._mark_dup_picard.' + hashlib.sha224(
+                    input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+
+            elif name.split('_')[1] == "VariantRecalibrator":
+                self.target = input + '._mark_dup_picard.' + hashlib.sha224(
+                    input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+            return
+
+        def add_args_realigner_target_creator(self, input, **kwargs):
+            # gatk -Xmx20G -T RealignerTargetCreator -R $my.fasta -I $my.bam\
+            #  -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf \
+            # -o $samp_realign_targets.intervals
+            #kwargs.get()
+            self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                             "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + '_realign_targets.intervals'),
+                             "-R " + kwargs.get("ref_fasta_path"),
+                             "-known=" + kwargs.get("-known", "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf")]
+            return
+
+        def add_args_indel_realigner(self, input, **kwargs):
+            # gatk - T IndelRealigner \
+            # - R $myfasta \
+            # - known $myindel \
+            # - targetIntervals $mysamplebase"_realign_targets.intervals" \
+            # - I $mysamplebase"_sorted_dedup.bam" \
+            # - o $mysamplebase"_sorted_dedup_realigned.bam" \
+
+            kwargs.get()
+            self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                             "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
+                             "-R " + kwargs.get("ref_fasta_path"),
+                             "-known=" +  ]
+            return
+
+        def add_args_base_recalibrator(self, input, **kwargs):
+            # gatk - T IndelRealigner \
+            # - R $myfasta \
+            # - known $myindel \
+            # - targetIntervals $mysamplebase"_realign_targets.intervals" \
+            # - I $mysamplebase"_sorted_dedup.bam" \
+            # - o $mysamplebase"_sorted_dedup_realigned.bam" \
+
+            kwargs.get()
+            self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                             "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
+                             "-R " + kwargs.get("ref_fasta_path"),
+                             "-known=" +]
+            return
+
+        def add_args_print_reads(self, input, **kwargs):
+            # gatk - T IndelRealigner \
+            # - R $myfasta \
+            # - known $myindel \
+            # - targetIntervals $mysamplebase"_realign_targets.intervals" \
+            # - I $mysamplebase"_sorted_dedup.bam" \
+            # - o $mysamplebase"_sorted_dedup_realigned.bam" \
+
+            kwargs.get()
+            self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                             "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
+                             "-R " + kwargs.get("ref_fasta_path"),
+                             "-known=" +]
+            return
+
+        def add_args_haplotype_caller(self, input, **kwargs):
+            # gatk - T IndelRealigner \
+            # - R $myfasta \
+            # - known $myindel \
+            # - targetIntervals $mysamplebase"_realign_targets.intervals" \
+            # - I $mysamplebase"_sorted_dedup.bam" \
+            # - o $mysamplebase"_sorted_dedup_realigned.bam" \
+
+            kwargs.get()
+            self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                             "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
+                             "-R " + kwargs.get("ref_fasta_path"),
+                             "-known=" +]
+            return
