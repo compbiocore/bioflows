@@ -79,6 +79,29 @@ class TestGsnap(unittest.TestCase):
         # for k, v in self.gsnap_test.__dict__.iteritems():
         #     print k + ": " + str(v) +  "\n"
 
+class TestKneaddata(unittest.TestCase):
+
+    def setUp(self):
+        self.wrapper_name = "kneaddata"
+        self.parmsfile = "../test_metatranscriptome/test_run.yaml" # not made yet
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'fastqc'
+        self.kneaddata_test = wr.Kneaddata(self.wrapper_name, "test_samp",
+                                     stdout=os.path.join(self.rw1.run_parms['work_dir'], 'fastqc.log'),
+                                     **dict(self.rw1.base_kwargs))
+
+
+    def test_kneaddata_wrapper(self):
+        print "\n***** Testing Kneaddata_wrapper command *****\n"
+        print self.kneaddata_test.run_command
+        out_command = "kneaddata -o /gpfs/scratch/aragaven/test_workflow/qc /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_fastqc_err.log 1>/gpfs/scratch/aragaven/test_workflow/fastqc.log; fastqc /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_fastqc_err.log 1>/gpfs/scratch/aragaven/test_workflow/fastqc.log"
+        self.assertEqual(self.fastqc_test.run_command, out_command)
+        # print "\n***** Testing Fastqc_wrapper *****\n"
+        # for k, v in self.fastqc_test.__dict__.iteritems():
+        #     print k + ": " + str(v) +  "\n"
+
 class TestSamMarkDup(unittest.TestCase):
 
     def setUp(self):
