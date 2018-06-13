@@ -917,6 +917,7 @@ class Gatk(BaseWrapper):
         self.make_target(name, input, **kwargs)
         self.init(new_name, **kwargs)
 
+        mem_str = ' -Xmx10000M'
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
 
@@ -932,7 +933,6 @@ class Gatk(BaseWrapper):
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
             # self.args += [' -Xmx10000M']
-            mem_str = ' -Xmx10000M'
 
         new_name = name.split("_")
         new_name.insert(1, mem_str)
@@ -959,25 +959,32 @@ class Gatk(BaseWrapper):
             self.add_args_realigner_target_creator(input, **kwargs)
 
         elif name.split('_')[1] == "IndelRealigner":
-            self.target = input + '._read_qual_by_cycle_picard.' + hashlib.sha224(
-                input + '._read_qual_by_cycle_picard.txt').hexdigest() + ".txt"
+            self.target = input + '_realign_targets' + hashlib.sha224(
+                input + '_realign_targets.intervals').hexdigest() + ".intervals"
             self.add_args_indel_realigner(input, **kwargs)
 
         elif name.split('_')[1] == "BaseRecalibrator":
-            self.target = input + '._read_qual_overall_picard.' + hashlib.sha224(
-                input + '._read_qual_overall_picard.txt').hexdigest() + ".txt"
+            if kwargs.get("-BQSR") is not None:
+                self.target = input + '_post_recal_table' + hashlib.sha224(
+                    input + '_post_recal_table.txt').hexdigest() + ".txt"
+            else:
+                self.target = input + '_recal_table' + hashlib.sha224(
+                    input + '_recal_table.txt').hexdigest() + ".txt"
+            self.add_args_base_recalibrator(input, **kwargs)
 
         elif name.split('_')[1] == "PrintReads":
-            self.target = input + '._mark_dup_picard.' + hashlib.sha224(
-                input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+            self.target = input + '_recal_gatk' + hashlib.sha224(
+                input + '_recal_gatk.bam').hexdigest() + ".bam"
+            self.add_args_print_reads(input, **kwargs)
 
         elif name.split('_')[1] == "HaplotypeCaller":
-            self.target = input + '._mark_dup_picard.' + hashlib.sha224(
-                input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+            self.target = input + '_GATK-HC.g' + hashlib.sha224(
+                input + '_GATK-HC.g.vcf').hexdigest() + ".txt"
+            self.add_args_haplotype_caller(input, **kwargs)
 
         elif name.split('_')[1] == "VariantRecalibrator":
             self.target = input + '._mark_dup_picard.' + hashlib.sha224(
-                input + '._mark_dup_picard.txt').hexdigest() + ".txt"
+                input + '._mark_dup_picard.txt').hexdigest() + ".vcf"
         return
 
     def add_args_realigner_target_creator(self, input, **kwargs):
@@ -1024,7 +1031,7 @@ class Gatk(BaseWrapper):
                                                      "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf"),
                          "-knownSites " + "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf",
                          ]
-        if "BQSR" in self.kwargs.keys():
+        if "-BQSR" in self.kwargs.keys():
             self.add_args += ["-BQSR " + os.path.join(kwargs.get('qc_dir'), input, "_recal_table.txt"),
                               "-o " + os.path.join(kwargs.get('qc_dir'), input, "_post_recal_table.txt")]
         else:
