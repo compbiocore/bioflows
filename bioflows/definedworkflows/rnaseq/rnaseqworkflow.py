@@ -1,7 +1,18 @@
-import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
+import copy
+import os
+import subprocess
+import sys
+import time
 from collections import OrderedDict, defaultdict
+
+import jsonpickle
+import luigi
+import saga
+import yaml
+
 import bioflows.bioflowsutils.wrappers as wr
 from bioflows.bioutils.access_sra.sra import SraUtils
+
 
 def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     '''
@@ -178,7 +189,10 @@ class BaseWorkflow:
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
-                              'picard_CollectWgsMetrics': wr.Picard
+                              'picard_CollectWgsMetrics': wr.Picard,
+                              'gatk_RealignerTargetCreator': wr.Gatk,
+                              'gatk_IndelRealigner': wr.Gatk,
+                              'gatk_BaseRecalibrator': wr.Gatk
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,

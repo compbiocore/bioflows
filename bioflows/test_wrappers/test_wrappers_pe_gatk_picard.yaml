@@ -1,0 +1,24 @@
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
+sample_manifest:
+  fastq_file: sampl_manifest_min_pe_celegans.csv
+  metadata:
+run_parms:
+  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda
+  work_dir: /gpfs/scratch/
+  log_dir: logs
+  paired_end: True
+  #local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  #luigi_local_path: /home/aragaven/scratch/test_workflow
+  db: sqlite
+  db_loc: ':memory:'
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  gtf_file: /gpfs/scratch/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+  reference_fasta_path: /gpfs/scratch/test.fa
+workflow_sequence:
+  gatk_RealignerTargetCreator:
+    options:
+      -known: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf

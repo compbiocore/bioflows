@@ -1,0 +1,29 @@
+bioproject: wes_uzun_localhost # Project Name  Required
+experiment: wes_pilot # Experiment type  Required
+sample_manifest:
+  fastq_file: sample_manifest.csv
+  metadata:
+run_parms:
+  conda_command: source activate /gpfs/data/cbc/cbc_conda_v1/envs/test_bioflows
+  work_dir: /gpfs/test/wes_run_1
+  log_dir: logs
+  paired_end: True
+  local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  #luigi_local_path: /home/aragaven/scratch/test_workflow
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  reference_fasta_path: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/ucsc.hg19.fasta
+workflow_sequence:
+  fastqc: default
+  bwa_mem:
+    options:
+      /gpfs/data/cbc/ref_indexes/bwa_0.7.17-r1188_idx/ucsc.hg19/ucsc.hg19.fasta:
+    job_params:
+      ncpus: 8
+      mem: 30000
+      time: 600
+  gatk_RealignerTargetCreator:
+    options:
+      -known: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
