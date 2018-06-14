@@ -1,7 +1,18 @@
-import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
+import copy
+import os
+import subprocess
+import sys
+import time
 from collections import OrderedDict, defaultdict
+
+import jsonpickle
+import luigi
+import saga
+import yaml
+
 import bioflows.bioflowsutils.wrappers as wr
 from bioflows.bioutils.access_sra.sra import SraUtils
+
 
 def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     '''
@@ -178,7 +189,10 @@ class BaseWorkflow:
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
-                              'picard_CollectWgsMetrics': wr.Picard
+                              'picard_CollectWgsMetrics': wr.Picard,
+                              'gatk_RealignerTargetCreator': wr.Gatk,
+                              'gatk_IndelRealigner': wr.Gatk,
+                              'gatk_BaseRecalibrator': wr.Gatk
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -238,7 +252,7 @@ class BaseWorkflow:
 
     def set_base_kwargs(self):
         """
-        Setup basic keyword arguments for the wrappers to use
+        Setup the generic keyword arguments for the wrappers to use
         :return:
         """
         self.base_kwargs['cwd'] = self.work_dir
@@ -259,6 +273,8 @@ class BaseWorkflow:
         self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', False)
         self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
         self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
+
+        # These can be application specific
         self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
         self.base_kwargs['ref_fasta_path'] = self.run_parms.get('reference_fasta_path', None)
         self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
@@ -718,6 +734,10 @@ class BaseWorkflow:
             if isinstance(v, dict):
                 # Add the specific program options
                 # Need to modify to dict so that default values can be updated
+                # Right now program options are directly added as text
+                # Also need to edit this in wrappers so that two sets of arg dicts are used
+                # one for options and one for job parms
+
                 if 'options' in v.keys():
                     for k1, v1 in v['options'].iteritems():
                         # Should we test for flag options?

@@ -11,13 +11,11 @@ run_parms:
   #local_targets: False
   luigi_local_path: /Users/aragaven/scratch
   #luigi_local_path: /home/aragaven/scratch/test_workflow
-  db: sqlite
-  db_loc: ':memory:'
   saga_host: localhost
   #ssh_user: aragaven
   saga_scheduler: slurm
-  gtf_file: /gpfs/scratch/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
   reference_fasta_path: /gpfs/scratch/test.fa
+  gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
   fastqc: default
   gsnap:
