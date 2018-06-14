@@ -52,9 +52,33 @@ class TestGatkInit(unittest.TestCase):
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp",
                                  stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_IndelRealigner.log'),
                                  **dict(self.dw1.base_kwargs))
-        print "\n***** Testing GATK INDEL REALINER command *****\n"
+        print "\n***** Testing GATK INDEL REALIGNER command *****\n"
         print self.gatk_test.run_command
         # self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
+
+    def test_gatk_BaseRecalibrator(self):
+        self.wrapper_name = 'gatk_BaseRecalibrator'
+        self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp",
+                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_BaseRecalibrator.log'),
+                                 **dict(self.dw1.base_kwargs))
+        print "\n***** Testing GATK Base Recalibrator command *****\n"
+        print self.gatk_test.run_command
+
+    def test_gatk_BaseRecalibrator_bqsr(self):
+        self.wrapper_name = 'gatk_BaseRecalibrator'
+        self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", "-BQSR",
+                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_BaseRecalibrator.log'),
+                                 **dict(self.dw1.base_kwargs))
+        print "\n***** Testing GATK Base Recalibrator with BQSR command *****\n"
+        print self.gatk_test.run_command
+
+    def test_gatk_PrintReads(self):
+        self.wrapper_name = 'gatk_PrintReads'
+        self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp",
+                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_PrintReads.log'),
+                                 **dict(self.dw1.base_kwargs))
+        print "\n***** Testing GATK Print Reads command *****\n"
+        print self.gatk_test.run_command
 
 
 if __name__ == '__main__':

@@ -914,7 +914,7 @@ class Gatk(BaseWrapper):
         ## set the checkpoint target file
         new_name = ' '.join(name.split("_"))
         # kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
-        self.make_target(name, input, **kwargs)
+        self.make_target(name, input, *args, **kwargs)
         self.init(new_name, **kwargs)
 
         mem_str = ' -Xmx10000M'
@@ -952,42 +952,42 @@ class Gatk(BaseWrapper):
         self.setup_run()
         return
 
-    def make_target(self, name, input, **kwargs):
+    def make_target(self, name, input, *args, **kwargs):
         if name.split('_')[1] == "RealignerTargetCreator":
             self.target = input + '.realign_targets.intervals' + hashlib.sha224(
                 input + '.realign_targets.intervals').hexdigest() + ".txt"
-            self.add_args_realigner_target_creator(input, **kwargs)
+            self.add_args_realigner_target_creator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "IndelRealigner":
             self.target = input + '_realign_targets' + hashlib.sha224(
                 input + '_realign_targets.intervals').hexdigest() + ".intervals"
-            self.add_args_indel_realigner(input, **kwargs)
+            self.add_args_indel_realigner(input, *args, **kwargs)
 
         elif name.split('_')[1] == "BaseRecalibrator":
-            if kwargs.get("-BQSR") is not None:
+            if "-BQSR" in args:
                 self.target = input + '_post_recal_table' + hashlib.sha224(
                     input + '_post_recal_table.txt').hexdigest() + ".txt"
             else:
                 self.target = input + '_recal_table' + hashlib.sha224(
                     input + '_recal_table.txt').hexdigest() + ".txt"
-            self.add_args_base_recalibrator(input, **kwargs)
+            self.add_args_base_recalibrator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "PrintReads":
             self.target = input + '_recal_gatk' + hashlib.sha224(
                 input + '_recal_gatk.bam').hexdigest() + ".bam"
-            self.add_args_print_reads(input, **kwargs)
+            self.add_args_print_reads(input, *args, **kwargs)
 
         elif name.split('_')[1] == "HaplotypeCaller":
             self.target = input + '_GATK-HC.g' + hashlib.sha224(
                 input + '_GATK-HC.g.vcf').hexdigest() + ".txt"
-            self.add_args_haplotype_caller(input, **kwargs)
+            self.add_args_haplotype_caller(input, *args, **kwargs)
 
         elif name.split('_')[1] == "VariantRecalibrator":
             self.target = input + '._mark_dup_picard.' + hashlib.sha224(
                 input + '._mark_dup_picard.txt').hexdigest() + ".vcf"
         return
 
-    def add_args_realigner_target_creator(self, input, **kwargs):
+    def add_args_realigner_target_creator(self, input, *args, **kwargs):
         # gatk -Xmx20G -T RealignerTargetCreator -R $my.fasta -I $my.bam\
         #  -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf \
         # -o $samp_realign_targets.intervals
@@ -999,7 +999,7 @@ class Gatk(BaseWrapper):
                                                 "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf")]
         return
 
-    def add_args_indel_realigner(self, input, **kwargs):
+    def add_args_indel_realigner(self, input, *args, **kwargs):
         # gatk - T IndelRealigner \
         # - R $myfasta \
         # - known $myindel \
@@ -1016,7 +1016,7 @@ class Gatk(BaseWrapper):
                          ]
         return
 
-    def add_args_base_recalibrator(self, input, **kwargs):
+    def add_args_base_recalibrator(self, input, *args, **kwargs):
         # gatk - T IndelRealigner \
         # - R $myfasta \
         # - known $myindel \
@@ -1026,20 +1026,26 @@ class Gatk(BaseWrapper):
 
         # kwargs.get()
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.realigned.bam"),
-                         " -ncgt 8", "-R " + kwargs.get("ref_fasta_path"),
-                         "-knownSites " + kwargs.get("-known",
-                                                     "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf"),
-                         "-knownSites " + "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf",
-                         ]
-        if "-BQSR" in self.kwargs.keys():
-            self.add_args += ["-BQSR " + os.path.join(kwargs.get('qc_dir'), input, "_recal_table.txt"),
-                              "-o " + os.path.join(kwargs.get('qc_dir'), input, "_post_recal_table.txt")]
+                         "-R " + kwargs.get("ref_fasta_path")]
+
+        # TODO make this optional by searching *args and replacing
+        self.add_args += [" -ncgt 8"]
+        self.add_args += [
+            "-knownSites " + "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf"]
+        self.add_args += [
+            "-knownSites " + "/gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf"]
+
+        print "testing bqsr"
+        print args
+        if "-BQSR" in args:
+            self.add_args += ["-BQSR " + os.path.join(kwargs.get('qc_dir'), input + "_recal_table.txt"),
+                              "-o " + os.path.join(kwargs.get('qc_dir'), input + "_post_recal_table.txt")]
         else:
-            self.add_args += ["-o " + os.path.join(kwargs.get('qc_dir'), input, "_recal_table.txt")]
+            self.add_args += ["-o " + os.path.join(kwargs.get('qc_dir'), input + "_recal_table.txt")]
 
         return
 
-    def add_args_print_reads(self, input, **kwargs):
+    def add_args_print_reads(self, input, *args, **kwargs):
         # gatk - T IndelRealigner \
         # - R $myfasta \
         # - known $myindel \
@@ -1055,7 +1061,7 @@ class Gatk(BaseWrapper):
         ]
         return
 
-    def add_args_haplotype_caller(self, input, **kwargs):
+    def add_args_haplotype_caller(self, input, *args, **kwargs):
         # gatk - T IndelRealigner \
         # - R $myfasta \
         # - known $myindel \

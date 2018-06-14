@@ -22,3 +22,6 @@ workflow_sequence:
   gatk_RealignerTargetCreator:
     options:
       -known: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+  gatk_BaseRecalibrator:
+    options:
+      -BQSR:
