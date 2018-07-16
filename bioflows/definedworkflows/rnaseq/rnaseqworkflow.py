@@ -23,6 +23,7 @@ def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     :return:
 
     Borrowed shamelessly from http://codegist.net/code/python2-yaml/
+    #todo fix hack
     '''
     class OrderedLoader(loader):
         pass
@@ -38,6 +39,7 @@ def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     return yaml.load(stream, OrderedLoader)
 
 class BaseTask:
+
     def setup(self):
         self.parms = jsonpickle.decode(self.prog_parms[0])
         self.jobparms = self.parms.job_parms
@@ -168,6 +170,7 @@ class TaskFlow(luigi.WrapperTask):
 
 class BaseWorkflow:
     base_kwargs = dict()
+    new_base_kwargs = dict()
     sample_fastq = dict()
     sample_fastq_work = dict()
     progs = OrderedDict()
@@ -190,9 +193,15 @@ class BaseWorkflow:
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
                               'picard_CollectWgsMetrics': wr.Picard,
+                              'picard_MarkDuplicates': wr.Picard,
+                              'picard_BuildBamIndex': wr.Picard,
+                              'picard_AddOrReplaceReadGroups': wr.Picard,
                               'gatk_RealignerTargetCreator': wr.Gatk,
                               'gatk_IndelRealigner': wr.Gatk,
-                              'gatk_BaseRecalibrator': wr.Gatk
+                              'gatk_BaseRecalibrator': wr.Gatk,
+                              'gatk_PrintReads': wr.Gatk,
+                              'gatk_HaplotypeCaller': wr.Gatk,
+                              'gatk_AnalyzeCovariates': wr.Gatk
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -204,6 +213,7 @@ class BaseWorkflow:
             self.parse_sample_info_from_file()
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
+        # todo close so we can trap errors else will fail silently
 
         # Setup saga parameters
         self.set_saga_parms()
@@ -252,7 +262,8 @@ class BaseWorkflow:
 
     def set_base_kwargs(self):
         """
-        Setup the generic keyword arguments for the wrappers to use
+        Setup the generic keyword arguments for the wrappers to use. These keywords are the
+        global parameters for the entire workflow.
         :return:
         """
         self.base_kwargs['cwd'] = self.work_dir
@@ -727,10 +738,11 @@ class BaseWorkflow:
         ##******************************************
         ## This whole section needs to be refactored
         ## to allow for program options to be updated
-
+        run_cntr = 1
         for k, v in self.workflow_sequence.iteritems():
             self.progs[k] = []
             print k, v
+
             if isinstance(v, dict):
                 # Add the specific program options
                 # Need to modify to dict so that default values can be updated
@@ -742,8 +754,13 @@ class BaseWorkflow:
                     for k1, v1 in v['options'].iteritems():
                         # Should we test for flag options?
                         if v1 is not None:
-                            self.progs[k].append("%s %s" % (k1, v1))
+                            if not isinstance(v1, list):
+                                self.progs[k].append("%s %s" % (k1, v1))
+                            else:  # isinstance(v1, list):
+                                for v11 in v1:
+                                    self.progs[k].append("%s %s" % (k1, v11))
                         else:
+                            print "Flag type argument " + k1
                             self.progs[k].append("%s" % (k1))
                 else:
                     self.progs[k].append('')
@@ -754,17 +771,20 @@ class BaseWorkflow:
                     self.progs_job_parms[k] = 'default'
             elif v == 'default':
                 self.progs[k].append('')
-
+                self.progs_job_parms[k] = 'default'
                 # self.progs[k].append(v1)
         self.progs = OrderedDict(reversed(self.progs.items()))
+        print self.progs
         return
 
     def update_job_parms(self, key):
-        new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         if self.progs_job_parms[key] != 'default':
-            new_base_kwargs['job_parms_type'] = "custom"
-            new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
-        return new_base_kwargs
+            self.new_base_kwargs['job_parms_type'] = "custom"
+            self.new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
+        else:
+            print "Using default **kwarg Values"
+        return self.new_base_kwargs
 
 
 
@@ -862,7 +882,21 @@ class RnaSeqFlow(BaseWorkflow):
                     print tmp_prog.run_command
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
+                # Remove the duprun from the the key and create the wrapper command
+                elif 'duprun' in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                           **dict(self.base_kwargs)
+                                                           )
 
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs
@@ -911,7 +945,7 @@ class DnaSeqFlow(BaseWorkflow):
     def __init__(self, parmsfile):
         self.init(parmsfile)
 
-        # Create Expression quantification directory for RNASeq
+        # Create  quantification directory for
         #self.expression_dir = os.path.join(self.work_dir, 'expression')
 
         # Update kwargs to include directory for expression quantification
@@ -1039,6 +1073,121 @@ class DnaSeqFlow(BaseWorkflow):
         return
 
 
+class GatkFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create  directory for storing GATK files
+        self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+
+        # Update kwargs to include directory for VCFs
+        self.base_kwargs['gatk_dir'] = self.gatk_dir
+
+        # Update paths to check to include directory for VCFs
+        self.paths_to_test += self.gatk_dir
+
+        return
+
+    def chain_commands(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        for samp, file in self.sample_fastq_work.iteritems():
+            print "\n *******Commands for Sample:%s ***** \n" % (samp)
+            samp_progs = []
+
+            for key in self.progs.keys():
+                new_base_kwargs = self.update_job_parms(key)
+                if key == 'bwa_mem':
+                    # update job parms
+                    # new_base_kwargs = self.update_job_parms(key)
+                    # Add additional samtools processing steps to GSNAP output
+
+                    tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
+                                                                        stdout=os.path.join(self.log_dir,
+                                                                                            samp + '_bamdup.log'),
+                                                                        **dict(self.base_kwargs)
+                                                                        )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samindex']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir, samp + '_bamidx.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samsort']('samtools', samp,
+                                                             stdout=os.path.join(self.log_dir, samp + '_bamsrt.log'),
+                                                             **dict(new_base_kwargs)
+                                                             )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtomapped']('samtools', samp,
+                                                                 stdout=os.path.join(self.log_dir,
+                                                                                     samp + '_bamtomappedbam.log'),
+                                                                 **dict(self.base_kwargs)
+                                                                 )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtounmapped']('samtools', samp,
+                                                                   stdout=os.path.join(self.log_dir,
+                                                                                       samp + '_bamtounmappedbam.log'),
+                                                                   **dict(self.base_kwargs)
+                                                                   )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samtobam']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir,
+                                                                                  samp + '_samtobam.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.align_dir, samp + '.sam'),
+                                                       **dict(new_base_kwargs))
+
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
+                                                                           self.run_parms['log_dir'],
+                                                                           samp + '_' + key + '.log'),
+                                                       **dict(new_base_kwargs)
+                                                       )
+                    print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+
+        return
+
+
+
+
+
 def rna_seq_main():
 
     print "success intall worked"
@@ -1125,6 +1274,51 @@ def dna_seq_main():
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
                 workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
     return
+
+
+def gatk_main():
+    print "success intall worked"
+    # sys.exit(0)
+    # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
+    parmsfile = sys.argv[1]
+    gt1 = GatkFlow(parmsfile)
+    #
+    # print "\n***** Printing config Parsing ******\n"
+    # for k, v in rw1.__dict__.iteritems():
+    #     print k, v
+    #     #
+    #
+    # print "\n***** Printing Sample Info ******\n"
+    # for k, v in rw1.sample_fastq.iteritems():
+    #     print k, v
+    #
+
+    gt1.parse_prog_info()
+    # print "\n***** Printing Progs dict ******\n"
+    # for k, v in rw1.progs.iteritems():
+    #     print k, v
+    #
+    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
+    # print "\n***** Printing Progs dict in reverse ******\n"
+    # for k, v in rev_progs.iteritems():
+    #     print k, v
+
+    print "\n***** Printing Chained Commands ******\n"
+
+    # Actual jobs start here
+    gt1.test_paths()
+    if 'sra' in gt1.sample_manifest.keys():
+        gt1.download_sra_cmds()
+        if gt1.sra_info['downloads']:
+            sys.exit(0)
+    else:
+        gt1.symlink_fastqs()
+
+    gt1.chain_commands()
+    luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
+                workers=len(gt1.sample_fastq_work.keys()), lock_size=1)
+    return
+
 
 
 if __name__ == '__main__':

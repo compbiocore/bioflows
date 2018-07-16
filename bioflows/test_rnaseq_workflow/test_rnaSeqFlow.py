@@ -1,9 +1,11 @@
-import unittest, saga, luigi
-from unittest import TestCase
-from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
+import unittest
 from collections import OrderedDict
+from unittest import TestCase
+
+import luigi
+
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
 from bioflows.definedworkflows.rnaseq.rnaseqworkflow import TaskFlow
-import luigi.contrib.ssh as lcs
 
 
 class TestRnaSeqFlowFunctions(TestCase):
@@ -315,11 +317,11 @@ if __name__ == '__main__':
 
     ## Test specific workflow function
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestRnaSeqFlowFunctions("test_parse_prog_info"))
+    suite = unittest.TestSuite()
+    suite.addTest(TestRnaSeqFlowFunctions("test_parse_prog_info"))
     # suite.addTest(TestRnaSeqFlowFunctions("test_chain_commands_se"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 
     ## Runs  only a specific function
 
@@ -367,6 +369,6 @@ if __name__ == '__main__':
 
     # Runs  only a specific class for SE  dual RNA Seq mus and S. pnuemonia from SRA locally on CCV
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestRnaSeqFlowSRALocalSlurmSEDual)
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(TestRnaSeqFlowSRALocalSlurmSEDual)
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
