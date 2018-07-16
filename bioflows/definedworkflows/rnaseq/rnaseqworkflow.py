@@ -1275,7 +1275,6 @@ def dna_seq_main():
                 workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
     return
 
-
 def gatk_main():
     print "success intall worked"
     # sys.exit(0)
