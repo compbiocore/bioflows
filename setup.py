@@ -15,6 +15,7 @@ setup(
     description='',
     entry_points={
         'console_scripts': ['bioflows-rnaseq = bioflows.definedworkflows.rnaseq.rnaseqworkflow:rna_seq_main',
-                            'bioflows-dnaseq = bioflows.definedworkflows.rnaseq.rnaseqworkflow:dna_seq_main'],
+                            'bioflows-dnaseq = bioflows.definedworkflows.rnaseq.rnaseqworkflow:dna_seq_main',
+                            'bioflows-gatk = bioflows.definedworkflows.rnaseq.rnaseqworkflow:gatk_main'],
     }
 )
