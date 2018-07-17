@@ -797,7 +797,8 @@ class BedtoolsCounts(BaseWrapper):
 
 
 class FeatureCounts(BaseWrapper):
-    """A wrapper for FeatureCounts
+    """
+     Wrapper for FeatureCounts
     """
 
     def __init__(self, name, input, *args, **kwargs):
@@ -812,6 +813,55 @@ class FeatureCounts(BaseWrapper):
         self.setup_run()
         return
 
+
+class Trimmomatic(BaseWrapper):
+    """
+        Wrapper for trimmomatic
+    """
+    add_command = ''
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+        new_name = ' '.join(name.split("_"))
+        self.init(new_name, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+
+            # Update threads if cpus given
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
+
+        else:
+            # Set default memory and cpu options
+            self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
+            self.args += ['-t 8']
+
+        if self.paired_end:
+
+            self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz"),
+                          os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz")]
+
+            self.add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
+            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_1.fq.gz") + "; "
+            self.add_command += "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2P.fq.gz") + " "
+            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_2.fq.gz") + ";"
+            self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1U.fq.gz") + "; "
+            self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
+        else:
+            self.args += [os.path.join(kwargs.get('fastq_dir'), input + ".fq.gz")]
+
+        self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz")]
+
+        self.setup_run()
+
+        trim_dir = kwargs.get("fastq_dir")
+
+        # trimmomatic PE -threads 8  -trimlog " + os.path.join(log_dir, samp + "_" + progname + "_trimmomatic.log "
+        com = com + " -baseout " + os.path.join(trim_dir,
+                                                samp + "_tr.fq.gz") + "  ; "
+
+    f.close()
 
 class Picard(BaseWrapper):
     """

@@ -1033,6 +1033,20 @@ class DnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                elif 'duprun' in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                           **dict(self.base_kwargs)
+                                                           )
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs
@@ -1168,6 +1182,20 @@ class GatkFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                elif 'duprun' in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                           **dict(self.base_kwargs)
+                                                           )
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs

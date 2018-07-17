@@ -15,6 +15,11 @@ run_parms:
   saga_scheduler: slurm
   reference_fasta_path: /gpfs/scratch/test.fa
 workflow_sequence:
+  trimmmomatic_PE:
+    options:
+      "ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true":
+      "SLIDINGWINDOW:10:25":
+      "MINLEN:75":
   picard_CollectWgsMetrics:
     job_params:
       mem: 30000
