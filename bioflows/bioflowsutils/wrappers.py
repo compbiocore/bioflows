@@ -858,10 +858,7 @@ class Trimmomatic(BaseWrapper):
         trim_dir = kwargs.get("fastq_dir")
 
         # trimmomatic PE -threads 8  -trimlog " + os.path.join(log_dir, samp + "_" + progname + "_trimmomatic.log "
-        com = com + " -baseout " + os.path.join(trim_dir,
-                                                samp + "_tr.fq.gz") + "  ; "
-
-    f.close()
+        com = com + " -baseout " + os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz") + "  ; "
 
 class Picard(BaseWrapper):
     """
