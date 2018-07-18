@@ -38,7 +38,7 @@ class TestGatkInit(unittest.TestCase):
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK INDEL REALIGNER command *****\n"
         out_command = "gatk  -Xmx30000M  -T IndelRealigner "
-        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam OUTPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
+        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam -o /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
         out_command += "-R /gpfs/scratch/test.fa -targetIntervals /gpfs/scratch/gatk_results/test_samp_realign_targets.intervals --filter_bases_not_stored "
         out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_IndelRealigner_err.log 1>/gpfs/scratch/logs/test_samp_gatk_IndelRealigner.log"
         print self.gatk_test.run_command
