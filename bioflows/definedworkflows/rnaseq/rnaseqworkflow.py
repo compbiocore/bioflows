@@ -48,6 +48,8 @@ class BaseTask:
         ## Hack to get the command to work for now
         self.jobparms['command'] = '#SBATCH -vvvv\nset -e\necho $PATH\n'
         self.jobparms['command'] += self.parms.conda_command + "\n"
+        self.jobparms['command'] += "\n***** New PATH *****\necho$PATH\n\n"
+        self.jobparms['command'] += "\n***** checking Java****\njave -version\n\n"
 
         # self.jobparms['command'] +='source activate cbc_conda\n'
         self.jobparms['command'] += 'srun '
