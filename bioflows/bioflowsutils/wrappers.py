@@ -852,13 +852,11 @@ class Trimmomatic(BaseWrapper):
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + ".fq.gz")]
 
         self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz")]
-
+        self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
+        self.args += args
         self.setup_run()
 
-        trim_dir = kwargs.get("fastq_dir")
-
-        # trimmomatic PE -threads 8  -trimlog " + os.path.join(log_dir, samp + "_" + progname + "_trimmomatic.log "
-        com = com + " -baseout " + os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz") + "  ; "
+        return
 
 class Picard(BaseWrapper):
     """
@@ -882,6 +880,7 @@ class Picard(BaseWrapper):
         new_name = ' '.join(name.split("_"))
         # kwargs['target'] = input + '._wgs_stats_picard.' + hashlib.sha224(input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
         self.make_target(name, input, *args, **kwargs)
+        kwargs['target'] = self.target
         self.init(new_name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -908,8 +907,8 @@ class Picard(BaseWrapper):
 
     def make_target(self, name, input, *args, **kwargs):
         if name.split('_')[1] == "CollectWgsMetrics":
-            self.target = input + '._wgs_stats_picard.' + hashlib.sha224(
-                input + '._wgs_stats_picard.txt').hexdigest() + ".txt"
+            self.target = input + '_wgs_stats_picard.' + hashlib.sha224(
+                input + '_wgs_stats_picard.txt').hexdigest() + ".txt"
             self.add_args_collect_wgs_metrics(input, *args, **kwargs)
         elif name.split('_')[1] == "MeanQualityByCycle":
             self.target = input + '._read_qual_by_cycle_picard.' + hashlib.sha224(
@@ -1017,6 +1016,7 @@ class Gatk(BaseWrapper):
         new_name = ' '.join(name.split("_"))
 
         self.make_target(name, input, *args, **kwargs)
+        kwargs['target'] = self.target
         self.init(new_name, **kwargs)
 
         mem_str = ' -Xmx10000M'
