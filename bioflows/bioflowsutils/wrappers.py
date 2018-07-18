@@ -1099,8 +1099,8 @@ class Gatk(BaseWrapper):
         #  -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf \
         # -o $samp_realign_targets.intervals
         # kwargs.get()
-        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
-                         "OUTPUT=" + os.path.join(kwargs.get('gatk_dir'), input + '_realign_targets.intervals'),
+        self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                         "-o " + os.path.join(kwargs.get('gatk_dir'), input + '_realign_targets.intervals'),
                          "-R " + kwargs.get("ref_fasta_path")]
         print "printing optional arguments"
         print args
@@ -1120,8 +1120,8 @@ class Gatk(BaseWrapper):
         # - o $mysamplebase"_sorted_dedup_realigned.bam" \
 
         # kwargs.get()
-        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
-                         "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
+        self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.bam"),
+                         "-o " + os.path.join(kwargs.get('align_dir'), input + '.dedup.rg.srtd.realigned.bam'),
                          "-R " + kwargs.get("ref_fasta_path"),
                          "-targetIntervals " + os.path.join(kwargs.get('gatk_dir'),
                                                             input + '_realign_targets.intervals')
@@ -1141,7 +1141,7 @@ class Gatk(BaseWrapper):
         # - o $mysamplebase"_sorted_dedup_realigned.bam" \
 
         # kwargs.get()
-        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.realigned.bam"),
+        self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.realigned.bam"),
                          "-R " + kwargs.get("ref_fasta_path")]
 
         # TODO make this optional by searching *args and replacing and an exception handler to ensure at least one -knownSites is present
@@ -1174,7 +1174,7 @@ class Gatk(BaseWrapper):
 
         # kwargs.get()
         self.add_args = [
-            "INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.realigned.bam"),
+            "-I " + os.path.join(kwargs.get('align_dir'), input + ".dedup.rg.srtd.realigned.bam"),
             "-R " + kwargs.get("ref_fasta_path"),
             "-BQSR " + os.path.join(kwargs.get('gatk_dir'), input + "_recal_table.txt"),
             "-o " + os.path.join(kwargs.get('align_dir'), input + '.gatk.recal.bam')
@@ -1193,7 +1193,7 @@ class Gatk(BaseWrapper):
         # -o /gpfs/data/cbc/uzun/wes_analysis/wes_run_1/gatk_all_run/WESPE2932_GATK-HC.g.vcf
 
         # kwargs.get()
-        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + ".gatk.recal.bam"),
+        self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + ".gatk.recal.bam"),
                          "-R " + kwargs.get("ref_fasta_path")]
         self.add_args += args
         self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + '.GATK-HC.g.vcf')]

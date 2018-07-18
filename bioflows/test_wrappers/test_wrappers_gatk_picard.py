@@ -24,7 +24,8 @@ class TestGatkInit(unittest.TestCase):
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK REALIGNER TARGET CREATOR command *****\n"
         print self.gatk_test.run_command
-        out_command = "gatk  -Xmx30000M  -T RealignerTargetCreator INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam OUTPUT=/gpfs/scratch/gatk_results/test_samp_realign_targets.intervals "
+        out_command = "gatk  -Xmx30000M  -T RealignerTargetCreator -I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam "
+        out_command += "-o /gpfs/scratch/gatk_results/test_samp_realign_targets.intervals "
         out_command += "-R /gpfs/scratch/test.fa -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf "
         out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_RealignerTargetCreator_err.log 1>/gpfs/scratch/logs/test_samp_gatk_RealignerTargetCreator.log"
         self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
@@ -37,7 +38,7 @@ class TestGatkInit(unittest.TestCase):
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK INDEL REALIGNER command *****\n"
         out_command = "gatk  -Xmx30000M  -T IndelRealigner "
-        out_command += "INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam OUTPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
+        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.bam OUTPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
         out_command += "-R /gpfs/scratch/test.fa -targetIntervals /gpfs/scratch/gatk_results/test_samp_realign_targets.intervals --filter_bases_not_stored "
         out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_IndelRealigner_err.log 1>/gpfs/scratch/logs/test_samp_gatk_IndelRealigner.log"
         print self.gatk_test.run_command
@@ -52,7 +53,7 @@ class TestGatkInit(unittest.TestCase):
         print "\n***** Testing GATK Base Recalibrator command *****\n"
         print self.gatk_test.run_command
         out_command = "gatk -Xmx30000M -T BaseRecalibrator "
-        out_command += "INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam  "
+        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam  "
         out_command += "-R /gpfs/scratch/test.fa "
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf "
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf "
@@ -69,7 +70,7 @@ class TestGatkInit(unittest.TestCase):
         print "\n***** Testing GATK Base Recalibrator with BQSR command *****\n"
         print self.gatk_test.run_command
         out_command = "gatk -Xmx30000M -T BaseRecalibrator "
-        out_command += "INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
+        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
         out_command += "-R /gpfs/scratch/test.fa "
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf "
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf "
@@ -88,7 +89,7 @@ class TestGatkInit(unittest.TestCase):
         print "\n***** Testing GATK Print Reads command *****\n"
         print self.gatk_test.run_command
         out_command = "gatk -Xmx10000M -T PrintReads "
-        out_command += "INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
+        out_command += "-I /gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
         out_command += "-R /gpfs/scratch/test.fa "
         out_command += "-BQSR /gpfs/scratch/gatk_results/test_samp_recal_table.txt "
         out_command += "-o /gpfs/scratch/alignments/test_samp.gatk.recal.bam "
