@@ -13,8 +13,9 @@ class TestGatkInit(unittest.TestCase):
     def setUp(self):
         self.parmsfile = "test_wrappers_pe_gatk_picard.yaml"
         self.dw1 = dsw(self.parmsfile)
-        self.dw1.set_base_kwargs()
+        # self.dw1.set_base_kwargs()
         self.dw1.parse_prog_info()
+        print self.dw1.progs.keys()
 
     def test_gatk_realignerTargetcreator(self):
         self.wrapper_name = 'gatk_RealignerTargetCreator'
@@ -62,7 +63,7 @@ class TestGatkInit(unittest.TestCase):
         self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
 
     def test_gatk_BaseRecalibrator_bqsr(self):
-        self.wrapper_name = 'gatk_BaseRecalibrator_duprun_1'
+        self.wrapper_name = 'gatk_BaseRecalibrator_round_2'
         self.dw1.update_job_parms(self.wrapper_name)
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                  stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_BaseRecalibrator.log'),
@@ -96,22 +97,21 @@ class TestGatkInit(unittest.TestCase):
         out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_PrintReads_err.log 1>/gpfs/scratch/logs/test_samp_gatk_PrintReads.log"
         self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
 
-
-def test_gatk_AnalyzeCovariates(self):
-    self.wrapper_name = 'gatk_AnalyzeCovariates'
-    self.dw1.update_job_parms(self.wrapper_name)
-    self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                             stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_AnalyzeCovariates.log'),
-                             **dict(self.dw1.new_base_kwargs))
-    print "\n***** Testing GATK ANALYZECOVRIATES command *****\n"
-    print self.gatk_test.run_command
-    out_command = "gatk -Xmx30000M -T PrintReads "
-    out_command += "INPUT=/gpfs/scratch/alignments/test_samp.dedup.rg.srtd.realigned.bam "
-    out_command += "-R /gpfs/scratch/test.fa "
-    out_command += "-BQSR /gpfs/scratch/gatk_results/test_samp_recal_table.txt "
-    out_command += "-o /gpfs/scratch/alignments/test_samp.gatk.recal.bam "
-    out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_PrintReads_err.log 1>/gpfs/scratch/logs/test_samp_gatk_PrintReads.log"
-    self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
+    def test_gatk_AnalyzeCovariates(self):
+        self.wrapper_name = 'gatk_AnalyzeCovariates'
+        self.dw1.update_job_parms(self.wrapper_name)
+        self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
+                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_AnalyzeCovariates.log'),
+                                 **dict(self.dw1.new_base_kwargs))
+        print "\n***** Testing GATK ANALYZECOVRIATES command *****\n"
+        print self.gatk_test.run_command
+        out_command = "gatk -Xmx10000M -T AnalyzeCovariates "
+        out_command += "-R /gpfs/scratch/test.fa "
+        out_command += "-before /gpfs/scratch/gatk_results/test_samp_recal_table.txt "
+        out_command += "-after /gpfs/scratch/gatk_results/test_samp_post_recal_table.txt "
+        out_command += "-plots /gpfs/scratch/gatk_results/test_samp_recalibration_plots.pdf "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_AnalyzeCovariates_err.log 1>/gpfs/scratch/logs/test_samp_gatk_AnalyzeCovariates.log"
+        self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
 
 
 class TestPicardInit(unittest.TestCase):
@@ -119,7 +119,7 @@ class TestPicardInit(unittest.TestCase):
     def setUp(self):
         self.parmsfile = "test_wrappers_pe_gatk_picard.yaml"
         self.dw1 = dsw(self.parmsfile)
-        self.dw1.set_base_kwargs()
+        # self.dw1.set_base_kwargs()
         self.dw1.parse_prog_info()
 
     def test_picard_markduplicates(self):

@@ -40,6 +40,9 @@ def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
 
 class BaseTask:
 
+    # Variable for suffix for multiple run of a program
+
+
     def setup(self):
         self.parms = jsonpickle.decode(self.prog_parms[0])
         self.jobparms = self.parms.job_parms
@@ -49,7 +52,7 @@ class BaseTask:
         self.jobparms['command'] = '#SBATCH -vvvv\nset -e\necho $PATH\n'
         self.jobparms['command'] += self.parms.conda_command + "\n"
         self.jobparms['command'] += "\n***** New PATH *****\necho$PATH\n\n"
-        self.jobparms['command'] += "\n***** checking Java****\njave -version\n\n"
+        self.jobparms['command'] += "\n***** checking Java****\njava -version\n\n"
 
         # self.jobparms['command'] +='source activate cbc_conda\n'
         self.jobparms['command'] += 'srun '
@@ -171,12 +174,13 @@ class TaskFlow(luigi.WrapperTask):
 
 
 class BaseWorkflow:
-    base_kwargs = dict()
-    new_base_kwargs = dict()
-    sample_fastq = dict()
+    base_kwargs = ''
+    new_base_kwargs = ''
+    sample_fastq = ''
     sample_fastq_work = dict()
     progs = OrderedDict()
     sra_info = ''
+    multi_run_var = "round"
 
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
@@ -215,6 +219,7 @@ class BaseWorkflow:
             self.parse_sample_info_from_file()
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
+
         # todo close so we can trap errors else will fail silently
 
         # Setup saga parameters
@@ -227,6 +232,7 @@ class BaseWorkflow:
         #self.paired_end = False
         self.set_paths()
         self.set_base_kwargs()
+
         self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
                          self.fastq_dir, self.align_dir, self.qc_dir]
 
@@ -240,6 +246,7 @@ class BaseWorkflow:
 
         for k, v in ordered_load(open(fileHandle, 'r'), yaml.SafeLoader).iteritems():
             setattr(self, k, v)
+
         return
 
 
@@ -268,6 +275,8 @@ class BaseWorkflow:
         global parameters for the entire workflow.
         :return:
         """
+        print "\n ****** Setting base Keywords ***** \n"
+        self.base_kwargs = dict()
         self.base_kwargs['cwd'] = self.work_dir
         self.base_kwargs['align_dir'] = self.align_dir
         self.base_kwargs['qc_dir'] = self.qc_dir
@@ -291,6 +300,7 @@ class BaseWorkflow:
         self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
         self.base_kwargs['ref_fasta_path'] = self.run_parms.get('reference_fasta_path', None)
         self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         return
 
     def parse_sample_info_from_file(self):
@@ -299,6 +309,7 @@ class BaseWorkflow:
         the sample id as the key
         :return:
         """
+        self.sample_fastq = dict()
         for line in open(self.sample_manifest['fastq_file'], 'r'):
             tmpline = line.strip('\n').split(',')
             # print tmpline[0], tmpline[1]
@@ -344,7 +355,10 @@ class BaseWorkflow:
         self.work_dir = self.run_parms['work_dir']
         self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
         self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
+
+        # TODO refactor to make sra dir only if sra option is used
         self.sra_dir = os.path.join(self.work_dir, 'sra')
+
         self.fastq_dir = os.path.join(self.work_dir, 'fastq')
         self.align_dir = os.path.join(self.work_dir, 'alignments')
         self.qc_dir = os.path.join(self.work_dir, 'qc')
@@ -740,47 +754,90 @@ class BaseWorkflow:
         ##******************************************
         ## This whole section needs to be refactored
         ## to allow for program options to be updated
-        run_cntr = 1
-        for k, v in self.workflow_sequence.iteritems():
-            self.progs[k] = []
-            print k, v
 
-            if isinstance(v, dict):
-                # Add the specific program options
-                # Need to modify to dict so that default values can be updated
-                # Right now program options are directly added as text
-                # Also need to edit this in wrappers so that two sets of arg dicts are used
-                # one for options and one for job parms
+        tool_prefix = []
+        for p in self.workflow_sequence:
 
-                if 'options' in v.keys():
-                    for k1, v1 in v['options'].iteritems():
-                        # Should we test for flag options?
-                        if v1 is not None:
-                            if not isinstance(v1, list):
-                                self.progs[k].append("%s %s" % (k1, v1))
-                            else:  # isinstance(v1, list):
-                                for v11 in v1:
-                                    self.progs[k].append("%s %s" % (k1, v11))
-                        else:
-                            print "Flag type argument " + k1
-                            self.progs[k].append("%s" % (k1))
-                else:
-                    self.progs[k].append('')
-                # Add the specific program job parameters
-                if 'job_params' in v.keys():
-                    self.progs_job_parms[k] = v['job_params']
-                else:
-                    self.progs_job_parms[k] = 'default'
-            elif v == 'default':
-                self.progs[k].append('')
-                self.progs_job_parms[k] = 'default'
-                # self.progs[k].append(v1)
+            # round_counter = 0
+            for k, v in p.iteritems():
+                new_key = k
+                if isinstance(v, dict):
+                    # Add the specific program options
+                    # Need to modify to dict so that default values can be updated
+                    # Right now program options are directly added as text
+                    # Also need to edit this in wrappers so that two sets of arg dicts are used
+                    # one for options and one for job parms
+
+                    if 'subcommand' in v.keys():
+                        # Update current program name by adding the subcommand
+                        new_key = '_'.join([k, v['subcommand']])
+
+                    tool_prefix.append(new_key)
+
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
+
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
+                        # Update Current Program name by adding the number of times called
+                        new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+
+                    self.progs[new_key] = []
+
+                    if 'options' in v.keys():
+                        for k1, v1 in v['options'].iteritems():
+                            # Should we test for flag options?
+                            if v1 is not None:
+
+                                # This If-else block checks if options are repeated for example
+                                # in GATK -knownSites can be specified multiple times
+
+                                if not isinstance(v1, list):
+                                    self.progs[new_key].append("%s %s" % (k1, v1))
+                                else:  # isinstance(v1, list):
+                                    for v11 in v1:
+                                        self.progs[new_key].append("%s %s" % (k1, v11))
+                            else:
+                                print "Flag type argument " + k1
+                                self.progs[new_key].append("%s" % (k1))
+                    else:
+                        self.progs[new_key].append('')
+
+                    # Add the specific program job parameters
+                    if 'job_params' in v.keys():
+                        self.progs_job_parms[new_key] = v['job_params']
+                    else:
+                        self.progs_job_parms[new_key] = 'default'
+
+                # Todo should we use an else here instead of elif
+                elif v == 'default':
+
+                    tool_prefix.append(new_key)
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
+
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
+                        # Update Current Program name by adding the number of times called
+                        new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+
+                    self.progs[new_key] = []
+                    self.progs[new_key].append('')
+                    self.progs_job_parms[new_key] = 'default'
+
         self.progs = OrderedDict(reversed(self.progs.items()))
-        print self.progs
+        # print self.progs
         return
 
+    def find_command_rounds(self, new_key, prog_list):
+        """
+        Find the number of times a program has been called
+        :param new_key:
+        :param prog_list:
+        :return:
+        """
+        round_cnt = sum([new_key in S for S in prog_list])
+        return round_cnt
+
+
     def update_job_parms(self, key):
-        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        #self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         if self.progs_job_parms[key] != 'default':
             self.new_base_kwargs['job_parms_type'] = "custom"
             self.new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
@@ -804,7 +861,7 @@ class RnaSeqFlow(BaseWorkflow):
         self.base_kwargs['expression_dir'] = self.expression_dir
 
         # Update paths to check to include directory for expression quantification
-        self.paths_to_test += self.expression_dir
+        self.paths_to_test += [self.expression_dir]
 
         return
 
@@ -819,7 +876,7 @@ class RnaSeqFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
-
+                new_base_kwargs = self.update_job_parms(key)
                 if key == 'gsnap':
                     # update job parms
                     new_base_kwargs = self.update_job_parms(key)
@@ -885,17 +942,17 @@ class RnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
                 # Remove the duprun from the the key and create the wrapper command
-                elif 'duprun' in key:
+                elif self.multi_run_var in key:
                     input_list = key.split('_')
-                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
-                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                    tmp_prog = self.prog_wrappers[key](new_key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
-                                                           **dict(self.base_kwargs)
-                                                           )
+                                                       **dict(self.new_base_kwargs)
+                                                       )
 
                     # print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -906,7 +963,7 @@ class RnaSeqFlow(BaseWorkflow):
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                            self.run_parms['log_dir'],
                                                                            samp + '_' + key + '.log'),
-                                                       **dict(self.base_kwargs)
+                                                       **dict(self.new_base_kwargs)
                                                        )
 
                     print tmp_prog.run_command
@@ -969,7 +1026,7 @@ class DnaSeqFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
-
+                new_base_kwargs = self.update_job_parms(key)
                 if key == 'bwa_mem':
                     # update job parms
                     new_base_kwargs = self.update_job_parms(key)
@@ -1035,16 +1092,16 @@ class DnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
-                elif 'duprun' in key:
+                elif self.multi_run_var in key:
                     input_list = key.split('_')
-                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
                     tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
                                                            stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
-                                                           **dict(self.base_kwargs)
+                                                           **dict(self.new_base_kwargs)
                                                            )
 
                     # print tmp_prog.run_command
@@ -1056,7 +1113,7 @@ class DnaSeqFlow(BaseWorkflow):
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                            self.run_parms['log_dir'],
                                                                            samp + '_' + key + '.log'),
-                                                       **dict(self.base_kwargs)
+                                                       **dict(self.new_base_kwargs)
                                                        )
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -1101,9 +1158,9 @@ class GatkFlow(BaseWorkflow):
 
         # Update kwargs to include directory for VCFs
         self.base_kwargs['gatk_dir'] = self.gatk_dir
-
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         # Update paths to check to include directory for VCFs
-        self.paths_to_test += self.gatk_dir
+        self.paths_to_test += [self.gatk_dir]
 
         return
 
@@ -1184,17 +1241,17 @@ class GatkFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
-                elif 'duprun' in key:
+                elif self.multi_run_var in key:
                     input_list = key.split('_')
-                    idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
-                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                    tmp_prog = self.prog_wrappers[key](new_key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
-                                                           **dict(self.base_kwargs)
-                                                           )
+                                                       **dict(self.new_base_kwargs)
+                                                       )
 
                     # print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -1205,7 +1262,7 @@ class GatkFlow(BaseWorkflow):
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                            self.run_parms['log_dir'],
                                                                            samp + '_' + key + '.log'),
-                                                       **dict(new_base_kwargs)
+                                                       **dict(self.new_base_kwargs)
                                                        )
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -1225,26 +1282,9 @@ def rna_seq_main():
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     rw1 = RnaSeqFlow(parmsfile)
-    #
-    # print "\n***** Printing config Parsing ******\n"
-    # for k, v in rw1.__dict__.iteritems():
-    #     print k, v
-    #     #
-    #
-    # print "\n***** Printing Sample Info ******\n"
-    # for k, v in rw1.sample_fastq.iteritems():
-    #     print k, v
-    #
 
     rw1.parse_prog_info()
-    # print "\n***** Printing Progs dict ******\n"
-    # for k, v in rw1.progs.iteritems():
-    #     print k, v
-    #
-    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
-    # print "\n***** Printing Progs dict in reverse ******\n"
-    # for k, v in rev_progs.iteritems():
-    #     print k, v
+
 
     print "\n***** Printing Chained Commands ******\n"
 
@@ -1268,26 +1308,8 @@ def dna_seq_main():
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     dw1 = DnaSeqFlow(parmsfile)
-    #
-    # print "\n***** Printing config Parsing ******\n"
-    # for k, v in rw1.__dict__.iteritems():
-    #     print k, v
-    #     #
-    #
-    # print "\n***** Printing Sample Info ******\n"
-    # for k, v in rw1.sample_fastq.iteritems():
-    #     print k, v
-    #
 
     dw1.parse_prog_info()
-    # print "\n***** Printing Progs dict ******\n"
-    # for k, v in rw1.progs.iteritems():
-    #     print k, v
-    #
-    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
-    # print "\n***** Printing Progs dict in reverse ******\n"
-    # for k, v in rev_progs.iteritems():
-    #     print k, v
 
     print "\n***** Printing Chained Commands ******\n"
 
@@ -1307,30 +1329,11 @@ def dna_seq_main():
 
 def gatk_main():
     print "success intall worked"
-    # sys.exit(0)
-    # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     gt1 = GatkFlow(parmsfile)
-    #
-    # print "\n***** Printing config Parsing ******\n"
-    # for k, v in rw1.__dict__.iteritems():
-    #     print k, v
-    #     #
-    #
-    # print "\n***** Printing Sample Info ******\n"
-    # for k, v in rw1.sample_fastq.iteritems():
-    #     print k, v
-    #
+
 
     gt1.parse_prog_info()
-    # print "\n***** Printing Progs dict ******\n"
-    # for k, v in rw1.progs.iteritems():
-    #     print k, v
-    #
-    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
-    # print "\n***** Printing Progs dict in reverse ******\n"
-    # for k, v in rev_progs.iteritems():
-    #     print k, v
 
     print "\n***** Printing Chained Commands ******\n"
 

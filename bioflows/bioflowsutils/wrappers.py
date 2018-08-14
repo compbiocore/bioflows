@@ -127,9 +127,9 @@ class BaseWrapper(object):
         A function to strip the run name from programs
         :return:
         """
-        if 'duprun' in name:
+        if 'round' in name:
             input_list = name.split('_')
-            idx_to_rm = [i for i, s in enumerate(input_list) if 'duprun' in s][0]
+            idx_to_rm = [i for i, s in enumerate(input_list) if 'round' in s][0]
             del input_list[idx_to_rm:]
             new_name = '_'.join(input_list)
         else:

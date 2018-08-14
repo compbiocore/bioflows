@@ -15,63 +15,73 @@ run_parms:
   saga_scheduler: slurm
   reference_fasta_path: /gpfs/scratch/test.fa
 workflow_sequence:
-  picard_CollectWgsMetrics:
+- picard:
+    subcommand: CollectWgsMetrics
     job_params:
       mem: 30000
       time: 900
-  picard_AddOrReplaceReadGroups:
+- picard:
+    subcommand: AddOrReplaceReadGroups
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  picard_MarkDuplicates:
+- picard:
+    subcommand: MarkDuplicates
     options:
       REMOVE_DUPLICATES=true:
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_RealignerTargetCreator:
+- gatk:
+    subcommand: RealignerTargetCreator
     options:
       -known: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_IndelRealigner:
+- gatk:
+    subcommand: IndelRealigner
     options:
       --filter_bases_not_stored:
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_BaseRecalibrator:
+- gatk:
+    subcommand: BaseRecalibrator
     options:
       -knownSites:
-        - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
-        - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
       -nct: 8
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_BaseRecalibrator_duprun_1:
+- gatk:
+    subcommand: BaseRecalibrator
     options:
       -BQSR:
       -knownSites:
-        - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
-        - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
       -nct: 8
     job_params:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_PrintReads: default
-  picard_BuildBamIndex:
+- gatk:
+    subcommand: PrintReads
+- picard:
+    subcommand: BuildBamIndex
     job_params:
       mem: 30000
       time: 900
-  gatk_HaplotypeCaller:
+- gatk:
+    subcommand: HaplotypeCaller
     options:
       --dbsnp: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
       -stand_call_conf: 30
@@ -82,5 +92,6 @@ workflow_sequence:
       mem: 30000
       time: 900
       ncpus: 4
-  gatk_AnalyzeCovariates: default
+- gatk:
+    subcommand: AnalyzeCovariates
 

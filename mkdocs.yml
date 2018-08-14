@@ -1,0 +1,21 @@
+site_name:        Brown's Computational Biology Core SOftware
+site_author:      Ashok Ragavendran
+repo_url:         https://github.com/compbiocore/bioflows
+site_description: Documentation for running Bioinformatics/Computational workflows with bioflowa
+site_url:         https://compbiocore.github.io/bioflows/
+
+theme:
+  name: material
+
+markdown_extensions:
+- extra
+- tables
+- fenced_code
+- codehilite
+
+docs_dir: docs/
+
+pages:
+- Home: 'intro.md'
+- Tutorials: 'tutorials.md'
+#- rappers: 'mkdocs.md'

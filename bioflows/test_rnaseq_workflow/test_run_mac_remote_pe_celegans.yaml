@@ -10,15 +10,13 @@ run_parms:
   paired_end: True
   local_targets: True
   luigi_local_path: /Users/aragaven/scratch/test_workflow_pe_celegans
-  db: sqlite
-  db_loc: default
   saga_host: ssh.ccv.brown.edu
   ssh_user: aragaven
   saga_scheduler: slurm+ssh
   gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
-  fastqc: default
-  gsnap:
+- fastqc: default
+- gsnap:
     options:
       -d: c_elegans_Ws8
       -s: caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit
@@ -26,9 +24,11 @@ workflow_sequence:
       mem: 40000
       ncpus: 16
       time: 600
-  qualimap_rnaseq: default
-  salmon:
+- qualimap:
+    subcommand: rnaseq
+- fastqc: default
+- salmon:
     options:
       -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
       -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
-  htseq-count: default
+- htseq-count: default

@@ -1,0 +1,17 @@
+matrix: #allows to set up tests/deploys in different languages/environments.
+  include: #includes all stages of build
+
+  - stage: deploy # this block builds and deploys the docs, it's in Python.
+    language: python
+    install:
+    - pip install mkdocs
+    - pip install mkdocs-material
+    script:
+    - mkdocs build --verbose --clean --strict
+    deploy:
+      provider: pages
+      skip_cleanup: true
+      github_token: $GITHUB_TOKEN
+      local_dir: site
+      on:
+        branch: master
