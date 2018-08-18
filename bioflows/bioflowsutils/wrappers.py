@@ -189,6 +189,7 @@ class BaseWrapper(object):
             self.cmd = list(self.cmd.split())
         return
 
+    # TODO fix this function
     def version(self, flag=None):
         """
         Generates and logs a hash to distinguish this particular installation
@@ -212,7 +213,7 @@ class BaseWrapper(object):
             cmd.append('-v')
         # Run the command.
 
-        self.env['PATH'] = self.conda_command.split()[2] + "/bin:" + self.env['PATH']
+        # self.env['PATH'] = self.conda_command.split()[2] + "/bin:" + self.env['PATH']
         print "\n ***** print PATH ***** \n"
         print self.env['PATH']
         try:
