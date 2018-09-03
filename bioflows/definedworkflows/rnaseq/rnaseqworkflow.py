@@ -48,11 +48,11 @@ class BaseTask:
         self.jobparms = self.parms.job_parms
         self.jobparms['workdir'] = self.parms.cwd
 
-        ## Hack to get the command to work for now
+        # todo fix:  Hack to get the command to work for now
         self.jobparms['command'] = '#SBATCH -vvvv\nset -e\necho $PATH\n'
         self.jobparms['command'] += self.parms.conda_command + "\n"
-        self.jobparms['command'] += "\n***** New PATH *****\necho$PATH\n\n"
-        self.jobparms['command'] += "\n***** checking Java****\njava -version\n\n"
+        self.jobparms['command'] += "\necho '***** New PATH *****'\necho $PATH\n\n"
+        self.jobparms['command'] += "\necho '***** checking Java****'\njava -version\n\n"
 
         # self.jobparms['command'] +='source activate cbc_conda\n'
         self.jobparms['command'] += 'srun '
@@ -63,6 +63,11 @@ class BaseTask:
         self.name = self.parms.input + "_" + prog_name
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
+        f = open(os.path.join(self.parms.log_dir, self.name + "_sbatch_cmds"), 'a')
+        f.write("\n\n#*************\n")
+        f.write(self.jobparms['command'])
+        f.write("\n\n#*************\n")
+        f.close()
 
         self.jobparms['out'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stdout")
         self.jobparms['error'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stderr")
@@ -207,7 +212,8 @@ class BaseWorkflow:
                               'gatk_BaseRecalibrator': wr.Gatk,
                               'gatk_PrintReads': wr.Gatk,
                               'gatk_HaplotypeCaller': wr.Gatk,
-                              'gatk_AnalyzeCovariates': wr.Gatk
+                              'gatk_AnalyzeCovariates': wr.Gatk,
+                              'trimmomatic_PE': wr.Trimmomatic
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -227,7 +233,7 @@ class BaseWorkflow:
 
         # Setup the Conda PATH
         if 'conda_command' not in self.run_parms.keys():
-            self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
+            self.run_parms['conda_command'] = 'source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda'
 
         #self.paired_end = False
         self.set_paths()
@@ -859,7 +865,7 @@ class RnaSeqFlow(BaseWorkflow):
 
         # Update kwargs to include directory for expression quantification
         self.base_kwargs['expression_dir'] = self.expression_dir
-
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         # Update paths to check to include directory for expression quantification
         self.paths_to_test += [self.expression_dir]
 

@@ -141,11 +141,11 @@ class TestRnaSeqFlowFunctions(TestCase):
         self.rw1.sample_fastq_work = {'N2': '/gpfs/scratch/aragaven/test_workflow/sampN2.fq.gz',
                                       'N3': '/gpfs/scratch/aragaven/test_workflow/sampN3.fq.gz'}
         # self.rw1.symlink_fastqs
-        self.rw1.set_base_kwargs()
-        self.rw1.parse_prog_info()
+        # self.rw1.set_base_kwargs()
+        # self.rw1.parse_prog_info()
         print self.rw1.progs
         print "\n***** Printing Chained Commands ******\n"
-        self.rw1.set_base_kwargs()
+        #self.rw1.set_base_kwargs()
         self.rw1.chain_commands()
 
     def test_parse_sample_info_from_file(self):
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     # suite.addTest(TestRnaSeqFlowFunctions("test_parse_config"))
 
     suite.addTest(TestRnaSeqFlowFunctions("test_parse_prog_info"))
-    # suite.addTest(TestRnaSeqFlowFunctions("test_chain_commands_se"))
+    suite.addTest(TestRnaSeqFlowFunctions("test_chain_commands_se"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

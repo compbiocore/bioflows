@@ -48,8 +48,10 @@ class TestFastqc(unittest.TestCase):
     def test_fastqc_wrapper(self):
         print "\n***** Testing Fastqc_wrapper command *****\n"
         print self.fastqc_test.run_command
-        out_command = "fastqc  -o /gpfs/scratch/qc /gpfs/scratch/fastq/test_samp_1.fq.gz 2>>/gpfs/scratch/logs/test_samp_fastqc_err.log 1>>/gpfs/scratch/logs/test_samp_fastqc.log;"
-        out_command += " fastqc -o /gpfs/scratch/qc /gpfs/scratch/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/logs/test_samp_fastqc_err.log 1>>/gpfs/scratch/logs/test_samp_fastqc.log"
+        out_command = "fastqc  -o /gpfs/scratch/qc /gpfs/scratch/fastq/test_samp_1.fq.gz 2>>/gpfs/scratch/logs/test_samp_fastqc_err.log "
+        out_command += "1>>/gpfs/scratch/logs/test_samp_fastqc.log; "
+        out_command += "fastqc -o /gpfs/scratch/qc /gpfs/scratch/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/logs/test_samp_fastqc_err.log "
+        out_command += "1>>/gpfs/scratch/logs/test_samp_fastqc.log"
         self.assertEqual(self.fastqc_test.run_command.split(), out_command.split())
 
 class TestGsnap(unittest.TestCase):
@@ -72,8 +74,10 @@ class TestGsnap(unittest.TestCase):
         print "\n***** Testing Gsnap_wrapper command *****\n"
         print self.gsnap_test.run_command
         print self.gsnap_test.job_parms
-        out_command = "gsnap  -t 16 --gunzip -A sam -N1 --use-shared-memory=0 -d c_elegans_Ws8 -s caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit"
-        out_command += " /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/logs/test_samp_gsnap_err.log 1>/gpfs/scratch/alignments/gsnap.sam"
+        out_command = "gsnap  -t 16 --gunzip -A sam -N1 --use-shared-memory=0 -d c_elegans_Ws8 "
+        out_command += "-s caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit "
+        out_command += "/gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/logs/test_samp_gsnap_err.log "
+        out_command += "1>/gpfs/scratch/alignments/gsnap.sam"
         self.assertEqual(self.gsnap_test.run_command.split(), out_command.split())
 
 
@@ -92,8 +96,9 @@ class TestSamMarkDup(unittest.TestCase):
     def test_sammarkdup_wrapper(self):
         print "\n***** Testing biobambam_wrapper command *****\n"
         print self.biobambammarkdup_test.run_command
-        out_command = "bammarkduplicates2 index=0 I=/gpfs/scratch/alignments/test_samp.srtd.bam O=/gpfs/scratch/alignments/test_samp.dup.srtd.bam M=/gpfs/scratch/qc/test_samp.dup.metrics.txt"
-        out_command += " 2>>/gpfs/scratch/logs/test_samp_bammarkduplicates2_err.log 1>/gpfs/scratch/logs/bammarkduplicates.log"
+        out_command = "bammarkduplicates2 index=0 I=/gpfs/scratch/alignments/test_samp.srtd.bam "
+        out_command += "O=/gpfs/scratch/alignments/test_samp.dup.srtd.bam M=/gpfs/scratch/qc/test_samp.dup.metrics.txt "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_bammarkduplicates2_err.log 1>/gpfs/scratch/logs/bammarkduplicates.log"
         self.assertEqual(self.biobambammarkdup_test.run_command.split(), out_command.split())
 
 
@@ -112,9 +117,10 @@ class TestQualimapRna(unittest.TestCase):
     def test_qualimap_wrapper(self):
         print "\n***** Testing Qualimap_wrapper command for RNASeq*****\n"
         print self.qualimap_test.run_command
-        out_command = "qualimap  -Xmx10000M rnaseq  -gtf /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf -bam /gpfs/scratch/alignments/test_samp.dup.srtd.bam "
-        out_command += "  -outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_rnaseq_err.log 1>/gpfs/scratch/logs/qualimap.log;"
-        out_command += " cp  /gpfs/scratch/qc/test_samp/qualimapReport.html  /gpfs/scratch/qc/test_samp/test_samp_qualimapReport.html "
+        out_command = "qualimap  -Xmx10000M rnaseq  -gtf /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf "
+        out_command += "-bam /gpfs/scratch/alignments/test_samp.dup.srtd.bam "
+        out_command += "-outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_rnaseq_err.log 1>/gpfs/scratch/logs/qualimap.log; "
+        out_command += "cp  /gpfs/scratch/qc/test_samp/qualimapReport.html  /gpfs/scratch/qc/test_samp/test_samp_qualimapReport.html "
         self.assertEqual(self.qualimap_test.run_command.split(), out_command.split())
 
 
@@ -133,28 +139,29 @@ class TestQualimap(unittest.TestCase):
         print "\n***** Testing Qualimap_wrapper command for DNASeq*****\n"
         print self.qualimap_test.run_command
         out_command = "qualimap  -Xmx10000M bamqc -nr 10000 -c  -bam /gpfs/scratch/alignments/test_samp.dup.srtd.bam "
-        out_command += "  -outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_err.log 1>/gpfs/scratch/logs/qualimap.log;"
-        out_command += "  cp  /gpfs/scratch/qc/test_samp/qualimapReport.html  /gpfs/scratch/qc/test_samp/test_samp_qualimapReport.html "
+        out_command += "-outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_err.log 1>/gpfs/scratch/logs/qualimap.log; "
+        out_command += "cp  /gpfs/scratch/qc/test_samp/qualimapReport.html  /gpfs/scratch/qc/test_samp/test_samp_qualimapReport.html "
         self.assertEqual(self.qualimap_test.run_command.split(), out_command.split())
 
 
-class TestSalmon(unittest.TestCase):
-    def setUp(self):
-        self.parmsfile = "test_wrappers_pe.yaml"
-        self.rw1 = rsw(self.parmsfile)
-        self.rw1.parse_prog_info()
-        self.wrapper_name = 'salmon'
-        self.salmon_test = wr.SalmonCounts(self.wrapper_name, "test_samp", *self.rw1.progs['salmon'],
-                                           **dict(self.rw1.base_kwargs))
-
-    def test_salmon_counts_wrapper(self):
-        print "\n***** Testing Salmon_wrapper command *****\n"
-        print self.salmon_test.run_command
-        out_command = "salmon quant -g /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf -i /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index"
-        out_command += " -l A -1 /gpfs/scratch/fastq/test_samp_1.fq.gz -2 /gpfs/scratch/fastq/test_samp_2.fq.gz -o /gpfs/scratch/expression/test_samp_salmon_counts "
-        out_command += " 2>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log 1>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log; "
-        out_command += " cp  /gpfs/scratch/expression/test_samp_salmon_counts/quant.genes.sf /gpfs/scratch/expression/test_samp_salmon_quant.genes.txt"
-        self.assertEqual(self.salmon_test.run_command.split(), out_command.split())
+# class TestSalmon(unittest.TestCase):
+#     def setUp(self):
+#         self.parmsfile = "test_wrappers_pe.yaml"
+#         self.rw1 = rsw(self.parmsfile)
+#         self.rw1.parse_prog_info()
+#         self.wrapper_name = 'salmon'
+#         self.salmon_test = wr.SalmonCounts(self.wrapper_name, "test_samp", *self.rw1.progs['salmon'],
+#                                            **dict(self.rw1.base_kwargs))
+#
+#     def test_salmon_counts_wrapper(self):
+#         print "\n***** Testing Salmon_wrapper command *****\n"
+#         print self.salmon_test.run_command
+#         out_command = "salmon quant -g /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf "
+#         out_command += "-i /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index "
+#         out_command += "-l A -1 /gpfs/scratch/fastq/test_samp_1.fq.gz -2 /gpfs/scratch/fastq/test_samp_2.fq.gz -o /gpfs/scratch/expression/test_samp_salmon_counts "
+#         out_command += "2>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log 1>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log; "
+#         out_command += "cp  /gpfs/scratch/expression/test_samp_salmon_counts/quant.genes.sf /gpfs/scratch/expression/test_samp_salmon_quant.genes.txt"
+#         self.assertEqual(self.salmon_test.run_command.split(), out_command.split())
 
 
 class TestHtSeq(unittest.TestCase):
@@ -194,29 +201,55 @@ class TestBwaMem(unittest.TestCase):
         print self.bwa_test.run_command
         print self.bwa_test.job_parms
 
-class TestPicard(unittest.TestCase):
+
+class TestTrimmomaticPE(unittest.TestCase):
 
     def setUp(self):
         self.parmsfile = "test_wrappers_pe.yaml"
         self.rw1 = rsw(self.parmsfile)
         self.rw1.set_base_kwargs()
         self.rw1.parse_prog_info()
-        self.wrapper_name = 'picard_CollectWgsMetrics'
+        self.wrapper_name = 'trimmomatic_PE'
+        self.add_args = self.rw1.progs[self.wrapper_name]
+        # use  *self.add_args to unroll the list
+        new_base_kwargs = self.rw1.update_job_parms(self.wrapper_name)
+        self.trimmomatic_pe_test = wr.Trimmomatic(self.wrapper_name, "test_samp", *self.add_args,
+                                                  stdout=os.path.join(self.rw1.log_dir, "trimmomatic.log"),
+                                                  **dict(new_base_kwargs))
+
+    def test_trimmomatic_wrapper(self):
+        print "\n***** Testing Bwa_wrapper command *****\n"
+        print self.trimmomatic_pe_test.run_command
+        print self.trimmomatic_pe_test.job_parms
+
+
+class TestTrimmomaticPE(unittest.TestCase):
+
+    def setUp(self):
+        self.parmsfile = "test_wrappers_pe.yaml"
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'trimmomatic_PE'
         self.add_args = self.rw1.progs[self.wrapper_name]
         #use  *self.add_args to unroll the list
-        self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.add_args,
-                                   **dict(self.rw1.base_kwargs))
+        new_base_kwargs = self.rw1.update_job_parms(self.wrapper_name)
+        self.trimmomatic_pe_test = wr.Trimmomatic(self.wrapper_name, "test_samp", *self.add_args,
+                                                  stdout=os.path.join(self.rw1.log_dir, "trimmomatic.log"),
+                                                  **dict(new_base_kwargs))
 
-
-    def test_picard_wrapper(self):
-        print "\n***** Testing Picard_wrapper command *****\n"
-        print self.picard_test.run_command
-        print self.picard_test.job_parms
-        out_command = "picard CollectWgsMetrics  -Xmx10000M  INPUT=/gpfs/scratch/alignments/test_samp.dup.srtd.bam OUTPUT=/gpfs/scratch/qc/test_samp._wgs_stats_picard.txt"
-        out_command += " REFERENCE_SEQUENCE=/gpfs/scratch/test.fa MINIMUM_MAPPING_QUALITY=20 MINIMUM_BASE_QUALITY=20 COUNT_UNPAIRED=true VALIDATION_STRINGENCY=LENIENT"
-        out_command += " 2>>/gpfs/scratch/logs/test_samp_picard_CollectWgsMetrics_err.log 1>>/gpfs/scratch/logs/test_samp_picard_CollectWgsMetrics_err.log"
-        self.assertEqual(self.picard_test.run_command.split(), out_command.split())
-
+    def test_trimmomatic_wrapper(self):
+        print "\n***** Testing Bwa_wrapper command *****\n"
+        print self.trimmomatic_pe_test.run_command
+        print self.trimmomatic_pe_test.job_parms
+        out_command = "trimmomatic PE -t 8 ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true "
+        out_command += "SLIDINGWINDOW:10:25 MINLEN:75 /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz "
+        out_command += "-baseout /gpfs/scratch/fastq/test_samp_tr.fq.gz -trimlog /gpfs/scratch/logs/test_samptrimmomatic_PE.log "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_trimmomatic_PE_err.log 1>/gpfs/scratch/logs/trimmomatic.log;"
+        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_1P.fq.gz /gpfs/scratch/fastq/test_samp_tr_1.fq.gz;"
+        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_2P.fq.gz /gpfs/scratch/fastq/test_samp_tr_2.fq.gz;"
+        out_command += "rm -v /gpfs/scratch/fastq/test_samp_tr_1U.fq.gz; rm -v /gpfs/scratch/fastq/test_samp_tr_2U.fq.gz;"
+        self.assertEqual(self.trimmomatic_pe_test.run_command.split(), out_command.split())
 
 if __name__ == '__main__':
     # unittest.main()

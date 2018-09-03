@@ -815,6 +815,36 @@ class FeatureCounts(BaseWrapper):
         return
 
 
+class FastqScreen(BaseWrapper):
+    """
+     Wrapper for FeatureCounts
+    """
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+        kwargs['target'] = hashlib.sha224(input + '.fastq_screen.txt').hexdigest() + ".txt"
+        # name = name + " multicov "
+        self.init(name, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+
+            # Update threads if cpus given
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
+            else:
+                # Set default memory and cpu options
+                self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
+                self.args += ['--threads 8']
+
+        self.args = ["--outdir ", os.path.join(kwargs.get('qc_dir')), "--force"]
+        self.args += args
+        self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz")]
+        self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_2.fq.gz")]
+        self.setup_run()
+        return
+
+
 class Trimmomatic(BaseWrapper):
     """
         Wrapper for trimmomatic
@@ -838,10 +868,12 @@ class Trimmomatic(BaseWrapper):
             self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
             self.args += ['-t 8']
 
+        # Add ay other optional arguments
+        self.args += args
         if self.paired_end:
 
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz"),
-                          os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz")]
+                          os.path.join(kwargs.get('fastq_dir'), input + "_2.fq.gz")]
 
             self.add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
             self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_1.fq.gz") + "; "
@@ -851,11 +883,11 @@ class Trimmomatic(BaseWrapper):
             self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
         else:
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + ".fq.gz")]
+            # Todo need to check what move commands are added for SingleEnd
 
         self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz")]
         self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
-        self.args += args
-        self.setup_run()
+        self.setup_run(add_command=self.add_command)
 
         return
 

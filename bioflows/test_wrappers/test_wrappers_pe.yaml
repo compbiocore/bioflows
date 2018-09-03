@@ -17,35 +17,48 @@ run_parms:
   reference_fasta_path: /gpfs/scratch/test.fa
   gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
-- fastqc
-  default:
-- gsnap
-  options:
-    -d: c_elegans_Ws8
-    -s: caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit
-  job_params:
-    ncpus: 16
-    mem: 40000
-    time: 60
-- qualimap
-  subcommand: rnaseq
-  default:
-- qualimap
-  subcommand: bamqc
-  options:
-    -nr: 10000
-    -c:
-- salmon
+- fastqc: default
+- trimmomatic:
+    subcommand: PE
+    options:
+      "ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true":
+      "SLIDINGWINDOW:10:25 MINLEN:75":
+- fastq_screen:
+    options:
+      --conf:
+      --aligner: bwa
+      --force:
+      --outdir:
+      --threads: 8
+    job_params:
+      ncpus: 4
+      mem: 40000
+      time: 60
+- gsnap:
+    options:
+      -d: c_elegans_Ws8
+      -s: caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit
+    job_params:
+      ncpus: 16
+      mem: 40000
+      time: 60
+- qualimap:
+    subcommand: rnaseq
+- qualimap:
+    subcommand: bamqc
+    options:
+      -nr: 10000
+      -c:
+- salmon:
   options:
     -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
     -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
-- htseq-count
-  default:
-- bwa
-  subcommand: mem
-  options:
-    index.db:
-  job_params:
-    ncpus: 16
-- picard_CollectWgsMetrics
-  default:
+- htseq-count: default
+- bwa:
+    subcommand: mem
+    options:
+      index.db:
+    job_params:
+      ncpus: 16
+- picard:
+    subcommand: CollectWgsMetrics
