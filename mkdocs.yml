@@ -18,4 +18,3 @@ docs_dir: docs/
 pages:
 - Home: 'intro.md'
 - Tutorials: 'tutorials.md'
-#- rappers: 'mkdocs.md'

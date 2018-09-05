@@ -49,10 +49,10 @@ class BaseTask:
         self.jobparms['workdir'] = self.parms.cwd
 
         # todo fix:  Hack to get the command to work for now
-        self.jobparms['command'] = '#SBATCH -vvvv\nset -e\necho $PATH\n'
+        self.jobparms['command'] = "#SBATCH -vvvv\nset -e\necho '***** Old PATH *****'\necho $PATH\n"
         self.jobparms['command'] += self.parms.conda_command + "\n"
         self.jobparms['command'] += "\necho '***** New PATH *****'\necho $PATH\n\n"
-        self.jobparms['command'] += "\necho '***** checking Java****'\njava -version\n\n"
+        self.jobparms['command'] += "\necho '***** checking Java ****'\njava -version 2>&1 \n\n"
 
         # self.jobparms['command'] +='source activate cbc_conda\n'
         self.jobparms['command'] += 'srun '
@@ -87,6 +87,9 @@ class BaseTask:
         if host != 'localhost':
             session.add_context(ctx)
         # describe our job
+        # these parameters are standard saga parameters that map tp slurm specific ones:
+        # ref: line 410+ https://github.com/radical-cybertools/saga-python/blob/devel/src/saga/adaptors/slurm/slurm_job.py
+
         jd = saga.job.Description()
         jd.executable = ''
         jd.arguments = [kwargs.get('command')]  # cmd
@@ -96,8 +99,8 @@ class BaseTask:
         jd.number_of_processes = 1
         jd.processes_per_host = 1
         jd.total_cpu_count = kwargs.get('ncpus', 1)
-        jd.output = kwargs.get('out', os.path.join(jd.working_directory, "mysagajob.stdout"))
-        jd.error = kwargs.get('error', "mysagajob.stderr")
+        jd.output = kwargs.get('out', os.path.join(jd.working_directory, "slurmlog.stdout"))
+        jd.error = kwargs.get('error', "slurmlog.stderr")
         js = saga.job.Service(scheduler + "://" + host, session=session)
         myjob = js.create_job(jd)
         # Now we can start our job.
@@ -144,9 +147,14 @@ class TaskSequence(luigi.Task, BaseTask):
     def requires(self):
         self.setup()
         newParms = [x for x in self.prog_parms]
-        del newParms[0]
+
+        # Test if only one command is submitted or more commands are submitted
         if len(newParms) > 1:
-            return TaskSequence(prog_parms=newParms)
+            del newParms[0]
+            if len(newParms) > 1:
+                return TaskSequence(prog_parms=newParms)
+            else:
+                return TopTask(prog_parms=newParms)
         else:
             return TopTask(prog_parms=newParms)
 
