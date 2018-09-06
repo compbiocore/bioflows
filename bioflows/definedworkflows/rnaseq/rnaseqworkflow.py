@@ -49,7 +49,8 @@ class BaseTask:
         self.jobparms['workdir'] = self.parms.cwd
 
         # todo fix:  Hack to get the command to work for now
-        self.jobparms['command'] = "#SBATCH -vvvv\nset -e\necho '***** Old PATH *****'\necho $PATH\n"
+        self.jobparms['command'] = "#SBATCH -v\nset -e\necho '***** Old PATH *****'\necho $PATH\n"
+        self.jobparms['command'] += "echo '**** Conda command***'\necho '" + self.parms.conda_command + "'\n"
         self.jobparms['command'] += self.parms.conda_command + "\n"
         self.jobparms['command'] += "\necho '***** New PATH *****'\necho $PATH\n\n"
         self.jobparms['command'] += "\necho '***** checking Java ****'\njava -version 2>&1 \n\n"
