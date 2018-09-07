@@ -6,15 +6,28 @@ site_url:         https://compbiocore.github.io/bioflows/
 
 theme:
   name: material
+  feature:
+    tabs: true
+  palette:
+    primary: 'blue grey'
+    accent: 'indigo'
+  logo: images/cbc-logo.svg
+
+extra_css:
+- styles/dark_mode.css
 
 markdown_extensions:
 - extra
 - tables
-- fenced_code
+- admonition
 - codehilite
+- footnotes
+- pymdownx.superfences
+- pymdownx.details
 
-docs_dir: docs/
-
-pages:
-- Home: 'intro.md'
-- Tutorials: 'tutorials.md'
+nav:
+- Home: index.md
+- Docs: intro.md
+- Tutorials:
+  - About: tutorials/tutorials.md
+  - RNA-Seq tutorial: tutorials/rna-seq_tutorial.md

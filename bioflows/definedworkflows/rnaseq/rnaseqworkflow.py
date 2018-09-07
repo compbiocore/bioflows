@@ -42,21 +42,28 @@ class BaseTask:
 
     # Variable for suffix for multiple run of a program
 
-
-    def setup(self):
-        self.parms = jsonpickle.decode(self.prog_parms[0])
+    def setup(self, prog_input):
+        self.parms = jsonpickle.decode(prog_input)
         self.jobparms = self.parms.job_parms
         self.jobparms['workdir'] = self.parms.cwd
 
         # todo fix:  Hack to get the command to work for now
-        self.jobparms['command'] = "#SBATCH -v\nset -e\necho '***** Old PATH *****'\necho $PATH\n"
+        self.jobparms['command'] = "\n#SBATCH --export=NONE\n\n"
+        self.jobparms['command'] += "set -e\necho '***** Old PATH *****'\necho $PATH\n"
         self.jobparms['command'] += "echo '**** Conda command***'\necho '" + self.parms.conda_command + "'\n"
         self.jobparms['command'] += self.parms.conda_command + "\n"
+        # todo Fix hack because CCV loads global modules
+        # with conda activate a new shell is created and the PATH gets muddled
+        # need to figure out how to clear out the env
+        # self.jobparms['command'] += "export PATH=$CONDA_PREFIX/bin:$PATH"
+
         self.jobparms['command'] += "\necho '***** New PATH *****'\necho $PATH\n\n"
         self.jobparms['command'] += "\necho '***** checking Java ****'\njava -version 2>&1 \n\n"
+        self.jobparms['command'] += "\necho '***** checking env *****'\nprintenv\n\n"
 
-        # self.jobparms['command'] +='source activate cbc_conda\n'
-        self.jobparms['command'] += 'srun '
+        # self.jobparms['command'] += 'conda activate $CONDA_PREFIX\n'
+        self.jobparms['command'] += 'scontrol show -ddd job $SLURN_JOBID \n'
+        self.jobparms['command'] += 'srun --export=ALL '
         self.jobparms['command'] += self.parms.run_command + "\n"
         self.jobparms['command'] += " echo 'DONE' > " + self.parms.luigi_target
 
@@ -64,12 +71,6 @@ class BaseTask:
         self.name = self.parms.input + "_" + prog_name
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
-        f = open(os.path.join(self.parms.log_dir, self.name + "_sbatch_cmds"), 'a')
-        f.write("\n\n#*************\n")
-        f.write(self.jobparms['command'])
-        f.write("\n\n#*************\n")
-        f.close()
-
         self.jobparms['out'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stdout")
         self.jobparms['error'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stderr")
         if self.jobparms['saga_host'] != 'localhost':
@@ -103,6 +104,15 @@ class BaseTask:
         jd.output = kwargs.get('out', os.path.join(jd.working_directory, "slurmlog.stdout"))
         jd.error = kwargs.get('error', "slurmlog.stderr")
         js = saga.job.Service(scheduler + "://" + host, session=session)
+
+        prog_name = kwargs.get("name").replace(" ", "_")
+        script_name = kwargs.get("input") + "_" + prog_name
+        f = open(os.path.join(kwargs.get('script_dir'), script_name + "_sbatch_cmds"), 'w')
+        f.write("\n\n#*************\n")
+        f.write(kwargs.get('command'))
+        f.write("\n\n#*************\n")
+        f.close()
+
         myjob = js.create_job(jd)
         # Now we can start our job.
         # print " \n ***** SAGA: job Started ****\n"
@@ -127,7 +137,8 @@ class TopTask(luigi.Task, BaseTask):
     prog_parms = luigi.ListParameter()
 
     def run(self):
-        self.setup()
+
+        self.setup(self.prog_parms[0])
         self.__class__.__name__ = str(self.name)
         job = self.create_saga_job(**self.jobparms)
         return
@@ -146,7 +157,7 @@ class TaskSequence(luigi.Task, BaseTask):
     prog_parms = luigi.ListParameter()
 
     def requires(self):
-        self.setup()
+        self.setup(self.prog_parms[0])
         newParms = [x for x in self.prog_parms]
 
         # Test if only one command is submitted or more commands are submitted
@@ -160,13 +171,16 @@ class TaskSequence(luigi.Task, BaseTask):
             return TopTask(prog_parms=newParms)
 
     def run(self):
-        self.setup()
+        self.setup(self.prog_parms[0])
         self.__class__.__name__ = str(self.name)
-        job = self.create_saga_job(**self.jobparms)
+        if len(self.prog_parms) > 1:
+            job = self.create_saga_job(**self.jobparms)
+        else:
+            job = None
         return
 
     def output(self):
-        self.setup()
+        self.setup(self.prog_parms[0])
         self.__class__.__name__ = str(self.name)
         if self.parms.local_target:
             return luigi.LocalTarget(self.parms.luigi_local_target)
@@ -245,10 +259,12 @@ class BaseWorkflow:
             self.run_parms['conda_command'] = 'source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda'
 
         #self.paired_end = False
+        if "log_dir" not in self.run_parms.keys():
+            self.run_parms['log_dir'] = "logs"
         self.set_paths()
         self.set_base_kwargs()
 
-        self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
+        self.paths_to_test = [self.work_dir, self.log_dir, self.script_dir, self.checkpoint_dir, self.sra_dir,
                          self.fastq_dir, self.align_dir, self.qc_dir]
 
         return
@@ -307,6 +323,7 @@ class BaseWorkflow:
         self.base_kwargs['job_parms_type'] = "default"
         self.base_kwargs['add_job_parms'] = None
         self.base_kwargs['log_dir'] = self.log_dir
+        self.base_kwargs['scripts_dir'] = self.script_dir
         self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', False)
         self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
         self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
@@ -369,6 +386,7 @@ class BaseWorkflow:
         '''
         self.work_dir = self.run_parms['work_dir']
         self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
+        self.script_dir = os.path.join(self.log_dir, "slurm_scripts")
         self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
 
         # TODO refactor to make sra dir only if sra option is used
