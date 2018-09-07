@@ -25,28 +25,24 @@ This package requires the `conda-forge` and the `compbiocore` conda channels to 
 
 ### Installing
 
-Installation is simple using the conda environment
+Installation is simple using conda environments
 
 ```
-conda install -c compbiocore 
+conda install -c compbiocore bioflows
 ```
 
-And repeat
+This will install bioflows and all the necessary bio-informatics tools that are part of the standard workflows. 
 
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+[//]: # (End with an example of getting some data out of the system or using it for a little demo)
 
 ## Tests
 
-Explain how to run the automated tests for this system
+[//]: # (Explain how to run the automated tests for this system)
 
 
 ## Deployment
 
-Add additional notes about how to deploy this on a local machine and in a cloud provider.
+[//]: # (Add additional notes about how to deploy this on a local machine and in a cloud provider.)
 
 
 ## Contributing
@@ -54,13 +50,13 @@ Add additional notes about how to deploy this on a local machine and in a cloud 
 Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Release History
-- 0.4
-  - CHANGES:  
+[//]: # (- 0.4)
+ [//]: # ( - CHANGES:  )
 
-- 0.3
-  - CHANGES:
+[//]: # (- 0.3)
+[//]: # (  - CHANGES:)
 
 
 ## Authors
 
-List authors and affiliation.
+[//]: # (List authors and affiliation.)
