@@ -1,4 +1,4 @@
-# YAML description
+# bioflows YAML control file Specifications
 
 ## Project information section
 

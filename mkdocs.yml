@@ -28,6 +28,7 @@ markdown_extensions:
 nav:
 - Home: index.md
 - Docs: intro.md
+- Specifications: yaml_description.md
 - Tutorials:
   - About: tutorials/tutorials.md
   - RNA-Seq tutorial: tutorials/rna-seq_tutorial.md
