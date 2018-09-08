@@ -263,8 +263,8 @@ class BaseWorkflow:
         self.set_paths()
         self.set_base_kwargs()
 
-        self.paths_to_test = [self.work_dir, self.log_dir, self.script_dir, self.checkpoint_dir, self.sra_dir,
-                         self.fastq_dir, self.align_dir, self.qc_dir]
+        self.paths_to_test = [self.work_dir, self.log_dir, self.scripts_dir, self.checkpoint_dir, self.sra_dir,
+                              self.fastq_dir, self.align_dir, self.qc_dir]
 
         return
 
@@ -322,7 +322,7 @@ class BaseWorkflow:
         self.base_kwargs['job_parms_type'] = "default"
         self.base_kwargs['add_job_parms'] = None
         self.base_kwargs['log_dir'] = self.log_dir
-        self.base_kwargs['scripts_dir'] = self.script_dir
+        self.base_kwargs['scripts_dir'] = self.scripts_dir
         self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', False)
         self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
         self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
@@ -1330,7 +1330,7 @@ def rna_seq_main():
         rw1.symlink_fastqs()
     rw1.chain_commands()
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
-                workers=len(rw1.sample_fastq_work.keys()), lock_size=1)
+                workers=len(rw1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
     return
 
 
@@ -1356,7 +1356,7 @@ def dna_seq_main():
 
     dw1.chain_commands()
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
-                workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
+                workers=len(dw1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
     return
 
 def gatk_main():
@@ -1380,7 +1380,7 @@ def gatk_main():
 
     gt1.chain_commands()
     luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
-                workers=len(gt1.sample_fastq_work.keys()), lock_size=1)
+                workers=len(gt1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
     return
 
 
