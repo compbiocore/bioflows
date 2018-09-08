@@ -46,6 +46,7 @@ class BaseTask:
         self.parms = jsonpickle.decode(prog_input)
         self.jobparms = self.parms.job_parms
         self.jobparms['workdir'] = self.parms.cwd
+        self.jobparms['scripts_dir'] = self.parms.scripts_dir
 
         # todo fix:  Hack to get the command to work for now
         self.jobparms['command'] = "\n#SBATCH --export=NONE\n\n"
@@ -67,12 +68,12 @@ class BaseTask:
         self.jobparms['command'] += self.parms.run_command + "\n"
         self.jobparms['command'] += " echo 'DONE' > " + self.parms.luigi_target
 
-        prog_name = self.parms.name.replace(" ", "_")
-        self.name = self.parms.input + "_" + prog_name
+        self.jobparms['name'] = self.parms.name.replace(" ", "_")
+        self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['name']
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
-        self.jobparms['out'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stdout")
-        self.jobparms['error'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stderr")
+        self.jobparms['out'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stdout")
+        self.jobparms['error'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stderr")
         if self.jobparms['saga_host'] != 'localhost':
             self.jobparms['outfilesource'] = 'ssh.ccv.brown.edu:' + self.parms.luigi_target
             self.jobparms['outfiletarget'] = '' + os.path.dirname(self.parms.luigi_local_target) + "/"
@@ -105,9 +106,7 @@ class BaseTask:
         jd.error = kwargs.get('error', "slurmlog.stderr")
         js = saga.job.Service(scheduler + "://" + host, session=session)
 
-        prog_name = kwargs.get("name").replace(" ", "_")
-        script_name = kwargs.get("input") + "_" + prog_name
-        f = open(os.path.join(kwargs.get('script_dir'), script_name + "_sbatch_cmds"), 'w')
+        f = open(os.path.join(kwargs.get('scripts_dir'), kwargs.get('script_name') + "_sbatch_cmds"), 'w')
         f.write("\n\n#*************\n")
         f.write(kwargs.get('command'))
         f.write("\n\n#*************\n")
@@ -139,13 +138,13 @@ class TopTask(luigi.Task, BaseTask):
     def run(self):
 
         self.setup(self.prog_parms[0])
-        self.__class__.__name__ = str(self.name)
+        self.__class__.__name__ = str(self.jobparms['name'])
         job = self.create_saga_job(**self.jobparms)
         return
 
     def output(self):
-        self.setup()
-        self.__class__.__name__ = str(self.name)
+        self.setup(self.prog_parms[0])
+        self.__class__.__name__ = str(self.jobparms['name'])
         if self.parms.local_target:
             # lcs.RemoteFileSystem("ssh.ccv.brown.edu").get( self.parms.luigi_target,self.parms.luigi_local_target)
             return luigi.LocalTarget(self.parms.luigi_local_target)
@@ -172,7 +171,7 @@ class TaskSequence(luigi.Task, BaseTask):
 
     def run(self):
         self.setup(self.prog_parms[0])
-        self.__class__.__name__ = str(self.name)
+        self.__class__.__name__ = str(self.jobparms['name'])
         if len(self.prog_parms) > 1:
             job = self.create_saga_job(**self.jobparms)
         else:
@@ -181,7 +180,7 @@ class TaskSequence(luigi.Task, BaseTask):
 
     def output(self):
         self.setup(self.prog_parms[0])
-        self.__class__.__name__ = str(self.name)
+        self.__class__.__name__ = str(self.jobparms['name'])
         if self.parms.local_target:
             return luigi.LocalTarget(self.parms.luigi_local_target)
         else:
@@ -386,7 +385,7 @@ class BaseWorkflow:
         '''
         self.work_dir = self.run_parms['work_dir']
         self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
-        self.script_dir = os.path.join(self.log_dir, "slurm_scripts")
+        self.scripts_dir = os.path.join(self.work_dir, "slurm_scripts")
         self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
 
         # TODO refactor to make sra dir only if sra option is used

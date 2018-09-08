@@ -81,6 +81,7 @@ class BaseWrapper(object):
         self.log_dir = kwargs.get('log_dir', os.path.join(os.getcwd(), "logs"))
         self.align_dir = kwargs.get('align_dir', os.path.join(os.getcwd(), 'align_dir'))
         self.qc_dir = kwargs.get('qc_dir', os.path.join(os.getcwd(), 'qc_dir'))
+        self.scripts_dir = kwargs.get('scripts_dir', os.path.join(self.log_dir, 'scripts_dir'))
         self.intermediary_dir = kwargs.get('intermediary_dir', os.path.join(os.getcwd(), 'intermediary_files'))
         ## Define the checkpoint files
         ##self.luigi_source = os.path.join(self.cwd, 'checkpoints', kwargs.get('source', "None"))

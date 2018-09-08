@@ -1,15 +1,13 @@
-# BioFlows Tutorials
+# bioflows Tutorials
 
 This section provides an overview of how to run pre-defined workflows using
 the **bioflows** package. The tutorials are based on presuming that the analysis is
 conducted on the Brown [CCV](https://web1.ccv.brown.edu) compute cluster, to use on other systems please
 check the installation instructions for setting up your environment. Currently, we have implemented an RNA-seq
-workflow using the GSNAP RNAseq aligner. This will be updated as new
-workflows and enhnacements are made to the BioFlows package.
+workflow using the GSNAP RNAseq aligner. This will be updated as new workflows and enhancements are made to the BioFlows package.
 
-> *If you are not sure what the console means or how to login to CCV go
->   to this resource.*
-
+!!! note
+    If you are not sure what the console means or how to login to CCV go to this resource.
 
 
 ## Setup the Environment for bioflows
@@ -41,7 +39,7 @@ module load cbc_conda
 	This will add  `/gpfs/realtime/cbc_conda_v1/bin/` to the beginning of your `PATH` variable
 
 For convenience we will use `/users/username` as the working directory and you should modify
-accordingly.
+the path to the working directory accordingly.
 
 These scripts should be run in a persistent terminal session and we will
 use GNU screen to do that, so that the we can disconnnect from our ssh
@@ -50,15 +48,16 @@ the following link
 [gnu
 screen tutorial](https://www.linode.com/docs/networking/ssh/using-gnu-screen-to-manage-persistent-terminal-sessions)
 
-Start a screen session naming it **test_bioflows** as shown below
+Start a screen session naming it `test_bioflows` as shown below
 
 ```
-
-``` screen -S test_bioflows
+screen -S test_bioflows
+``` 
 
 once you are in your screen session you set up your python environment
 with the following commands
-
-    source activate_cbc_conda
+```
+source activate_cbc_conda
+```
 
 Now you are ready to run the predefined RNAseq workflow
