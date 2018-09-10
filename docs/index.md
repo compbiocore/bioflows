@@ -29,8 +29,8 @@ downloaded from various publicly available repositories called
 
 For ensuring reproducibily, we have established a publicly accessible
 channel for all programs that are included with wrappers within the
-bioflows tool accessible through the [**compbiocore channel**](https://anaconda.org/compbiocore/). In this channel, we have provided conda packages of all software used including
-the bioflows package itself. To download the packages or the bioflows tool use the command into your conda environment:
+bioflows tool through the [**compbiocore channel**](https://anaconda.org/compbiocore/). In this channel, we have also provided conda packages of all software used including
+the bioflows package itself. To download specific packages or the bioflows tool use the command into your conda environment:
 ```
     conda install -c compbiocore /pkg_name/
 
