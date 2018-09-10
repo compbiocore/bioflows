@@ -167,15 +167,13 @@ class TaskSequence(luigi.Task, BaseTask):
             else:
                 return TopTask(prog_parms=newParms)
         else:
-            return TopTask(prog_parms=newParms)
+            return []
+            # return TopTask(prog_parms=newParms)
 
     def run(self):
         self.setup(self.prog_parms[0])
         self.__class__.__name__ = str(self.jobparms['name'])
-        if len(self.prog_parms) > 1:
-            job = self.create_saga_job(**self.jobparms)
-        else:
-            job = None
+        job = self.create_saga_job(**self.jobparms)
         return
 
     def output(self):
@@ -1306,7 +1304,6 @@ class GatkFlow(BaseWorkflow):
 
 
 
-
 def rna_seq_main():
 
     print "success intall worked"
@@ -1329,8 +1326,11 @@ def rna_seq_main():
     else:
         rw1.symlink_fastqs()
     rw1.chain_commands()
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
-                workers=len(rw1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
+                workers=min(50, len(rw1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
     return
 
 
@@ -1355,8 +1355,11 @@ def dna_seq_main():
         dw1.symlink_fastqs()
 
     dw1.chain_commands()
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
-                workers=len(dw1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
+                workers=min(50, len(dw1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
     return
 
 def gatk_main():
@@ -1379,8 +1382,12 @@ def gatk_main():
         gt1.symlink_fastqs()
 
     gt1.chain_commands()
+
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
     luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
-                workers=len(gt1.sample_fastq_work.keys()), lock_size=1, log_level='WARNING')
+                workers=min(50, len(gt1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
     return
 
 
