@@ -33,12 +33,12 @@ sample_manifest:
   metadata:
 run_parms:
   conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
-  work_dir: **/users/username**
+  work_dir: */users/username*
   log_dir: logs
   paired_end: True
   local_targets: False
   saga_host: localhost
-  ssh_user: **ccv username**
+  ssh_user: *ccv username*
   saga_scheduler: slurm
 workflow_sequence:
   - fastqc: default
@@ -61,7 +61,7 @@ Copy the above into a text file and save it in `/users/username` as `test_run.ya
 
 For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, so it should run within the hour and you should see that the alignments are completed.
 
-We will now create a sample manifest file, which is in `csv` format. For this tutorial we copy the manifest below into a text file and save it in `/users/username` as `sample_manifest_min.csv`
+We will now create a sample manifest file, which is in `csv` format. Copy the manifest below into a text file and save it in `/users/username` as `sample_manifest_min.csv`
 
 ```
 samp_1299,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_2.gz
