@@ -16,7 +16,7 @@ execute the test workflow on Brown University's CCV cluster.
 
  The basic steps to running a workflow are
  1. [Create a control file] [#Setup the configuration fie]
- 2. Create your working directory if does not exist
+ 2. Create your working directory if does not exist, here we assume its `/users/username`
  3. [Setup a screen session][/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session]
 
 ## Setup the YAML configuration file
@@ -32,45 +32,40 @@ sample_manifest:
   fastq_file: sampl_manifest_min.csv
   metadata:
 run_parms:
-  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda_test
-  work_dir: /gpfs/scratch/aragaven/test_workflow
+  conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
+  work_dir: **/users/username**
   log_dir: logs
-  paired_end: False
+  paired_end: True
   local_targets: False
-  db: sqlite
-  db_loc: ':memory:'
   saga_host: localhost
-  ssh_user: aragaven
+  ssh_user: **ccv username**
   saga_scheduler: slurm
-  gtf_file: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf
 workflow_sequence:
-  fastqc: default
-  gsnap:
-    options:
-      -d: Ensembl_mus_GRCm38.p5_rel89
-      -s: Mus_musculus.GRCm38.89.splicesites.iit
-    job_params:
-      ncpus: 16
-      mem: 40000
-      time: 60
-  qualimap_rnaseq: default
-  htseq-count: default
+  - fastqc: default
+  - gsnap:
+     options:
+       -d: Ensembl_mus_GRCm38.p5_rel89
+       -s: Mus_musculus.GRCm38.89.splicesites.iit
+      job_params:
+        ncpus: 16
+        mem: 40000
+        time: 60
+  - qualimap_rnaseq: default
+  - htseq-count: default
       
 ```
 
 ## Submit the workflow
 
-Copy the above into a text file and save it in `/users/username` as
-`test_run.yaml`
+Copy the above into a text file and save it in `/users/username` as `test_run.yaml`
 
-For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, so it should run within the hour and you should
-see that the alignments are completed.
-We will now create a sample manifest file. For this tutorial we Copy the manifest below into a text file and save it in
-`/users/username` as `sample_manifest_min.csv`
+For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, so it should run within the hour and you should see that the alignments are completed.
+
+We will now create a sample manifest file, which is in `csv` format. For this tutorial we copy the manifest below into a text file and save it in `/users/username` as `sample_manifest_min.csv`
 
 ```
-    samp_1299,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_2.gz
-    samp_1214,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_2.gz
+samp_1299,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_2.gz
+samp_1214,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_2.gz
 ```
 
 Now in your screen session run the following commands to setup your
@@ -78,8 +73,8 @@ environment if you have not done so previously during the setup or you
 have started a new screen session
 
 ```
-    source activate_cbcC_dona
-    bioflows-rnaseq test_run.yaml
+source activate_cbc_conda
+bioflows-rnaseq test_run.yaml
 ```
 
 
