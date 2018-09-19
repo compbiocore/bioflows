@@ -1,4 +1,4 @@
-# bioflows
+# *bioflows*
 
 ## Overview
 
@@ -12,11 +12,10 @@ computational analysis of NGS data and critical to this objective is to
 provide a consistent software environment across multiple platforms. The
 achieve this goal we are using the following approaches:
 
--   Container based approach using [**docker**](https://www.docker.com) for managing the analysis environment
--   [**CONDA**](https://conda.io/docs/) package management system for managing software tools
--   BioFlows workflow tool to ensure consistency in analysis steps and
+   -   [**CONDA**](https://conda.io/docs/) package management system for managing software tools
+   -   BioFlows workflow tool to ensure consistency in analysis steps and
     stages with interoperability across multiple job submission systems
-
+   -  Container based approach using [**docker**](https://www.docker.com) for managing the analysis environment
 
 
 ## Conda Package Management
@@ -29,13 +28,16 @@ downloaded from various publicly available repositories called
 
 For ensuring reproducibily, we have established a publicly accessible
 channel for all programs that are included with wrappers within the
-bioflows tool through the [**compbiocore channel**](https://anaconda.org/compbiocore/). In this channel, we have also provided conda packages of all software used including
-the bioflows package itself. To download specific packages or the bioflows tool use the command into your conda environment:
+*bioflows* tool through the [**compbiocore channel**](https://anaconda.org/compbiocore/). In this channel, we have also provided conda packages of all software used including
+the *bioflows* package itself. To download specific packages or the *bioflows* tool use the command into your conda environment:
+
 ```
     conda install -c compbiocore /pkg_name/
-
 ```
-
+!!! note
+    **bioflows and its dependencies are available as `conda` pacakges for the linux OS only. 
+    To use **bioflows** in other OSes you will need to use the docker container approach
+    
 More detailed instructions on how to install anaconda and use the conda
 environments can be found in the anaconda documentation for:
 

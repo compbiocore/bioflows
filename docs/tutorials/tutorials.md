@@ -1,4 +1,4 @@
-# bioflows Tutorials
+# About **bioflows** Tutorials
 
 This section provides an overview of how to run pre-defined workflows using
 the **bioflows** package. The tutorials are based on presuming that the analysis is
