@@ -1,7 +1,7 @@
 repo: bioflows
-site_name:        Brown's Computational Biology Core
+site_name:        Bioflows
 site_author:      Ashok Ragavendran
 repo_url:         https://github.com/compbiocore/bioflows
-site_description: Documentation for bioflows, a workflow engine developed by the Computational Biology Core.
-site_url: https://compbiocore.github.io/bioflows/
-type: documentation
+site_description: A workflow engine developed by the Computational Biology Core.
+docs_url: https://compbiocore.github.io/bioflows/
+type: software
