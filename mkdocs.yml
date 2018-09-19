@@ -31,4 +31,5 @@ nav:
 - Specifications: yaml_description.md
 - Tutorials:
   - About: tutorials/tutorials.md
+  - Setup the bioflows environment: tutorials/Setup_bioflows_env.md
   - RNA-Seq tutorial: tutorials/rna-seq_tutorial.md

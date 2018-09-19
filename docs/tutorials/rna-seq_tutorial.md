@@ -5,16 +5,19 @@ This tutorial shows how to run a standard predefined RNA-seq analysis on
 the Brown HPC cluster OSCAR, using the bioflows tool. The workflow
 consists of the following steps:
 
-    -  **Fastqc**: For QC of Raw Fastq reads
-    -  **GSNAP** alignment of the reads to the reference genome of the reads
-    -  **Qualimap** tool for the QC of the aligments generated
-    -  **featureCounts** tool for quantifying expression based on mapped reads
-    -  **Salmon** tool for alignment free quantification of known transcripts
+-  **Fastqc**: For QC of Raw Fastq reads
+-  **GSNAP** alignment of the reads to the reference genome of the reads
+-  **Qualimap** tool for the QC of the aligments generated
+-  **featureCounts** tool for quantifying expression based on mapped reads
+-  **Salmon** tool for alignment free quantification of known transcripts
 
 The next section provide a short how-to with all the commands to
-execute a test workflow.
+execute the test workflow on Brown University's CCV cluster. 
 
-
+ The basic steps to running a workflow are
+ 1. [Create a control file] [#Setup the configuration fie]
+ 2. Create your working directory if does not exist
+ 3. [Setup a screen session][/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session]
 ## Setup the YAML configuration file
 
 For the test run we use the following YAML format control file. A

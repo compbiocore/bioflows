@@ -1,5 +1,6 @@
 # Setting up the environment for **bioflows**
 
+## Setup conda envinronment
 First make sure the conda environment is setup in your `PATH`
 variable. In your CCV console type
 
@@ -29,6 +30,7 @@ module load cbc_conda
 For convenience we will use `/users/username` as the working directory and you should modify
 the path to your working directory accordingly.
 
+## Setup GNU screen session
 These scripts should be run in a persistent terminal session and we will
 use `GNU screen` to do that, so that the we can disconnnect from our ssh
 sessions for long running jobs. To learn more on how to use screen use
