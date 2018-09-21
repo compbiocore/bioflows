@@ -15,9 +15,10 @@ The next section provide a short how-to with all the commands to
 execute the test workflow on Brown University's CCV cluster. 
 
  The basic steps to running a workflow are
- 1. [Create a control file] [#Setup the configuration fie]
+ 
+ 1. [Create a control file](#Setup the YAML configuration file)
  2. Create your working directory if does not exist, here we assume its `/users/username`
- 3. [Setup a screen session][/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session]
+ 3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
 
 ## Setup the YAML configuration file
 
@@ -25,7 +26,7 @@ For the test run we use the following YAML format control file. A
 detailed documentation of the YAML file and all the options is shown
 here. For the current example, we will discuss each section in detail  below
 
-```yaml
+```
 bioproject: Project_test_localhost
 experiment: rnaseq_pilot
 sample_manifest:
@@ -43,11 +44,11 @@ run_parms:
 workflow_sequence:
   - fastqc: default
   - gsnap:
-     options:
-       -d: Ensembl_mus_GRCm38.p5_rel89
-       -s: Mus_musculus.GRCm38.89.splicesites.iit
+      options:
+       -d: Ensembl_Homo_sapiens_GRCh37
+       -s: /gpfs/data/cbc/cbcollab/cbc_ref/gmapdb_2017.01.14/Ensembl_Homo_sapiens_GRCh37/Ensembl_Homo_sapiens_GRCh37.maps/Ensembl_Homo_sapiens.GRCh37.87.splicesites.iit
       job_params:
-        ncpus: 16
+        ncpus: 8
         mem: 40000
         time: 60
   - qualimap_rnaseq: default
@@ -68,9 +69,7 @@ samp_1299,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_1.gz,/gpfs/scratch/aragav
 samp_1214,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_2.gz
 ```
 
-Now in your screen session run the following commands to setup your
-environment if you have not done so previously during the setup or you
-have started a new screen session
+Now in your screen session run the following commands to setup your conda environment if you have not done so previously during the setup or if you just started a new screen session
 
 ```
 source activate_cbc_conda

@@ -1,14 +1,13 @@
 import copy
+import jsonpickle
+import luigi
 import os
+import saga
 import subprocess
 import sys
 import time
-from collections import OrderedDict, defaultdict
-
-import jsonpickle
-import luigi
-import saga
 import yaml
+from collections import OrderedDict, defaultdict
 
 import bioflows.bioflowsutils.wrappers as wr
 from bioflows.bioutils.access_sra.sra import SraUtils
@@ -154,16 +153,16 @@ class TopTask(luigi.Task, BaseTask):
 
 class TaskSequence(luigi.Task, BaseTask):
     prog_parms = luigi.ListParameter()
-
+    n_tasks = luigi.IntParamter()
     def requires(self):
         self.setup(self.prog_parms[0])
         newParms = [x for x in self.prog_parms]
 
         # Test if only one command is submitted or more commands are submitted
-        if len(newParms) > 1:
+        if self.n_tasks > 1:
             del newParms[0]
             if len(newParms) > 1:
-                return TaskSequence(prog_parms=newParms)
+                return TaskSequence(prog_parms=newParms, n_tasks=self.n_tasks)
             else:
                 return TopTask(prog_parms=newParms)
         else:
@@ -971,6 +970,7 @@ class RnaSeqFlow(BaseWorkflow):
                     print tmp_prog.run_command
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
+
                 # Remove the duprun from the the key and create the wrapper command
                 elif self.multi_run_var in key:
                     input_list = key.split('_')
@@ -998,31 +998,8 @@ class RnaSeqFlow(BaseWorkflow):
 
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
-                    # print self.job_params
-                    # tmp_prog.job_parms['mem'] = 1000
-                    # tmp_prog.job_parms['time'] = 80
-                    # tmp_prog.job_parms['ncpus'] = 1
-                    ## Need to fix to read in options and parms
 
-            # Remove the first job and re-add it without any targets
-
-            # del samp_progs[-1]
-            # tmp_prog = self.prog_wrappers[key](key, samp,
-            #                                    stdout=os.path.join(self.log_dir,samp + '_' + key + '.log'),
-            #                                    **dict(self.base_kwargs)
-            #                                    )
-            # tmp_prog.luigi_source = "None"
-            # samp_progs.append(jsonpickle.encode(tmp_prog))
-            # print "\n**** Command after removal *** \n"
-            # print tmp_prog.run_command
-            # for k,v in tmp_prog.__dict__.iteritems():
-            #     print k,v
-            # # print self.job_params
-            # # print tmp_prog.job_parms
-            # print tmp_prog.luigi_source
-            # self.allTasks.append(TaskSequence(samp_progs))
             self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
-            # print self.allTasks
 
         return
 
@@ -1297,7 +1274,7 @@ class GatkFlow(BaseWorkflow):
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
-            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+            self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
 
         return
 
