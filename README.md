@@ -4,7 +4,7 @@
 [![Travis](https://img.shields.io/travis/compbiocore/cbc-documentation-templates.svg?style=flat-square)](https://travis-ci.org/compbiocore/bioflows)
 [![Coverage](https://img.shields.io/coveralls/github/jekyll/jekyll.svg?style=flat-square)](http://www.coverage.com)
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg?style=flat-square)](https://compbiocore.github.io/bioflows)
-[![License](https://img.shields.io/badge/license-MIT-orange.svg?style=flat-square)](https://raw.githubusercontent.com/compbiocore/cbc-documentation-templates/master/LICENSE.md)  
+[![License](https://img.shields.io/badge/license-GPL_3.0-orange.svg?style=flat-square)](https://raw.githubusercontent.com/compbiocore/cbc-documentation-templates/master/LICENSE.md)  
 [![Conda](https://img.shields.io/conda/v/compbiocore/optitype.svg?style=flat-square)](https://anaconda.org/compbiocore/bioflows)
 
 
