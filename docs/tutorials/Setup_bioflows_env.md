@@ -20,10 +20,10 @@ module load cbc_conda
 ```
 
 !!! note
-   if the module command does not work then use   
-   ```
+    if the module command does not work then use   
+    ```
         export PATH=/gpfs/runtime/cbc_conda/bin/:$PATH
-   ```
+    ```
  
 run the `echo $PATH` command again.
 
