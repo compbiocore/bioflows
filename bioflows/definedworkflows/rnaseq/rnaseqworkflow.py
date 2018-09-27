@@ -48,6 +48,7 @@ class BaseTask:
         self.jobparms['scripts_dir'] = self.parms.scripts_dir
 
         # todo fix:  Hack to get the command to work for now
+        #              Clear all the environment variables
         self.jobparms['command'] = "\n#SBATCH --export=NONE\n\n"
         self.jobparms['command'] += "set -e\necho '***** Old PATH *****'\necho $PATH\n"
         self.jobparms['command'] += "echo '**** Conda command***'\necho '" + self.parms.conda_command + "'\n"

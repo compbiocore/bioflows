@@ -1,5 +1,7 @@
 # Setting up the environment for **bioflows**
 
+This section is specifically aimed at users of Brown University's OSCAR HPC cluster. Users of other systems should pay close attention to the 
+
 ## Setup conda envinronment
 First make sure the conda environment is setup in your `PATH`
 variable. In your CCV console type
@@ -16,7 +18,14 @@ if you do not see this then load the **cbc_conda** module as follows
 ```
 module load cbc_conda
 ```
- run the `echo $PATH` command again.
+
+!!! note
+   if the module command does not work then use   
+   ```
+        export PATH=/gpfs/runtime/cbc_conda/bin/:$PATH
+   ```
+ 
+run the `echo $PATH` command again.
 
 ??? tip "Error in Paths"
     If  `/gpfs/realtime/cbc_conda/bin/` is not the first element in the list then use the command 
