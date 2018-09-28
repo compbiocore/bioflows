@@ -41,6 +41,7 @@ run_parms:
   saga_host: localhost
   ssh_user: *ccv username*
   saga_scheduler: slurm
+  gtf_file: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_hg_GRCh37_rel87/Homo_sapiens.GRCh37.87.gtf
 workflow_sequence:
   - fastqc: default
   - gsnap:
@@ -66,7 +67,7 @@ We will now create a sample manifest file, which is in `csv` format. Copy the ma
 
 ```
 samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
-samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_2.gz
+samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg   /Cb_2.gz
 ```
 
 Now in your screen session run the following commands to setup your conda environment if you have not done so previously during the setup or if you just started a new screen session
