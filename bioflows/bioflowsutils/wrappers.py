@@ -862,12 +862,12 @@ class Trimmomatic(BaseWrapper):
 
             # Update threads if cpus given
             if 'ncpus' in kwargs.get('add_job_parms').keys():
-                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
+                self.args += [' -threads ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
 
         else:
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
-            self.args += ['-t 8']
+            self.args += ['-threads 8']
 
         # Add ay other optional arguments
         self.args += args

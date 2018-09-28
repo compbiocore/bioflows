@@ -492,9 +492,9 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+                                          "fastq-dump", "-vvv", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
                                           self.fastq_dir, ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+                                          " mv -v", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -503,12 +503,15 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
+                                          "fastq-dump", "-vvv", "--gzip", "--split-files",
+                                          os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
+                                          " mv -v",
+                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
+                                          " mv -v",
+                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -521,7 +524,8 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+                                              "fastq-dump", "-vvv", "--gzip", os.path.join(self.sra_dir, sra_name),
+                                              '-O',
                                               self.fastq_dir, ";",
                                               " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
@@ -534,18 +538,18 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", "--split-files",
+                                              "fastq-dump", "-vvv", "--gzip", "--split-files",
                                               os.path.join(self.sra_dir, sra_name), '-O',
                                               self.fastq_dir, ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
-                                              "rm",
+                                              "rm -v",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")), ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
-                                              "rm",
+                                              "rm -v",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")), ";",
                                               "echo DONE:", srr_file, "> "]))
                         samp_list.append(samp)
@@ -583,7 +587,7 @@ class BaseWorkflow:
         f = open(outfile, 'w')
         for samp, cmds in cmds_set.iteritems():
             if type(cmds) == list:
-                f.write(samp + ":" + '; '.join(cmds) + "\n")
+                f.write(samp + ":" + '\n'.join(cmds) + "\n")
             else:
                 f.write(samp + ":" + cmds + "\n")
 
