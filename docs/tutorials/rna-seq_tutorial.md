@@ -65,8 +65,8 @@ For this tutorial I have created a small test dataset with 10000 read pairs from
 We will now create a sample manifest file, which is in `csv` format. Copy the manifest below into a text file and save it in `/users/username` as `sample_manifest_min.csv`
 
 ```
-samp_1299,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb2_2.gz
-samp_1214,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_1.gz,/gpfs/scratch/aragaven/rnaseq_test/PE_hg/Cb_2.gz
+samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
+samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_2.gz
 ```
 
 Now in your screen session run the following commands to setup your conda environment if you have not done so previously during the setup or if you just started a new screen session
