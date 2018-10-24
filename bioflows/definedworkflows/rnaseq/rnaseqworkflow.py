@@ -539,8 +539,7 @@ class BaseWorkflow:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
                                               "fastq-dump", "-vvv", "--gzip", "--split-files",
-                                              os.path.join(self.sra_dir, sra_name), '-O',
-                                              self.fastq_dir, ";",
+                                              os.path.join(self.sra_dir, sra_name), '-O', self.fastq_dir, ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
@@ -646,17 +645,31 @@ class BaseWorkflow:
         jobs = []
         for samp,cmd in cmds.iteritems():
             num = 1
+            prev_job_id = None;
+
             for c in cmd:
                 job_output = os.path.join(self.log_dir, samp + "_" + str(num) + "_" + job_output_suffix)
                 #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
 
                 ## Always redirect stderr to stdout in this case
-                jd.arguments = c + job_output + " 2>&1 "
-                myjob = js.create_job(jd)
+                myjob = ''
+
+                if num == 1:
+                    jd.arguments = c + job_output + " 2>&1 "
+                    myjob = js.create_job(jd)
+                    prev_job_id = myjob
+                elif num > 1:
+                    jd.arguments = "#SBATCH --dependency=after:job_id:" + str(prev_job_id) + "\n\n"
+                    jd.arguments += c + job_output + " 2>&1 "
+                    myjob = js.create_job(jd)
+                    prev_job_id = myjob
+
                 myjob.run()
                 jobs.append(myjob)
                 print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
+
                 num += 1
+
         # Wait for all jobs to finish
 
         while len(jobs) > 0:

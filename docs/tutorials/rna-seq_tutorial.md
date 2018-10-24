@@ -2,8 +2,13 @@
 ## Overview
 
 This tutorial shows how to run a standard predefined RNA-seq analysis on
-the Brown HPC cluster OSCAR, using the bioflows tool. The workflow
-consists of the following steps:
+the Brown HPC cluster OSCAR, using the bioflows tool. 
+!!! attention
+    #Prerequisites
+    - Make sure you have access to the OSCAR cluster or request one by contacting support@ccv.brown.edu
+    - If you are not comfortable with the Linux environment you can
+
+The workflow consists of the following steps:
 
 -  **Fastqc**: For QC of Raw Fastq reads
 -  **GSNAP** alignment of the reads to the reference genome of the reads
@@ -16,17 +21,14 @@ execute the test workflow on Brown University's CCV cluster.
 
  The basic steps to running a workflow are
  
- 1. [Create a control file](#Setup the YAML configuration file)
+ 1. [**Create a control file**](#Setup the YAML configuration file)
  2. Create your working directory if does not exist, here we assume its `/users/username`
+ 3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
 
 !!! caution
     The working directory in a real example can end up being quite large upto a few terabytes. On OSCAR you would create the working directory in a location such as your `data` folder or the `scratch` folder
     
- 3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
 
-!!! attention
-    #Prerequistes
-    - Make sure you have  
 ## Setup the YAML configuration file
 
 For the test run we use the following YAML format control file. A
