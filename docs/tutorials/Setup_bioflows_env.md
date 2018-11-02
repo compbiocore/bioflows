@@ -16,7 +16,7 @@ element in the list of paths in your output.
 if you do not see this then load the **cbc_conda** module as follows
 
 ```
-module load cbc_conda
+source /gpfs/runtime/cbc_conda/activate_cbc_conda
 ```
 
 !!! note
@@ -56,7 +56,11 @@ screen -S test_bioflows
 once you are in your screen session you set up your `conda` environment containing **bioflows** as follows
 with the following commands
 ```
-source activate_cbc_conda
+source /gpfs/runtime/cbc_conda/activate_cbc_conda
 ```
-
+??? tip "activate with PATH/ variable set"
+    if you have set the `PATH` variable instead as mentioned above the just use the command
+    ```
+        source activate_cbc_conda
+    ```
 Now you are ready to run the predefined workflows in specific tutorials

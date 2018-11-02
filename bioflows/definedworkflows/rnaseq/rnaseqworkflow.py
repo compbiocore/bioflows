@@ -483,8 +483,11 @@ class BaseWorkflow:
         Download sra based on ftp urls and process to fastq
         :return:
         '''
-        cmds = []
+
         # Add commands to the command list
+        cmds = []
+
+        # Add samples to a list
         samp_list =[]
         for samp, fileName in self.sample_fastq.iteritems():
             self.sample_fastq_work[samp] = []
@@ -557,9 +560,8 @@ class BaseWorkflow:
 
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
-        #print cmds
-        # Create a dictionary of Sample and commands
-        #cmds_dict = dict(zip(samp_list,cmds))
+
+        # defaultdict with a default factory of list. A new list is created for each new key.
 
         cmds_dict = defaultdict(list)
         for samp,cmd in zip(samp_list,cmds):
@@ -594,7 +596,7 @@ class BaseWorkflow:
         f.close()
         return
 
-    def symlink_fastqs_submit_jobs(self, cmds, job_output_suffix, run_time):
+    def symlink_fastqs_submit_jobs(self, cmds, job_output_suffix, run_time, depend=False):
         """
         take in a dictionary of sample and associated commands to run for the sample and submit each command as a job
         :param cmds:
@@ -646,27 +648,39 @@ class BaseWorkflow:
         jobs = []
         for samp,cmd in cmds.iteritems():
             num = 1
-            prev_job_id = None;
+            prev_job_id = None
 
             for c in cmd:
                 job_output = os.path.join(self.log_dir, samp + "_" + str(num) + "_" + job_output_suffix)
-                #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
+                jd.error = os.path.join(self.log_dir, samp + "_" + str(num) + "_slurm.err")
+                jd.output = os.path.join(self.log_dir, samp + "_" + str(num) + "_slurm.out")
 
                 ## Always redirect stderr to stdout in this case
                 myjob = ''
 
-                if num == 1:
+                if num == 1 and depend:
+                    jd.arguments = c + " 2>&1 " + job_output
+                    myjob = js.create_job(jd)
+                    myjob.run()
+                    jobs.append(myjob)
+                    prev_job_id = myjob.get_id().split('-')[1].strip('[').strip(']')
+                elif num > 1 and depend:
+                    # Hack to append other SBATCH defs
+                    tmp_args = "#SBATCH--dependency=afterok:" + str(prev_job_id) + "\n"
+                    jd.output += "\n" + tmp_args
                     jd.arguments = c + job_output + " 2>&1 "
                     myjob = js.create_job(jd)
-                    prev_job_id = myjob
-                elif num > 1:
-                    jd.arguments = "#SBATCH --dependency=after:job_id:" + str(prev_job_id) + "\n\n"
-                    jd.arguments += c + job_output + " 2>&1 "
+                    myjob.run()
+                    jobs.append(myjob)
+                    prev_job_id = myjob.get_id().split('-')[1].strip('[').strip(']')
+                else:
+                    jd.arguments = c + job_output + " 2>&1 "
                     myjob = js.create_job(jd)
-                    prev_job_id = myjob
+                    myjob.run()
+                    jobs.append(myjob)
 
-                myjob.run()
-                jobs.append(myjob)
+                # myjob.run()
+                # jobs.append(myjob)
                 print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
 
                 num += 1
