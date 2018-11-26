@@ -1032,7 +1032,7 @@ class RnaSeqFlow(BaseWorkflow):
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
-            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs, n_tasks=len(samp_progs))))
 
         return
 
@@ -1180,7 +1180,7 @@ class DnaSeqFlow(BaseWorkflow):
             # # print tmp_prog.job_parms
             # print tmp_prog.luigi_source
             # self.allTasks.append(TaskSequence(samp_progs))
-            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs, n_tasks=len(samp_progs))))
             # print self.allTasks
 
         return
