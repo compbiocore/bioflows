@@ -869,8 +869,8 @@ class Trimmomatic(BaseWrapper):
             self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
             self.args += ['-threads 8']
 
-        # Add ay other optional arguments
-        self.args += args
+        self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
+
         if self.paired_end:
 
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz"),
@@ -887,7 +887,9 @@ class Trimmomatic(BaseWrapper):
             # Todo need to check what move commands are added for SingleEnd
 
         self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + "_tr.fq.gz")]
-        self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
+
+        # Add all other optional trimming specification arguments
+        self.args += args
         self.setup_run(add_command=self.add_command)
 
         return
