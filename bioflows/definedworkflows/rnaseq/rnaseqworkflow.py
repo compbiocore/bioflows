@@ -64,7 +64,9 @@ class BaseTask:
         self.jobparms['command'] += "\necho '***** checking env *****'\nprintenv\n\n"
 
         # self.jobparms['command'] += 'conda activate $CONDA_PREFIX\n'
-        self.jobparms['command'] += 'scontrol show -ddd job $SLURN_JOBID \n'
+        self.jobparms['command'] += "\necho '***** printing JOB INFO *****'\nscontrol show -ddd job $SLURM_JOBID \n"
+
+        # Add a script here to print out the actual commands used by the slurm using sbatch script
         self.jobparms['command'] += 'srun --export=ALL '
         self.jobparms['command'] += self.parms.run_command + "\n"
         self.jobparms['command'] += " echo 'DONE' > " + self.parms.luigi_target
