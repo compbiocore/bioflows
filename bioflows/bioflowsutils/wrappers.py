@@ -332,7 +332,7 @@ class FastQC(BaseWrapper):
 
         self.init(name, **kwargs)
         # self.luigi_source = "None"
-        self.version('-v')
+        # self.version('-v')
         self.add_threading('-t')
         self.args += [' -o ' + self.qc_dir]
         self.args += args
@@ -879,7 +879,7 @@ class Trimmomatic(BaseWrapper):
             self.add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
             self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_1.fq.gz") + "; "
             self.add_command += "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2P.fq.gz") + " "
-            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_2.fq.gz") + ";"
+            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_tr_2.fq.gz") + "; "
             self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1U.fq.gz") + "; "
             self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
         else:

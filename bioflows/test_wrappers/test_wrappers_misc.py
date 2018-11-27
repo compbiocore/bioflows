@@ -202,6 +202,7 @@ class TestBwaMem(unittest.TestCase):
         print self.bwa_test.job_parms
 
 
+
 class TestTrimmomaticPE(unittest.TestCase):
 
     def setUp(self):
@@ -239,15 +240,16 @@ class TestTrimmomaticPE(unittest.TestCase):
                                                   **dict(new_base_kwargs))
 
     def test_trimmomatic_wrapper(self):
-        print "\n***** Testing Bwa_wrapper command *****\n"
+        print "\n***** Testing Trimmomatic wrapper command *****\n"
         print self.trimmomatic_pe_test.run_command
         print self.trimmomatic_pe_test.job_parms
-        out_command = "trimmomatic PE -t 8 ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true "
-        out_command += "SLIDINGWINDOW:10:25 MINLEN:75 /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz "
-        out_command += "-baseout /gpfs/scratch/fastq/test_samp_tr.fq.gz -trimlog /gpfs/scratch/logs/test_samptrimmomatic_PE.log "
-        out_command += "2>>/gpfs/scratch/logs/test_samp_trimmomatic_PE_err.log 1>/gpfs/scratch/logs/trimmomatic.log;"
-        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_1P.fq.gz /gpfs/scratch/fastq/test_samp_tr_1.fq.gz;"
-        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_2P.fq.gz /gpfs/scratch/fastq/test_samp_tr_2.fq.gz;"
+        out_command = "trimmomatic PE -threads 8  "
+        out_command += "-trimlog /gpfs/scratch/logs/test_samptrimmomatic_PE.log  /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz "
+        out_command += "-baseout /gpfs/scratch/fastq/test_samp_tr.fq.gz "
+        out_command += "ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true SLIDINGWINDOW:10:25 MINLEN:75 "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_trimmomatic_PE_err.log 1>/gpfs/scratch/logs/trimmomatic.log; "
+        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_1P.fq.gz /gpfs/scratch/fastq/test_samp_tr_1.fq.gz; "
+        out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_2P.fq.gz /gpfs/scratch/fastq/test_samp_tr_2.fq.gz; "
         out_command += "rm -v /gpfs/scratch/fastq/test_samp_tr_1U.fq.gz; rm -v /gpfs/scratch/fastq/test_samp_tr_2U.fq.gz;"
         self.assertEqual(self.trimmomatic_pe_test.run_command.split(), out_command.split())
 
@@ -262,5 +264,7 @@ if __name__ == '__main__':
     # suite.addTest(TestSamMarkDup("test_sammarkdup_wrapper"))
     #suite.addTest(TestQualimapRna("test_qualimap_wrapper"))
     suite.addTest(TestFastqc("test_fastqc_wrapper"))
-    runner = unittest.TextTestRunner()
+    suite.addTest(TestFastqc("test_bwa_wrapper"))
+
+    # runner = unittest.TextTestRunner()
     runner.run(suite)
