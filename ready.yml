@@ -4,6 +4,6 @@ authors:
   - name: Ashok Ragavendran
     github_user: ashokrags
 repo_url:         https://github.com/compbiocore/bioflows
-site_description: A workflow engine developed by the Computational Biology Core.
+site_description: A bioinformatics workflow engine that streamlines the most common analysis pipelines.
 docs_url: https://compbiocore.github.io/bioflows/
 type: software
