@@ -333,7 +333,7 @@ class FastQC(BaseWrapper):
         self.init(name, **kwargs)
         # self.luigi_source = "None"
         # self.version('-v')
-        self.add_threading('-t')
+        # self.add_threading('-t')
         self.args += [' -o ' + self.qc_dir]
         self.args += args
 
@@ -381,6 +381,7 @@ class Gsnap(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
             if 'ncpus' in kwargs.get('add_job_parms').keys():
+                # TODO make sure threads are not given in the args
                 self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
         else:
             self.job_parms.update({'mem': 1000, 'time': 80, 'ncpus': 1})
@@ -512,6 +513,7 @@ class SamToolsSort(BaseWrapper):
 
             # add threading
             if 'ncpus' in kwargs.get('add_job_parms').keys():
+                # TODO make sure threads are not given in the args
                 self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
@@ -750,6 +752,7 @@ class Bwa(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
             if 'ncpus' in kwargs.get('add_job_parms').keys():
+                # TODO make sure threads are not given in the args
                 self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
         else:
             self.job_parms.update({'mem': 4000, 'time': 80, 'ncpus': 12})
@@ -831,12 +834,14 @@ class FastqScreen(BaseWrapper):
             self.job_parms.update(kwargs.get('add_job_parms'))
 
             # Update threads if cpus given
+            # TODO make sure threads are not given in the args
             if 'ncpus' in kwargs.get('add_job_parms').keys():
-                self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
+                self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'])]
             else:
                 # Set default memory and cpu options
                 self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
-                self.args += ['--threads 8']
+                # TODO make sure threads are not given in the args
+                self.args += ['--threads 4']
 
         self.args = ["--outdir ", os.path.join(kwargs.get('qc_dir')), "--force"]
         self.args += args
@@ -853,6 +858,8 @@ class Trimmomatic(BaseWrapper):
     add_command = ''
 
     def __init__(self, name, input, *args, **kwargs):
+        print "Printing trimmomatic args"
+        print args
         self.input = input
         new_name = ' '.join(name.split("_"))
         self.init(new_name, **kwargs)
@@ -860,14 +867,19 @@ class Trimmomatic(BaseWrapper):
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
 
-            # Update threads if cpus given
+            # Update threads if cpus given ## Need to fix this based on environment o
+            # Other parameters. this can break when slurm config does not allow multi
+            # threads per cpu
+            # TODO make sure threads are not given in the args
+
             if 'ncpus' in kwargs.get('add_job_parms').keys():
-                self.args += [' -threads ' + str(kwargs.get('add_job_parms')['ncpus'] * 2)]
+                self.args += [' -threads ' + str(kwargs.get('add_job_parms')['ncpus'])]
 
         else:
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
-            self.args += ['-threads 8']
+            # TODO make sure threads are not given in the args
+            self.args += ['-threads 4']
 
         self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
 

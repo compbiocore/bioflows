@@ -21,6 +21,7 @@ workflow_sequence:
 - trimmomatic:
     subcommand: PE
     options:
+      -threads: 8
       "ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true":
       "SLIDINGWINDOW:10:25 MINLEN:75":
 - fastq_screen:
