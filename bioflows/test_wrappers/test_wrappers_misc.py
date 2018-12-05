@@ -241,6 +241,7 @@ class TestTrimmomaticPE(unittest.TestCase):
 
     def test_trimmomatic_wrapper(self):
         print "\n***** Testing Trimmomatic wrapper command *****\n"
+        print self.rw1.new_base_kwargs
         print self.trimmomatic_pe_test.run_command
         print self.trimmomatic_pe_test.job_parms
         out_command = "trimmomatic PE -threads 8  "

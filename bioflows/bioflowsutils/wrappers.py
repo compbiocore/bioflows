@@ -865,6 +865,7 @@ class Trimmomatic(BaseWrapper):
         self.init(new_name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
+            # self.job_parms.update(dict(kwargs.get('add_job_parms')))
             self.job_parms.update(kwargs.get('add_job_parms'))
 
             # Update threads if cpus given ## Need to fix this based on environment o

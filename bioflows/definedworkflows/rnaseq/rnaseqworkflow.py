@@ -943,7 +943,7 @@ class RnaSeqFlow(BaseWorkflow):
                 new_base_kwargs = self.update_job_parms(key)
                 if key == 'gsnap':
                     # update job parms
-                    new_base_kwargs = self.update_job_parms(key)
+                    # new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
 
                     tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
@@ -963,6 +963,7 @@ class RnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                    # TODO why use new_base_kwargs instead of base_kwargs like the others
                     tmp_prog = self.prog_wrappers['samsort']('samtools', samp,
                                                              stdout=os.path.join(self.log_dir, samp + '_bamsrt.log'),
                                                              **dict(new_base_kwargs)
@@ -1012,7 +1013,9 @@ class RnaSeqFlow(BaseWorkflow):
                     idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
-                    tmp_prog = self.prog_wrappers[key](new_key, samp, *self.progs[key],
+
+                    # Testing here
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
@@ -1071,7 +1074,7 @@ class DnaSeqFlow(BaseWorkflow):
                 new_base_kwargs = self.update_job_parms(key)
                 if key == 'bwa_mem':
                     # update job parms
-                    new_base_kwargs = self.update_job_parms(key)
+                    # new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
 
                     tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
@@ -1288,7 +1291,8 @@ class GatkFlow(BaseWorkflow):
                     idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
-                    tmp_prog = self.prog_wrappers[key](new_key, samp, *self.progs[key],
+                    # Testing here
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
