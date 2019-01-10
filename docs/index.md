@@ -1,22 +1,23 @@
 # *bioflows*
 
-## Overview
-
-This document provides a guide to using the bioflows package for various
-workflows to analyse NGS datasets. Currently, we have implemented one
-standard RNA-seq workflow and a tutorial is included for analysis of
+## Summary
+This is a guide to using the `bioflows` package for running standard
+pipelines to analyse NGS datasets. Currently, we have implemented one version of a 
+standard RNA-seq pipeline, alongwith a tutorial, for analysis of
 RNA-seq data using this package.
 
-One primary objective of the Core is to enable reproducibility in
-computational analysis of NGS data and critical to this objective is to
-provide a consistent software environment across multiple platforms. The
-achieve this goal we are using the following approaches:
-
-   -   [**CONDA**](https://conda.io/docs/) package management system for managing software tools
-   -   BioFlows workflow tool to ensure consistency in analysis steps and
+## Overview
+A primary objective of the Computational Biology Core at Brown's Centre for Computational Biology of Human Diesease, is to enable reproducibility in computational analysis of NGS data. Critical to this objective is to provide a simple tool for creating/running bioinformatics workflows as well as consistent software environments across multiple platforms. To achieve this goal we have:
+    - **Developed BioFlows** a workflow tool to ensure consistency in analysis steps and
     stages with interoperability across multiple job submission systems
-   -  Container based approach using [**docker**](https://www.docker.com) for managing the analysis environment
+   -   [**Use CONDA**](https://conda.io/docs/) package management system for managing software tools
+   -  Container based approach using [**docker**](https://www.docker.com) for cross-platform interoperability of the analysis environment
 
+**bioflows** is an user-friendly python implementation of a workflow manager. The user is expected to not have any programming knowledge and needs to only provide a control file in a YAML format, chosen for its human readability. The goal here is to provide users with a simple and straight-forward interface for processing NGS datasets with many samples using standard bioinformatics pipelines, e.g  RNA-seq, GATK variant calling etc. The tool is developed to alleviate some of the primary issues with scaling up pipelines, such as file naming, management of data, output and logs. 
+
+## Capabilities
+
+## How it works
 
 ## Conda Package Management
 
@@ -35,7 +36,7 @@ the *bioflows* package itself. To download specific packages or the *bioflows* t
     conda install -c compbiocore /pkg_name/
 ```
 !!! note
-    **bioflows and its dependencies are available as `conda` pacakges for the linux OS only. 
+    **bioflows** and its dependencies are available as `conda` pacakges for the linux OS only. 
     To use **bioflows** in other OSes you will need to use the docker container approach
     
 More detailed instructions on how to install anaconda and use the conda

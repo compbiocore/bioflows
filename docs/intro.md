@@ -10,9 +10,4 @@ RNA-seq data using **bioflows**.
 
 ## Overview of bioflows
 
-**bioflows** is an user-friendly python implementation of a workflow manager. The user is expected to not have any programming and needs to only provide a control file in a YAML format, chosen for the human readability. The goal here is to provide users with a simple and straight-forward interface for processing NGS datasets many samples using a standard bioinformatics pipelines, e.g  RNA-seq, GATK variant calling etc. The tool is developed to alleviate some of the primary issues with scaling up pipelines, such as file naming, management of data, output and logs. 
-
-## Capabilities
-
-## How it works
 
