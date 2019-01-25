@@ -41,7 +41,7 @@ detailed documentation of the YAML file and all the options is shown
 bioproject: Project_test_localhost
 experiment: rnaseq_pilot
 sample_manifest:
-  fastq_file: sampl_manifest_min.csv
+  fastq_file: sample_manifest_min.csv
   metadata:
 run_parms:
   conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
@@ -91,3 +91,23 @@ In your screen session, run the following commands to setup your conda environme
 source activate_cbc_conda
 bioflows-rnaseq test_run.yaml
 ```
+
+### Workflow outputs
+
+The bioflows-rnaseq call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: `sra`, `fastq`, `alignments`, `qc`, `slurm_scripts`, `logs`, `expression`, and `checkpoints`.
+
+`sra` Will be empty in this tutorial.
+
+`fastq` symlinks to fastq files.
+
+`alignments` SAM and BAM files from GSNAP alignments.
+
+`qc` QC reports from fastqc and qualimap.
+
+`slurm_scripts` Records of the commands sent to slurm.
+
+`logs` Log files from various bioflows processes (including the standard error and standard out).
+
+`expression` Expression values from featureCounts.
+
+`checkpoints` Contains checkpoint records to confirm that bioflows has progressed through each step of the analysis.
