@@ -18,6 +18,8 @@ run_parms:
   gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
 - fastqc: default
+- fastqc: default
+- bammarkduplicates2: default
 - trimmomatic:
     subcommand: PE
     options:
@@ -46,6 +48,14 @@ workflow_sequence:
       ncpus: 16
       mem: 40000
       time: 60
+- samtools:
+    subcommand: sort
+    suffix:
+      input: ".mapped.bam"
+      output: ".tst.srtd.bam"
+    job_params:
+      ncpus: 3
+      mem: 30000
 - qualimap:
     subcommand: rnaseq
 - qualimap:
@@ -66,3 +76,8 @@ workflow_sequence:
       ncpus: 16
 - picard:
     subcommand: CollectWgsMetrics
+- fastq_screen:
+    job_params:
+      ncpus: 16
+    options:
+      --conf: my.conf

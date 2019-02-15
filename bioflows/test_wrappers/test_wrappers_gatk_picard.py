@@ -20,8 +20,9 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_realignerTargetcreator(self):
         self.wrapper_name = 'gatk_RealignerTargetCreator'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_RealignerTargetCreator.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK REALIGNER TARGET CREATOR command *****\n"
         print self.gatk_test.run_command
@@ -34,8 +35,9 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_indelRealigner(self):
         self.wrapper_name = 'gatk_IndelRealigner'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_IndelRealigner.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK INDEL REALIGNER command *****\n"
         out_command = "gatk  -Xmx30000M  -T IndelRealigner "
@@ -48,8 +50,9 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_BaseRecalibrator(self):
         self.wrapper_name = 'gatk_BaseRecalibrator'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_BaseRecalibrator.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK Base Recalibrator command *****\n"
         print self.gatk_test.run_command
@@ -65,8 +68,9 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_BaseRecalibrator_bqsr(self):
         self.wrapper_name = 'gatk_BaseRecalibrator_round_2'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_BaseRecalibrator.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK Base Recalibrator with BQSR command *****\n"
         print self.gatk_test.run_command
@@ -77,15 +81,16 @@ class TestGatkInit(unittest.TestCase):
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf "
         out_command += "-nct 8 -BQSR /gpfs/scratch/gatk_results/test_samp_recal_table.txt "
         out_command += "-o /gpfs/scratch/gatk_results/test_samp_post_recal_table.txt "
-        out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_err.log 1>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator.log"
+        out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_err.log 1>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_BQSR.log"
         self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
 
     # @unittest.skip("demonstrating skipping")
     def test_gatk_PrintReads(self):
         self.wrapper_name = 'gatk_PrintReads'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_PrintReads.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK Print Reads command *****\n"
         print self.gatk_test.run_command
@@ -100,6 +105,8 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_AnalyzeCovariates(self):
         self.wrapper_name = 'gatk_AnalyzeCovariates'
         self.dw1.update_job_parms(self.wrapper_name)
+        # self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                  stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_AnalyzeCovariates.log'),
                                  **dict(self.dw1.new_base_kwargs))
@@ -125,6 +132,8 @@ class TestPicardInit(unittest.TestCase):
     def test_picard_markduplicates(self):
         self.wrapper_name = 'picard_MarkDuplicates'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                      stdout=os.path.join(self.dw1.log_dir, 'test_samp_picard_markduplicates.log'),
                                      **dict(self.dw1.new_base_kwargs))
@@ -139,6 +148,8 @@ class TestPicardInit(unittest.TestCase):
     def test_picard_addorreplacereadgroups(self):
         self.wrapper_name = 'picard_AddOrReplaceReadGroups'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                      stdout=os.path.join(self.dw1.log_dir,
                                                          'test_samp_picard_AddOrReplaceReadGroups.log'),
@@ -153,6 +164,8 @@ class TestPicardInit(unittest.TestCase):
     def test_picard_buildbamindex(self):
         self.wrapper_name = 'picard_BuildBamIndex'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                      stdout=os.path.join(self.dw1.log_dir, 'test_samp_picard_BuildBamIndex.log'),
                                      **dict(self.dw1.new_base_kwargs))
@@ -165,6 +178,8 @@ class TestPicardInit(unittest.TestCase):
     def test_picard_collect_wgs_metrics(self):
         self.wrapper_name = 'picard_CollectWgsMetrics'
         self.dw1.update_job_parms(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
+
         self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
                                      stdout=os.path.join(self.dw1.log_dir, 'test_samp_picard_CollectWgsMetrics.log'),
                                      **dict(self.dw1.new_base_kwargs))
@@ -175,6 +190,7 @@ class TestPicardInit(unittest.TestCase):
         out_command += "MINIMUM_MAPPING_QUALITY=20 MINIMUM_BASE_QUALITY=20 COUNT_UNPAIRED=true VALIDATION_STRINGENCY=LENIENT "
         out_command += "2>>/gpfs/scratch/logs/test_samp_picard_CollectWgsMetrics_err.log 1>/gpfs/scratch/logs/test_samp_picard_CollectWgsMetrics.log"
         self.assertEqual(self.picard_test.run_command.split(), out_command.split())
+
 
 if __name__ == '__main__':
     # unittest.main()

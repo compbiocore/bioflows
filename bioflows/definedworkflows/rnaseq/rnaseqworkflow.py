@@ -209,7 +209,10 @@ class BaseWorkflow:
     progs = OrderedDict()
     sra_info = ''
     multi_run_var = "round"
-
+    prog_job_parms = dict()
+    prog_suffix_type = dict()
+    prog_output_suffix = dict()
+    prog_input_suffix = dict()
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
         self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
@@ -217,12 +220,10 @@ class BaseWorkflow:
                               'fastqc': wr.FastQC,
                               'qualimap_rnaseq': wr.QualiMap,
                               'qualimap_bamqc': wr.QualiMap,
-                              'samtobam': wr.SamToBam,
-                              'bamtomapped': wr.BamToMappedBam,
-                              'bamtounmapped': wr.BamToUnmappedBam,
-                              'samindex': wr.SamIndex,
-                              'samsort': wr.SamToolsSort,
-                              'bammarkduplicates2': wr.BiobambamMarkDup,
+                              'samtools_view': wr.SamTools,
+                              'samtools_index': wr.SamTools,
+                              'samtools_sort': wr.SamTools,
+                              'bammarkduplicates2': wr.Biobambam,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
@@ -236,7 +237,8 @@ class BaseWorkflow:
                               'gatk_PrintReads': wr.Gatk,
                               'gatk_HaplotypeCaller': wr.Gatk,
                               'gatk_AnalyzeCovariates': wr.Gatk,
-                              'trimmomatic_PE': wr.Trimmomatic
+                              'trimmomatic_PE': wr.Trimmomatic,
+                              'fastq_screen': wr.FastqScreen
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -836,15 +838,32 @@ class BaseWorkflow:
                         # Update current program name by adding the subcommand
                         new_key = '_'.join([k, v['subcommand']])
 
+                    # search if the same command was used before
                     tool_prefix.append(new_key)
-
                     round_counter = self.find_command_rounds(new_key, tool_prefix)
+
+                    # If this command is a repeat update the program key to include the times it was called
 
                     if len(self.progs.keys()) > 0 and round_counter > 1:
                         # Update Current Program name by adding the number of times called
                         new_key += "_" + self.multi_run_var + "_" + str(round_counter)
 
+                    # Gather all arguments for the program in this list
                     self.progs[new_key] = []
+
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
+                    self.prog_suffix_type[new_key] = 'default'
+
+                    if 'suffix' in v.keys():
+                        suffixes = v['suffix']
+                        self.prog_suffix_type[new_key] = "custom"
+
+                        if 'input' in suffixes.keys():
+                            self.prog_input_suffix[new_key] = suffixes['input']
+                        if 'output' in suffixes.keys():
+                            self.prog_output_suffix[new_key] = suffixes['output']
+
 
                     if 'options' in v.keys():
                         for k1, v1 in v['options'].iteritems():
@@ -867,9 +886,9 @@ class BaseWorkflow:
 
                     # Add the specific program job parameters
                     if 'job_params' in v.keys():
-                        self.progs_job_parms[new_key] = v['job_params']
+                        self.prog_job_parms[new_key] = v['job_params']
                     else:
-                        self.progs_job_parms[new_key] = 'default'
+                        self.prog_job_parms[new_key] = 'default'
 
                 # Todo should we use an else here instead of elif
                 elif v == 'default':
@@ -883,7 +902,10 @@ class BaseWorkflow:
 
                     self.progs[new_key] = []
                     self.progs[new_key].append('')
-                    self.progs_job_parms[new_key] = 'default'
+                    self.prog_job_parms[new_key] = 'default'
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
+                    self.prog_suffix_type[new_key] = 'default'
 
         self.progs = OrderedDict(reversed(self.progs.items()))
         # print self.progs
@@ -902,14 +924,23 @@ class BaseWorkflow:
 
     def update_job_parms(self, key):
         #self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
-        if self.progs_job_parms[key] != 'default':
+        if self.prog_job_parms[key] != 'default':
             self.new_base_kwargs['job_parms_type'] = "custom"
-            self.new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
+            self.new_base_kwargs['add_job_parms'] = self.prog_job_parms[key]
         else:
             print "Using default **kwarg Values"
         return self.new_base_kwargs
 
+    def update_prog_suffixes(self, key):
+        if self.prog_suffix_type[key] != 'default':
+            self.new_base_kwargs['suffix_type'] = "custom"
+        else:
+            print "Using default **kwarg Values"
+            self.new_base_kwargs['suffix_type'] = "default"
 
+        self.new_base_kwargs['suffix'] = {"input": self.prog_input_suffix[key],
+                                          "output": self.prog_output_suffix[key]}
+        return self.new_base_kwargs
 
 class RnaSeqFlow(BaseWorkflow):
     allTasks = []
@@ -1220,6 +1251,60 @@ class GatkFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
+                self.update_job_parms(key)
+                self.update_prog_suffixes(key)
+                if self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    # Testing here
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                           **dict(self.new_base_kwargs))
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+                    print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+            self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
+
+        return
+
+
+class GatkFlow2(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create  directory for storing GATK files
+        self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+
+        # Update kwargs to include directory for VCFs
+        self.base_kwargs['gatk_dir'] = self.gatk_dir
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # Update paths to check to include directory for VCFs
+        self.paths_to_test += [self.gatk_dir]
+
+        return
+
+    def chain_commands(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        for samp, file in self.sample_fastq_work.iteritems():
+            print "\n *******Commands for Sample:%s ***** \n" % (samp)
+            samp_progs = []
+
+            for key in self.progs.keys():
                 new_base_kwargs = self.update_job_parms(key)
                 if key == 'bwa_mem':
                     # update job parms
@@ -1293,11 +1378,11 @@ class GatkFlow(BaseWorkflow):
                     new_key = '_'.join(input_list)
                     # Testing here
                     tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
-                                                       stdout=os.path.join(self.run_parms['work_dir'],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),
-                                                       **dict(self.new_base_kwargs)
-                                                       )
+                                                           **dict(self.new_base_kwargs)
+                                                           )
 
                     # print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -1316,6 +1401,7 @@ class GatkFlow(BaseWorkflow):
             self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
 
         return
+
 
 
 
@@ -1382,7 +1468,6 @@ def gatk_main():
     print "success intall worked"
     parmsfile = sys.argv[1]
     gt1 = GatkFlow(parmsfile)
-
 
     gt1.parse_prog_info()
 
