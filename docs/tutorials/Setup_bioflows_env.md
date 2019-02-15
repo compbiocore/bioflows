@@ -1,6 +1,6 @@
 # Setting up the environment for **bioflows**
 
-This section is specifically aimed at users of Brown University's OSCAR HPC cluster. Users of other systems should pay close attention to the ** what should they pay attention to? **
+This section is specifically aimed at users of Brown University's OSCAR HPC cluster. Users of other systems should pay close attention to the file paths used, as they may not be relevant for their particular system.
 
 ## Setup conda envinronment
 First make sure the conda environment is setup in your `PATH`
