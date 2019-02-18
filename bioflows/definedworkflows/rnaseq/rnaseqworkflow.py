@@ -1259,7 +1259,7 @@ class GatkFlow(BaseWorkflow):
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
                     # Testing here
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[new_key],
                                                            **dict(self.new_base_kwargs))
 
                     # print tmp_prog.run_command
