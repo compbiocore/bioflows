@@ -478,9 +478,11 @@ class SamTools(BaseWrapper):
         new_name = ' '.join(name.split("_"))
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
-
         if self.stdout_as_output:
             kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
+        else:
+            kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
+
         self.init(new_name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -517,7 +519,7 @@ class SamTools(BaseWrapper):
                 self.in_suffix = "default"
 
         if name.split('_')[1] == "view":
-            self.stdout_as_output = True
+            # self.stdout_as_output = True
             self.target = input + self.out_suffix + hashlib.sha224(
                 input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_view(input, *args, **kwargs)
@@ -535,9 +537,13 @@ class SamTools(BaseWrapper):
         return
 
     def add_args_view(self, input, *args, **kwargs):
+        if self.in_suffix == "default":
+            print "Error: You need to provide the input suffix\n"
+            sys.exit(0)
+
         self.add_args += args
-        self.add_args += ["-o", os.path.join(self.align_dir, input + self.out_suffix)]
-        self.add_args.append(os.path.join(self.align_dir, input + self.in_suffix))
+        self.add_args += ["-o", os.path.join(kwargs['align_dir'], input + self.out_suffix)]
+        self.add_args.append(os.path.join(kwargs['align_dir'], input + self.in_suffix))
         return
 
     def add_args_sort(self, input, *args, **kwargs):
@@ -597,7 +603,7 @@ class QualiMap(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         # TODO add update to input/output suffixes here
-        self.in_suffix = ".dup.srtd.bam"
+        self.update_file_suffix(input_default="dup.srtd.bam", output_default="", **kwargs)
 
         kwargs['target'] = input + '.qualimapReport.' + hashlib.sha224(
             input + '.qualimapReport.html').hexdigest() + ".txt"

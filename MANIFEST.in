@@ -1,0 +1,4 @@
+include bioflows/test_rnaseq_workflow/*.csv
+include bioflows/test_rnaseq_workflow/*.yaml
+include bioflows/test_wrappers/*.csv
+include bioflows/test_wrappers/*.yaml
