@@ -48,6 +48,16 @@ workflow_sequence:
       ncpus: 16
       mem: 40000
       time: 60
+
+- samtools:
+    subcommand: view
+    suffix:
+      input: ".bam"
+      output: ".unmapped.bam"
+    options:
+      -f: "0x4"
+      -bh:
+
 - samtools:
     subcommand: sort
     suffix:

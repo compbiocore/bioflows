@@ -71,8 +71,9 @@ class BaseTask:
         self.jobparms['command'] += self.parms.run_command + "\n"
         self.jobparms['command'] += " echo 'DONE' > " + self.parms.luigi_target
 
-        self.jobparms['name'] = self.parms.name.replace(" ", "_")
-        self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['name']
+        # self.jobparms['name'] = self.parms.name.replace(" ", "_")
+        # self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['name']
+        self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['prog_id']
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
         self.jobparms['out'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stdout")
@@ -1259,7 +1260,7 @@ class GatkFlow(BaseWorkflow):
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
                     # Testing here
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[new_key],
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
                                                            **dict(self.new_base_kwargs))
 
                     # print tmp_prog.run_command

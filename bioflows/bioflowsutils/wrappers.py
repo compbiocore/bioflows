@@ -74,7 +74,7 @@ class BaseWrapper(object):
     def __init__(self, name, **kwargs):
 
         self.name = name
-
+        self.prog_id = kwargs.get('prog_id')
         # self.shell = '/bin/sh'
         self.cmd = None
         self.run_command = None
@@ -272,12 +272,12 @@ class BaseWrapper(object):
         """
 
         cmd = self.cmd
-        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name, 'err.log']))
+        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name, '.err.log']))
 
         if self.stderr is not None:
             stderr = self.stderr
         if len(self.name.split()) > 1:
-            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name_clean(), 'err.log']))
+            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name_clean(), '.err.log']))
         self.args.append('2>>' + stderr)
 
         # if self.pipe:
@@ -376,6 +376,8 @@ class FastQC(BaseWrapper):
         self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
 
         kwargs['stdout_append'] = os.path.join(kwargs['log_dir'], input + '_' + name + '.log')
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
         self.init(name, **kwargs)
         print "fastqc_name: ", self.name
         # self.luigi_source = "None"
@@ -429,7 +431,9 @@ class Gsnap(BaseWrapper):
         kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
+        kwargs['prog_id'] = name
 
+        name = self.prog_name_clean(name)
         self.init(name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -475,30 +479,33 @@ class SamTools(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        new_name = ' '.join(name.split("_"))
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
         if self.stdout_as_output:
             kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
         else:
             kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
 
+        new_name = ' '.join(name.split("_"))
         self.init(new_name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
 
             # add threading
-            if 'ncpus' in kwargs.get('add_job_parms').keys():
-                # TODO make sure threads are not given in the args
-                self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
-            if 'mem' in kwargs.get('add_job_parms').keys():
-                # TODO make sure threads are not given in the args
-                mem_per_thread = int(kwargs.get('add_job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                self.args += [' -@ ' + str(mem_per_thread)]
-            else:
-                mem_per_thread = int(kwargs.get('job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                self.args += [' -@ ' + str(mem_per_thread)]
+            if name.split('_')[1] == "sort":
+                if 'ncpus' in kwargs.get('add_job_parms').keys():
+                    # TODO make sure threads are not given in the args
+                    self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
+                if 'mem' in kwargs.get('add_job_parms').keys() and name.split('_')[1] == "sort":
+                    # TODO make sure threads are not given in the args
+                    mem_per_thread = int(kwargs.get('add_job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
+                    self.args += [' -@ ' + str(mem_per_thread)]
+                else:
+                    mem_per_thread = int(kwargs.get('job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
+                    self.args += [' -@ ' + str(mem_per_thread)]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
 
@@ -509,7 +516,7 @@ class SamTools(BaseWrapper):
     def make_target(self, name, input, *args, **kwargs):
         # Make sure output suffix is enforced
         if kwargs['suffix_type'] != "custom":
-            print "Error!!! you need to specify an output suffix"
+            print "Error1!!! you need to specify an output suffix"
             sys.exit(0)
         else:
             self.out_suffix = kwargs['suffix']['output']
@@ -531,7 +538,7 @@ class SamTools(BaseWrapper):
             self.add_args_sort(input, *args, **kwargs)
 
         elif name.split('_')[1] == "index":
-            self.target = input + self.in_suffix + ".bai" + hashlib.sha224(
+            self.target = input + self.in_suffix + ".bai." + hashlib.sha224(
                 input + self.in_suffix + ".bai").hexdigest() + ".txt"
             # self.add_args_index(input, *args, **kwargs)
         return
@@ -572,6 +579,8 @@ class Biobambam(BaseWrapper):
 
         kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
 
         self.init(name, **kwargs)
 
@@ -603,12 +612,13 @@ class QualiMap(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default="dup.srtd.bam", output_default="", **kwargs)
+        self.update_file_suffix(input_default=".dup.srtd.bam", output_default="", **kwargs)
 
         kwargs['target'] = input + '.qualimapReport.' + hashlib.sha224(
             input + '.qualimapReport.html').hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + '_qualimap.log')
+        kwargs['prog_id'] = name
 
         new_name = name.split('_')[0]
         self.init(new_name, **kwargs)
@@ -733,6 +743,10 @@ class Bwa(BaseWrapper):
         ## set the checkpoint target file
         kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
+
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+
         new_name = ' '.join(name.split("_"))
         self.init(new_name, **kwargs)
 
@@ -801,6 +815,9 @@ class FeatureCounts(BaseWrapper):
 
         kwargs['target'] = hashlib.sha224(input + '.featureCounts.csv').hexdigest() + ".txt"
         # name = name + " multicov "
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+
         self.init(name, **kwargs)
         self.args = ["-split", "-D", "-f 0.95",
                      "-a " + os.path.join(self.cwd, input + self.in_suffix),
@@ -824,8 +841,9 @@ class FastqScreen(BaseWrapper):
             kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_fastq_screen.log")
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
 
-        # name = name + " multicov "
         self.init(name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -882,12 +900,16 @@ class Trimmomatic(BaseWrapper):
         print "Printing trimmomatic args"
         print args
         self.input = input
+
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+
         new_name = ' '.join(name.split("_"))
 
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".fq.gz", output_default="_tr.fq.gz", **kwargs)
 
-        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_trimmomatic.log")
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + ".log")
 
         self.init(new_name, **kwargs)
 
@@ -953,6 +975,9 @@ class Picard(BaseWrapper):
         print "Printing optional arguments " + name
         print args
         # TODO add remove duprun function
+
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
 
         ## set the checkpoint target file
         new_name = ' '.join(name.split("_"))
@@ -1112,9 +1137,11 @@ class Gatk(BaseWrapper):
         self.input = input
         print "Printing optional arguments " + name
         print args
+        kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
+
         ## set the checkpoint target file
-        new_name = ' '.join(name.split("_"))
+        ##new_name = ' '.join(name.split("_"))
 
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
@@ -1141,7 +1168,7 @@ class Gatk(BaseWrapper):
         new_name = ' '.join(new_name)
         self.init(new_name, **kwargs)
 
-        kwargs['source'] = input + '.dedup.srtd.bam' + hashlib.sha224(input + '.dedup.rg.srtd.bam').hexdigest() + ".txt"
+        # kwargs['source'] = input + '.dedup.srtd.bam' + hashlib.sha224(input + '.dedup.rg.srtd.bam').hexdigest() + ".txt"
         # ref_fasta = kwargs.get("ref_fasta_path")
         # self.args += args
 
