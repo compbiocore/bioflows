@@ -45,6 +45,7 @@ class BaseTask:
     def setup(self, prog_input):
         self.parms = jsonpickle.decode(prog_input)
         self.jobparms = self.parms.job_parms
+        self.jobparms['name'] = self.parms.name
         self.jobparms['workdir'] = self.parms.cwd
         self.jobparms['scripts_dir'] = self.parms.scripts_dir
 
@@ -73,7 +74,7 @@ class BaseTask:
 
         # self.jobparms['name'] = self.parms.name.replace(" ", "_")
         # self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['name']
-        self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['prog_id']
+        self.jobparms['script_name'] = self.parms.input + "_" + self.parms.prog_id
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
         self.jobparms['out'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stdout")
@@ -908,6 +909,7 @@ class BaseWorkflow:
                     self.prog_output_suffix[new_key] = 'default'
                     self.prog_suffix_type[new_key] = 'default'
 
+
         self.progs = OrderedDict(reversed(self.progs.items()))
         # print self.progs
         return
@@ -1254,16 +1256,16 @@ class GatkFlow(BaseWorkflow):
             for key in self.progs.keys():
                 self.update_job_parms(key)
                 self.update_prog_suffixes(key)
+                tmp_prog = ''
                 if self.multi_run_var in key:
                     input_list = key.split('_')
                     idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
-                    # Testing here
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
-                                                           **dict(self.new_base_kwargs))
-
-                    # print tmp_prog.run_command
+                    print "new_key", new_key, key
+                    print self.progs[key], self.progs[new_key]
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+                    print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
@@ -1378,7 +1380,7 @@ class GatkFlow2(BaseWorkflow):
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
                     # Testing here
-                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key],
                                                            stdout=os.path.join(self.run_parms['work_dir'],
                                                                                self.run_parms['log_dir'],
                                                                                samp + '_' + key + '.log'),

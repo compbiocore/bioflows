@@ -70,6 +70,11 @@ class BaseWrapper(object):
     # hold the input/output suffixes for output
     in_suffix = ''
     out_suffix = ''
+    add_args = []
+    target = ''
+    stdout = ''
+    args = []
+    input = ''
 
     def __init__(self, name, **kwargs):
 
@@ -272,12 +277,12 @@ class BaseWrapper(object):
         """
 
         cmd = self.cmd
-        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name, '.err.log']))
+        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name, 'err.log']))
 
         if self.stderr is not None:
             stderr = self.stderr
         if len(self.name.split()) > 1:
-            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name_clean(), '.err.log']))
+            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name_clean(), 'err.log']))
         self.args.append('2>>' + stderr)
 
         # if self.pipe:
@@ -321,7 +326,7 @@ class BaseWrapper(object):
         self.run(cmd)
 
     def update_file_suffix(self, input_default=None, output_default=None, **kwargs):
-        '''
+        """
         Update the file suffix for each wrapper based on whether custom input/output suffixes are provided. When the
         defaults for inputs and/or outputs are not provided then it is expected that the user will have to provide a
         suffix. For example with samtools view an output suffix is always required
@@ -330,7 +335,9 @@ class BaseWrapper(object):
         :param output_default:  default suffix for output to the program
         :param kwargs:  this is new_base_kwargs passed on from the workflow class to each program
         :return:
-        '''
+
+        """
+
         if kwargs['suffix_type'] != "custom":
             if input_default is not None and output_default is not None:
                 self.in_suffix = input_default
@@ -354,6 +361,17 @@ class BaseWrapper(object):
             else:
                 self.in_suffix = input_default
         return
+
+    def reset_add_args(self):
+        """
+        This function needed to reset the add args when wrapper class is called multiple time
+        Should perhaps be moved to the basewrapper class
+        :return:
+
+        """
+        self.add_args = []
+        return
+
 ### Third-party command line tools ###
 
 class FastQC(BaseWrapper):
@@ -361,7 +379,6 @@ class FastQC(BaseWrapper):
     A wrapper for FastQC.
     http://www.bioinformatics.bbsrc.ac.uk/projects/fastqc/
     """
-    args = []
 
 
     def __init__(self, name, input, *args, **kwargs):
@@ -419,8 +436,6 @@ class Gsnap(BaseWrapper):
     
     """
 
-    # out_suffix ='.sam'
-    # in_suffix = '.fq.gz'
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
@@ -472,12 +487,10 @@ class SamTools(BaseWrapper):
     '''
     Wrapper class for the samtools command
     '''
-    target = ''
-    args = []
-    add_args = []
     stdout_as_output = False
 
     def __init__(self, name, input, *args, **kwargs):
+        self.reset_add_args()
         self.input = input
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
@@ -508,10 +521,11 @@ class SamTools(BaseWrapper):
                     self.args += [' -@ ' + str(mem_per_thread)]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
-
+        print self.add_args
         self.args += self.add_args
         self.setup_run()
         return
+
 
     def make_target(self, name, input, *args, **kwargs):
         # Make sure output suffix is enforced
@@ -544,10 +558,10 @@ class SamTools(BaseWrapper):
         return
 
     def add_args_view(self, input, *args, **kwargs):
+
         if self.in_suffix == "default":
             print "Error: You need to provide the input suffix\n"
             sys.exit(0)
-
         self.add_args += args
         self.add_args += ["-o", os.path.join(kwargs['align_dir'], input + self.out_suffix)]
         self.add_args.append(os.path.join(kwargs['align_dir'], input + self.in_suffix))
@@ -569,8 +583,8 @@ class Biobambam(BaseWrapper):
     '''
     Wrapper class to mark duplicates in a bam using biobambam
     '''
-    input = ''
-    args = ''
+
+    # TODO: Clean up
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
@@ -603,11 +617,11 @@ class Biobambam(BaseWrapper):
 class QualiMap(BaseWrapper):
     """
     A wrapper for the running qualimap QC suite
-
     """
 
     cmd = ''
-    args = []
+
+    # TODO: Clean up
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
@@ -654,7 +668,7 @@ class SalmonCounts(BaseWrapper):
     A wrapper for generating salmon counts
 
     """
-
+    # TODO: Clean up
     cmd = ''
     args = []
 
@@ -696,7 +710,7 @@ class HtSeqCounts(BaseWrapper):
     A wrapper for generating counts from HTSeq
 
     """
-
+    # TODO: Clean up
     cmd = ''
     args = []
 
@@ -737,7 +751,6 @@ class Bwa(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".fq.gz", output_default=".sam", **kwargs)
 
         ## set the checkpoint target file
@@ -790,6 +803,8 @@ class BedtoolsCounts(BaseWrapper):
 
     """
 
+    # TODO: Clean up
+
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         kwargs['target'] = hashlib.sha224(input + '.bedtoolsCounts.csv').hexdigest() + ".txt"
@@ -807,6 +822,8 @@ class FeatureCounts(BaseWrapper):
     """
      Wrapper for FeatureCounts
     """
+
+    # TODO: Clean up
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
@@ -840,10 +857,9 @@ class FastqScreen(BaseWrapper):
         if kwargs.get('paired_end'):
             kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
 
-        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_fastq_screen.log")
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
-
         self.init(name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
@@ -893,8 +909,6 @@ class Trimmomatic(BaseWrapper):
     """
         Wrapper for trimmomatic
     """
-    add_command = ''
-
 
     def __init__(self, name, input, *args, **kwargs):
         print "Printing trimmomatic args"
@@ -909,7 +923,7 @@ class Trimmomatic(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".fq.gz", output_default="_tr.fq.gz", **kwargs)
 
-        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + ".log")
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + ".log")
 
         self.init(new_name, **kwargs)
 
@@ -931,19 +945,19 @@ class Trimmomatic(BaseWrapper):
             # TODO make sure threads are not given in the args
             self.args += ['-threads 4']
 
-        self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + name + ".log")]
-
+        self.args += ["-trimlog", os.path.join(kwargs.get('log_dir'), input + "_" + name + ".log")]
+        add_command = ''
         if self.paired_end:
 
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix),
                           os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
 
-            self.add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
-            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.out_suffix) + "; "
-            self.add_command += "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2P.fq.gz") + " "
-            self.add_command += os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.out_suffix) + "; "
-            self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1U.fq.gz") + "; "
-            self.add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
+            add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
+            add_command += os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.out_suffix) + "; "
+            add_command += "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2P.fq.gz") + " "
+            add_command += os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.out_suffix) + "; "
+            add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1U.fq.gz") + "; "
+            add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
         else:
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + self.in_suffix)]
             # Todo need to check what move commands are added for SingleEnd
@@ -952,7 +966,7 @@ class Trimmomatic(BaseWrapper):
 
         # Add all other optional trimming specification arguments
         self.args += args
-        self.setup_run(add_command=self.add_command)
+        self.setup_run(add_command=add_command)
 
         return
 
@@ -966,9 +980,7 @@ class Picard(BaseWrapper):
         MINIMUM_BASE_QUALITY=20 \
         VALIDATION_STRINGENCY=LENIENT
     """
-    target = ''
-    add_args = ''
-    stdout = ''
+
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
@@ -977,6 +989,7 @@ class Picard(BaseWrapper):
         # TODO add remove duprun function
 
         kwargs['prog_id'] = name
+        # Remove the round from the name
         name = self.prog_name_clean(name)
 
         ## set the checkpoint target file
@@ -1012,35 +1025,39 @@ class Picard(BaseWrapper):
 
     def make_target(self, name, input, *args, **kwargs):
         if name.split('_')[1] == "CollectWgsMetrics":
-            self.target = input + '_wgs_stats_picard.' + hashlib.sha224(
-                input + '_wgs_stats_picard.txt').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_wgs_stats_picard.txt', **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_collect_wgs_metrics(input, *args, **kwargs)
         elif name.split('_')[1] == "MeanQualityByCycle":
-            self.target = input + '._read_qual_by_cycle_picard.' + hashlib.sha224(
-                input + '._read_qual_by_cycle_picard.txt').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_by_cycle_picard',
+                                    **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix + ".txt").hexdigest() + ".txt"
             self.add_args_mean_quality_by_cycle(input, *args, **kwargs)
         elif name.split('_')[1] == "QualityScoreDistribution":
-            self.target = input + '._read_qual_overall_picard.' + hashlib.sha224(
-                input + '._read_qual_overall_picard.txt').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_overall_picard', **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix + ".txt").hexdigest() + ".txt"
             self.add_args_quality_score_distribution(input, *args, **kwargs)
         elif name.split('_')[1] == "MarkDuplicates":
-            self.target = input + '_mark_dup_picard.' + hashlib.sha224(
+            self.target = input + '_mark_dup_picard.txt' + "_" + hashlib.sha224(
                 input + '_mark_dup_picard.txt').hexdigest() + ".txt"
             self.add_args_markduplicates(input, *args, **kwargs)
         elif name.split('_')[1] == "AddOrReplaceReadGroups":
-            self.target = input + '.rg.srtd.bam' + hashlib.sha224(
-                input + '.rg.srtd.bam').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dup.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_addorreplacereadgroups(input, *args, **kwargs)
         elif name.split('_')[1] == "BuildBamIndex":
-            self.target = input + '.gatk.recal.bam.bai' + hashlib.sha224(
-                input + '.gatk.recal.bam.bai').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".gatk.recal.bam", output_default="", **kwargs)
+            self.target = input + self.in_suffix + ".bai_" + hashlib.sha224(
+                input + self.in_suffix + '.bai').hexdigest() + ".txt"
             self.add_args_buildbamindex(input, *args, **kwargs)
         return
 
     def add_args_collect_wgs_metrics(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_wgs_stats_picard.txt', **kwargs)
-
+        self.reset_add_args()
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix),
                          "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path"),
@@ -1050,8 +1067,7 @@ class Picard(BaseWrapper):
         return
 
     def add_args_mean_quality_by_cycle(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_by_cycle_picard', **kwargs)
+        self.reset_add_args()
 
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + + self.out_suffix + '.txt'),
@@ -1062,8 +1078,7 @@ class Picard(BaseWrapper):
         return
 
     def add_args_quality_score_distribution(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_overall_picard', **kwargs)
+        self.reset_add_args()
 
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix + '.txt'),
@@ -1074,8 +1089,8 @@ class Picard(BaseWrapper):
         return
 
     def add_args_addorreplacereadgroups(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".dup.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
+        self.reset_add_args()
+
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "OUTPUT=" + os.path.join(kwargs.get('align_dir'), input + self.out_suffix),
                          "RGID=" + input,
@@ -1086,10 +1101,9 @@ class Picard(BaseWrapper):
         return
 
     def add_args_markduplicates(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".rg.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
+        self.reset_add_args()
 
-        ##TODO: Name dup output based on REMOVE_DUPLICATES Attr
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "M=" + os.path.join(kwargs.get('qc_dir'), input + '_mark_duplicates_picard.txt'),
                          "CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT"
@@ -1109,12 +1123,11 @@ class Picard(BaseWrapper):
         return
 
     def add_args_buildbamindex(self, input, *args, **kwargs):
-        # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".gatk.recal.bam", output_default="", **kwargs)
-        ##TODO: Name dup output based on REMOVE_DUPLICATES Attr
-        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
-                         "VALIDATION_STRINGENCY=LENIENT"
-                         ]
+        self.reset_add_args()
+
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'),
+                                                 input + self.in_suffix),
+                         "VALIDATION_STRINGENCY=LENIENT"]
         self.add_args += args
         return
 
@@ -1129,30 +1142,28 @@ class Gatk(BaseWrapper):
         MINIMUM_BASE_QUALITY=20 \
         VALIDATION_STRINGENCY=LENIENT
     """
-    target = ''
-    add_args = ''
-    stdout = ''
 
     def __init__(self, name, input, *args, **kwargs):
+
         self.input = input
-        print "Printing optional arguments " + name
-        print args
+
         kwargs['prog_id'] = name
+        # Remove the round from the name
         name = self.prog_name_clean(name)
 
         ## set the checkpoint target file
-        ##new_name = ' '.join(name.split("_"))
+        #new_name = ' '.join(name.split("_"))
 
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
         kwargs['stdout'] = self.stdout
 
-        self.init(new_name, **kwargs)
+        #self.init(new_name, **kwargs)
 
         mem_str = ' -Xmx10000M'
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
-
+            # TODO: figure how how to update threads for GATK based on CPUS?
             ## Update memory requirements  for Java
             if 'mem' in kwargs.get('add_job_parms').keys():
                 # self.args += [' -Xmx' + str(kwargs.get('add_job_parms')['mem']) + 'M']
@@ -1160,7 +1171,6 @@ class Gatk(BaseWrapper):
         else:
             # Set default memory and cpu options
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
-            # self.args += [' -Xmx10000M']
 
         new_name = name.split("_")
         new_name.insert(1, mem_str)
@@ -1186,32 +1196,42 @@ class Gatk(BaseWrapper):
 
     def make_target(self, name, input, *args, **kwargs):
         if name.split('_')[1] == "RealignerTargetCreator":
-            self.target = input + '.realign_targets.intervals' + hashlib.sha224(
-                input + '.realign_targets.intervals').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='_realign_targets.intervals',
+                                    **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_realigner_target_creator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "IndelRealigner":
-            self.target = input + '.dedup.rg.srtd.realigned.bam' + hashlib.sha224(
-                input + '.dedup.rg.srtd.realigned.bam').hexdigest() + ".txt"
+            self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='.dedup.rg.srtd.realigned.bam',
+                                    **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_indel_realigner(input, *args, **kwargs)
 
         elif name.split('_')[1] == "BaseRecalibrator":
+
+            self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='_recal_table.txt',
+                                    **kwargs)
             if "-BQSR" in args:
-                self.target = input + '_post_recal_table' + hashlib.sha224(
-                    input + '_post_recal_table.txt').hexdigest() + ".txt"
+                self.target = input + '_post' + self.out_suffix + "_" + hashlib.sha224(
+                    input + '_post' + self.out_suffix).hexdigest() + ".txt"
             else:
-                self.target = input + '_recal_table' + hashlib.sha224(
-                    input + '_recal_table.txt').hexdigest() + ".txt"
+                self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                    input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_base_recalibrator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "PrintReads":
-            self.target = input + '.gatk.recal.bam' + hashlib.sha224(
-                input + '.gatk.recal.bam').hexdigest() + ".txt"
+            self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='.gatk.recal.bam',
+                                    **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_print_reads(input, *args, **kwargs)
 
         elif name.split('_')[1] == "HaplotypeCaller":
-            self.target = input + '_GATK-HC.g.vcf' + hashlib.sha224(
-                input + '_GATK-HC.g.vcf').hexdigest() + ".txt"
+            self.update_file_suffix(input_default='.gatk.recal.bam', output_default='.GATK-HC.g.vcf', **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_haplotype_caller(input, *args, **kwargs)
 
         elif name.split('_')[1] == "VariantRecalibrator":
@@ -1219,8 +1239,10 @@ class Gatk(BaseWrapper):
                 input + '._mark_dup_picard.txt').hexdigest() + ".vcf"
 
         elif name.split('_')[1] == "AnalyzeCovariates":
-            self.target = input + '_recalibration_plots.pdf' + hashlib.sha224(
-                input + '_recalibration_plots.pdf').hexdigest() + ".txt"
+            self.update_file_suffix(input_default="_recal_table.txt", output_default="_recalibration_plots.pdf",
+                                    **kwargs)
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
+                input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_analyze_covariates(input, *args, **kwargs)
         return
 
@@ -1229,15 +1251,13 @@ class Gatk(BaseWrapper):
         #  -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf \
         # -o $samp_realign_targets.intervals
         # kwargs.get()
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_RealignerTargetCreator.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
-        self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='_realign_targets.intervals',
-                                **kwargs)
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix),
                          "-R " + kwargs.get("ref_fasta_path")]
-        print "printing optional arguments"
-        print args
+
         self.add_args += args
         # TODO Dont need the below.. Add an exception handler to make sure at least one -known is present
         # self.add_args += [
@@ -1253,18 +1273,15 @@ class Gatk(BaseWrapper):
         # - I $mysamplebase"_sorted_dedup.bam" \
         # - o $mysamplebase"_sorted_dedup_realigned.bam" \
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_IndelRealigner.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
-        self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='.dedup.rg.srtd.realigned.bam',
-                                **kwargs)
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-o " + os.path.join(kwargs.get('align_dir'), input + self.out_suffix),
                          "-R " + kwargs.get("ref_fasta_path"),
                          "-targetIntervals " + os.path.join(kwargs.get('gatk_dir'),
                                                             input + '_realign_targets.intervals')
                          ]
-        print "Printing optional arguments indel realigner"
-        print args
         self.add_args += args
 
         return
@@ -1278,9 +1295,9 @@ class Gatk(BaseWrapper):
         # - o $mysamplebase"_sorted_dedup_realigned.bam" \
 
         # kwargs.get()
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_BaseRecalibrator.log')
-        self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='_recal_table.txt',
-                                **kwargs)
+
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-R " + kwargs.get("ref_fasta_path")]
@@ -1315,8 +1332,8 @@ class Gatk(BaseWrapper):
         # -BQSR /gpfs/data/cbc/uzun/wes_analysis/wes_run_1/gatk_all_run/WESPE2932_recal_table.txt
         # -o /gpfs/data/cbc/uzun/wes_analysis/wes_run_1/gatk_all_run/WESPE2932_recal_gatk.bam
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_PrintReads.log')
-        self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='.gatk.recal.bam', **kwargs)
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
         self.add_args = [
             "-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
@@ -1339,8 +1356,8 @@ class Gatk(BaseWrapper):
 
         # kwargs.get()
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_HaplotypeCaller.log')
-        self.update_file_suffix(input_default='.gatk.recal.bam', output_default='.GATK-HC.g.vcf', **kwargs)
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-R " + kwargs.get("ref_fasta_path")]
@@ -1350,11 +1367,12 @@ class Gatk(BaseWrapper):
 
 
     def add_args_analyze_covariates(self, input, *args, **kwargs):
+        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.reset_add_args()
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_AnalyzeCovariates.log')
         self.add_args = ["-R " + kwargs.get("ref_fasta_path"),
-                         "-before " + os.path.join(kwargs.get('gatk_dir'), input + "_recal_table.txt"),
-                         "-after " + os.path.join(kwargs.get('gatk_dir'), input + "_post_recal_table.txt"),
-                         "-plots " + os.path.join(kwargs.get('gatk_dir'), input + "_recalibration_plots.pdf")
+                         "-before " + os.path.join(kwargs.get('gatk_dir'), input + self.in_suffix),
+                         "-after " + os.path.join(kwargs.get('gatk_dir'), input + "_post" + self.in_suffix),
+                         "-plots " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)
                          ]
         return

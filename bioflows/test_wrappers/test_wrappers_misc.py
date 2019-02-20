@@ -227,10 +227,10 @@ class TestTrimmomaticPE(unittest.TestCase):
         print self.trimmomatic_pe_test.run_command
         print self.trimmomatic_pe_test.job_parms
         out_command = "trimmomatic PE -threads 8  "
-        out_command += "-trimlog /gpfs/scratch/logs/test_samptrimmomatic_PE.log  /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz "
+        out_command += "-trimlog /gpfs/scratch/logs/test_samp_trimmomatic_PE.log  /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz "
         out_command += "-baseout /gpfs/scratch/fastq/test_samp_tr.fq.gz "
         out_command += "ILLUMINACLIP:/gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/opt/trimmomatic-0.36/adapters/TruSeq3-PE-2.fa:2:30:5:6:true SLIDINGWINDOW:10:25 MINLEN:75 "
-        out_command += "2>>/gpfs/scratch/logs/test_samp_trimmomatic_PE_err.log 1>/gpfs/scratch/logs/test_samp_trimmomatic.log; "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_trimmomatic_PE_err.log 1>/gpfs/scratch/logs/test_samp_trimmomatic_PE.log; "
         out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_1P.fq.gz /gpfs/scratch/fastq/test_samp_1_tr.fq.gz; "
         out_command += "mv -v /gpfs/scratch/fastq/test_samp_tr_2P.fq.gz /gpfs/scratch/fastq/test_samp_2_tr.fq.gz; "
         out_command += "rm -v /gpfs/scratch/fastq/test_samp_tr_1U.fq.gz; rm -v /gpfs/scratch/fastq/test_samp_tr_2U.fq.gz;"
@@ -262,7 +262,7 @@ class TestSamtools(unittest.TestCase):
         self.wrapper_name = 'samtools_sort'
         self.add_args = self.rw1.progs[self.wrapper_name]
         # use  *self.add_args to unroll the list
-        new_base_kwargs = self.rw1.update_job_parms(self.wrapper_name)
+        self.rw1.update_job_parms(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
         self.samtools_sort_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
                                               **dict(new_base_kwargs))
@@ -283,9 +283,9 @@ class TestSamtoolsView(unittest.TestCase):
         self.wrapper_name = 'samtools_view'
         self.add_args = self.rw1.progs[self.wrapper_name]
         # use  *self.add_args to unroll the list
-        new_base_kwargs = self.rw1.update_job_parms(self.wrapper_name)
+        self.rw1.update_job_parms(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
-        self.samtools_view_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
+        self.samtools_view_test = wr.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
                                               **dict(new_base_kwargs))
 
     def test_samtools_wrapper(self):

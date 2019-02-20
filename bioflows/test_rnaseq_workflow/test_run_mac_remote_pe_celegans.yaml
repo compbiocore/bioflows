@@ -15,7 +15,13 @@ run_parms:
   saga_scheduler: slurm+ssh
   gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
-- fastqc: default
+- fastqc:
+    options:
+      -t: "testdup"
+- fastqc:
+    suffix:
+      input: ".tr.fq.gz"
+
 - gsnap:
     options:
       -d: c_elegans_Ws8
@@ -24,11 +30,26 @@ workflow_sequence:
       mem: 40000
       ncpus: 16
       time: 600
+- samtools:
+    subcommand: view
+    suffix:
+      input: ".bam"
+      output: ".unmapped.bam"
+    options:
+      -f: "0x4"
+      -bh:
+- samtools:
+    subcommand: view
+    suffix:
+      input: ".sam"
+      output: ".bam"
+    options:
+      -Sbh:
 - qualimap:
     subcommand: rnaseq
-- fastqc: default
-- salmon:
-    options:
-      -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
-      -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
-- htseq-count: default
+
+#- salmon:
+#    options:
+#      -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+#      -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
+#- htseq-count: default

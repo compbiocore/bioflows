@@ -2,7 +2,7 @@ import unittest
 from collections import OrderedDict
 from unittest import TestCase
 
-from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import GatkFlow as rsw
 
 
 class TestRnaSeqFlowFunctions(TestCase):
@@ -10,6 +10,7 @@ class TestRnaSeqFlowFunctions(TestCase):
     def setUp(self):
         self.parmsfile = "test_run_mac_remote_pe_celegans.yaml"
         self.rw1 = rsw(self.parmsfile)
+
 
     def test_init(self):
 
@@ -141,7 +142,7 @@ class TestRnaSeqFlowFunctions(TestCase):
         self.rw1.sample_fastq_work = {'N2': '/gpfs/scratch/aragaven/test_workflow/sampN2.fq.gz',
                                       'N3': '/gpfs/scratch/aragaven/test_workflow/sampN3.fq.gz'}
         # self.rw1.symlink_fastqs
-        # self.rw1.set_base_kwargs()
+        self.rw1.set_base_kwargs()
         # self.rw1.parse_prog_info()
         print self.rw1.progs
         print "\n***** Printing Chained Commands ******\n"
