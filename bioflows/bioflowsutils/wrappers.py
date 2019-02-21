@@ -383,11 +383,11 @@ class FastQC(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        kwargs['target'] = input + '.fastqc.zip.' + hashlib.sha224(input + '.fastqc.zip').hexdigest() + ".txt"
+        kwargs['target'] = input + '.fastqc.zip.' + "_" + hashlib.sha224(input + '.fastqc.zip').hexdigest() + ".txt"
 
         # only need second part as fastqc is run on each file sequentially in the same job
         if kwargs.get('paired_end'):
-            kwargs['target'] = input + '.2.fastqc' + hashlib.sha224(input + '.2.fastqc.zip').hexdigest() + ".txt"
+            kwargs['target'] = input + '.2.fastqc' + "_" + hashlib.sha224(input + '.2.fastqc.zip').hexdigest() + ".txt"
 
         # Ssetup inputs/outputs
         self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
@@ -443,7 +443,7 @@ class Gsnap(BaseWrapper):
         ## Setup the inputs/output
         self.update_file_suffix(input_default=".fq.gz", output_default=".sam", **kwargs)
         ## set the checkpoint target file
-        kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
         kwargs['prog_id'] = name
@@ -541,18 +541,18 @@ class SamTools(BaseWrapper):
 
         if name.split('_')[1] == "view":
             # self.stdout_as_output = True
-            self.target = input + self.out_suffix + hashlib.sha224(
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
                 input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_view(input, *args, **kwargs)
 
         elif name.split('_')[1] == "sort":
             # self.stdout_as_output = True
-            self.target = input + self.out_suffix + hashlib.sha224(
+            self.target = input + self.out_suffix + "_" + hashlib.sha224(
                 input + self.out_suffix).hexdigest() + ".txt"
             self.add_args_sort(input, *args, **kwargs)
 
         elif name.split('_')[1] == "index":
-            self.target = input + self.in_suffix + ".bai." + hashlib.sha224(
+            self.target = input + self.in_suffix + ".bai." + "_" + hashlib.sha224(
                 input + self.in_suffix + ".bai").hexdigest() + ".txt"
             # self.add_args_index(input, *args, **kwargs)
         return
@@ -591,7 +591,7 @@ class Biobambam(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".srtd.bam", output_default=".dup.srtd.bam", **kwargs)
 
-        kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
@@ -628,11 +628,12 @@ class QualiMap(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".dup.srtd.bam", output_default="", **kwargs)
 
-        kwargs['target'] = input + '.qualimapReport.' + hashlib.sha224(
+        kwargs['target'] = input + '.qualimapReport.' + "_" + hashlib.sha224(
             input + '.qualimapReport.html').hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + '_qualimap.log')
         kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
 
         new_name = name.split('_')[0]
         self.init(new_name, **kwargs)
@@ -754,7 +755,7 @@ class Bwa(BaseWrapper):
         self.update_file_suffix(input_default=".fq.gz", output_default=".sam", **kwargs)
 
         ## set the checkpoint target file
-        kwargs['target'] = input + self.out_suffix + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
 
         kwargs['prog_id'] = name
@@ -852,7 +853,7 @@ class FastqScreen(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         self.update_file_suffix(input_default='.fq.gz', output_default='', **kwargs)
-        kwargs['target'] = input + "." + name + "." + hashlib.sha224(input + name).hexdigest() + ".txt"
+        kwargs['target'] = input + "." + name + "_" + hashlib.sha224(input + name).hexdigest() + ".txt"
 
         if kwargs.get('paired_end'):
             kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
@@ -860,6 +861,7 @@ class FastqScreen(BaseWrapper):
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
+
         self.init(name, **kwargs)
 
         if kwargs.get('job_parms_type') != 'default':
