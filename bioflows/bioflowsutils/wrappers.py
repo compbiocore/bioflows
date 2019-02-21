@@ -511,14 +511,14 @@ class SamTools(BaseWrapper):
             if name.split('_')[1] == "sort":
                 if 'ncpus' in kwargs.get('add_job_parms').keys():
                     # TODO make sure threads are not given in the args
-                    self.args += [' -t ' + str(kwargs.get('add_job_parms')['ncpus'])]
-                if 'mem' in kwargs.get('add_job_parms').keys() and name.split('_')[1] == "sort":
-                    # TODO make sure threads are not given in the args
-                    mem_per_thread = int(kwargs.get('add_job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                    self.args += [' -@ ' + str(mem_per_thread)]
-                else:
-                    mem_per_thread = int(kwargs.get('job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                    self.args += [' -@ ' + str(mem_per_thread)]
+                    self.args += [' -@ ' + str(kwargs.get('add_job_parms')['ncpus'])]
+                    if 'mem' in kwargs.get('add_job_parms').keys() and name.split('_')[1] == "sort":
+                        # TODO make sure threads are not given in the args
+                        mem_per_thread = int(kwargs.get('add_job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
+                        self.args += [' -m ' + str(mem_per_thread)]
+                    else:
+                        mem_per_thread = int(kwargs.get('job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
+                        self.args += [' -m ' + str(mem_per_thread)]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
         print self.add_args
