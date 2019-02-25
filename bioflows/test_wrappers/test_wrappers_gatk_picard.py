@@ -81,7 +81,7 @@ class TestGatkInit(unittest.TestCase):
         out_command += "-knownSites /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf "
         out_command += "-nct 8 -BQSR /gpfs/scratch/gatk_results/test_samp_recal_table.txt "
         out_command += "-o /gpfs/scratch/gatk_results/test_samp_post_recal_table.txt "
-        out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_err.log 1>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_BQSR.log"
+        out_command += "2>>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_round_2_err.log 1>/gpfs/scratch/logs/test_samp_gatk_BaseRecalibrator_round_2.log"
         self.assertEqual(self.gatk_test.run_command.split(), out_command.split())
 
     # @unittest.skip("demonstrating skipping")
@@ -105,10 +105,9 @@ class TestGatkInit(unittest.TestCase):
     def test_gatk_AnalyzeCovariates(self):
         self.wrapper_name = 'gatk_AnalyzeCovariates'
         self.dw1.update_job_parms(self.wrapper_name)
-        # self.dw1.update_prog_suffixes(self.wrapper_name)
+        self.dw1.update_prog_suffixes(self.wrapper_name)
 
         self.gatk_test = wr.Gatk(self.wrapper_name, "test_samp", *self.dw1.progs[self.wrapper_name],
-                                 stdout=os.path.join(self.dw1.log_dir, 'test_samp_gatk_AnalyzeCovariates.log'),
                                  **dict(self.dw1.new_base_kwargs))
         print "\n***** Testing GATK ANALYZECOVRIATES command *****\n"
         print self.gatk_test.run_command

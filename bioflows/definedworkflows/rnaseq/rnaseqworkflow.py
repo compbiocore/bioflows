@@ -65,7 +65,8 @@ class BaseTask:
         self.jobparms['command'] += "\necho '***** checking env *****'\nprintenv\n\n"
 
         # self.jobparms['command'] += 'conda activate $CONDA_PREFIX\n'
-        self.jobparms['command'] += "\necho '***** printing JOB INFO *****'\nscontrol show -ddd job $SLURM_JOBID \n"
+        self.jobparms[
+            'command'] += "\necho '***** printing JOB INFO *****'\nscontrol write batch_script $SLURM_JOBID /dev/stdout \n"
 
         # Add a script here to print out the actual commands used by the slurm using sbatch script
         self.jobparms['command'] += 'srun --export=ALL '
@@ -112,7 +113,7 @@ class BaseTask:
         js = saga.job.Service(scheduler + "://" + host, session=session)
 
         f = open(os.path.join(kwargs.get('scripts_dir'), kwargs.get('script_name') + "_sbatch_cmds"), 'w')
-        f.write("\n\n#*************\n")
+        f.write("#/bin/bash\n\n#*************\n")
         f.write(kwargs.get('command'))
         f.write("\n\n#*************\n")
         f.close()
@@ -244,7 +245,8 @@ class BaseWorkflow:
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
-                           'mem': 3000
+                           'mem': 3000,
+                           'ncpus': 1
                            }
 
         # Check and make sure both fastq_file and sra don't exist
@@ -336,7 +338,8 @@ class BaseWorkflow:
         self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
         self.base_kwargs['ref_fasta_path'] = self.run_parms.get('reference_fasta_path', None)
         self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
-        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # Does not work keeps the object in memory
         return
 
     def parse_sample_info_from_file(self):
@@ -926,12 +929,25 @@ class BaseWorkflow:
 
 
     def update_job_parms(self, key):
-        #self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
-        if self.prog_job_parms[key] != 'default':
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        if isinstance(self.prog_job_parms, dict) and self.prog_job_parms[key] == 'default':
+            print "Using default **kwarg Values"
+            self.new_base_kwargs['job_parms_type'] = "default"
+            self.new_base_kwargs['job_parms'] = self.job_params
+            print self.new_base_kwargs['job_parms']
+        else:
+            print "Using Custom Values for job parms"
             self.new_base_kwargs['job_parms_type'] = "custom"
             self.new_base_kwargs['add_job_parms'] = self.prog_job_parms[key]
-        else:
-            print "Using default **kwarg Values"
+            print self.new_base_kwargs['job_parms']
+
+        # Alternate version
+        # if isinstance(self.prog_job_parms, dict) and self.prog_job_parms[key] != 'default':
+        #         self.new_base_kwargs['job_parms_type'] = "custom"
+        #         self.new_base_kwargs['add_job_parms'] = self.prog_job_parms[key]
+        # else:
+        #     print "Using default Values for job parms"
+        #     self.new_base_kwargs['job_parms_type'] = "default"
         return self.new_base_kwargs
 
     def update_prog_suffixes(self, key):
@@ -1254,24 +1270,31 @@ class GatkFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
+                print "Printing original Parms\n"
+                print self.prog_job_parms
                 self.update_job_parms(key)
                 self.update_prog_suffixes(key)
-                tmp_prog = ''
                 if self.multi_run_var in key:
                     input_list = key.split('_')
                     idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
                     del input_list[idx_to_rm:]
                     new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
                     print "new_key", new_key, key
                     print self.progs[key], self.progs[new_key]
-                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
                     print tmp_prog.run_command
+                    print tmp_prog.job_parms
+
                     samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs
                     tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                    print self.progs[key]
                     print tmp_prog.run_command
+                    print tmp_prog.job_parms
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
             self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))

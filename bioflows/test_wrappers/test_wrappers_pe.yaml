@@ -62,6 +62,8 @@ workflow_sequence:
     suffix:
       input: ".mapped.bam"
       output: ".tst.srtd.bam"
+    options:
+      -T: /tmp/scratch/tmp_
     job_params:
       ncpus: 3
       mem: 30000

@@ -138,8 +138,8 @@ class TestQualimap(unittest.TestCase):
         print "\n***** Testing Qualimap_wrapper command for DNASeq*****\n"
         print self.qualimap_test.run_command
         out_command = "qualimap  -Xmx10000M bamqc -nr 10000 -c  -bam /gpfs/scratch/alignments/test_samp.dup.srtd.bam "
-        out_command += "-outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_err.log"
-        out_command += " 1>/gpfs/scratch/logs/test_samp_qualimap.log; "
+        out_command += "-outdir /gpfs/scratch/qc/test_samp 2>>/gpfs/scratch/logs/test_samp_qualimap_bamqc_err.log"
+        out_command += " 1>/gpfs/scratch/logs/test_samp_qualimap_bamqc.log; "
         out_command += "cp  /gpfs/scratch/qc/test_samp/qualimapReport.html  /gpfs/scratch/qc/test_samp/test_samp_qualimapReport.html "
         self.assertEqual(self.qualimap_test.run_command.split(), out_command.split())
 
@@ -263,12 +263,16 @@ class TestSamtools(unittest.TestCase):
         self.add_args = self.rw1.progs[self.wrapper_name]
         # use  *self.add_args to unroll the list
         self.rw1.update_job_parms(self.wrapper_name)
+        self.rw1.update_prog_suffixes(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
         self.samtools_sort_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
                                               **dict(new_base_kwargs))
 
     def test_samtools_wrapper(self):
         print "\n***** Testing Samtools_wrapper command *****\n"
+        new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
+        self.samtools_sort_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
+                                              **dict(new_base_kwargs))
         print self.samtools_sort_test.run_command
         print self.samtools_sort_test.job_parms
 

@@ -277,12 +277,13 @@ class BaseWrapper(object):
         """
 
         cmd = self.cmd
-        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name, 'err.log']))
+        stderr = os.path.join(self.log_dir, '_'.join([self.input, self.prog_id, 'err.log']))
 
         if self.stderr is not None:
             stderr = self.stderr
         if len(self.name.split()) > 1:
-            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.name_clean(), 'err.log']))
+            stderr = os.path.join(self.log_dir, '_'.join([self.input, self.prog_id, 'err.log']))
+            # MAYBE redundant
         self.args.append('2>>' + stderr)
 
         # if self.pipe:
@@ -396,10 +397,6 @@ class FastQC(BaseWrapper):
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
         self.init(name, **kwargs)
-        print "fastqc_name: ", self.name
-        # self.luigi_source = "None"
-        # self.version('-v')
-        # self.add_threading('-t')
         self.args += [' -o ' + self.qc_dir]
         self.args += args
 
@@ -464,7 +461,7 @@ class Gsnap(BaseWrapper):
         else:
             kwargs['source'] = hashlib.sha224(input + '_fastqc.gzip').hexdigest() + ".txt"
 
-        self.setup_args()
+        self.setup_args(*args)
 
         self.args += args
 
@@ -478,8 +475,29 @@ class Gsnap(BaseWrapper):
         self.setup_run()
         return
 
-    def setup_args(self):
-        self.args += ["--gunzip", "-A sam", "-N1", "--use-shared-memory=0"]
+    def setup_args(self, *args):
+        """
+        setup default args
+        :param args: The arguments from the Options section in the YAML
+        :return:
+        """
+        self.args = []
+        if any("--gunzip" in a for a in args):
+            pass
+        else:
+            self.args += ["--gunzip"]
+        if any("-A sam" in a for a in args):
+            pass
+        else:
+            self.args += ["-A sam"]
+        if any("-N1" in a for a in args):
+            pass
+        else:
+            self.args += "-N1"
+        if any("--use-shared-memory=0" in a for a in args):
+            pass
+        else:
+            self.args += ["--use-shared-memory=0"]
         return
 
 
@@ -515,10 +533,10 @@ class SamTools(BaseWrapper):
                     if 'mem' in kwargs.get('add_job_parms').keys() and name.split('_')[1] == "sort":
                         # TODO make sure threads are not given in the args
                         mem_per_thread = int(kwargs.get('add_job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                        self.args += [' -m ' + str(mem_per_thread)]
+                        self.args += [' -m ' + str(mem_per_thread) + "M"]
                     else:
                         mem_per_thread = int(kwargs.get('job_parms')['mem'] / kwargs.get('add_job_parms')['ncpus'])
-                        self.args += [' -m ' + str(mem_per_thread)]
+                        self.args += [' -m ' + str(mem_per_thread) + "M"]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
         print self.add_args
@@ -570,7 +588,13 @@ class SamTools(BaseWrapper):
     def add_args_sort(self, input, *args, **kwargs):
         if self.in_suffix == "default":
             self.in_suffix = ".bam"
+
         self.add_args += args
+        if any("-T" in a for a in self.add_args):
+            idx_to_replace = [i for i, s in enumerate(self.add_args) if '-T' in s][0]
+            tmpdir_string = self.add_args[idx_to_replace] + "_" + input
+            self.add_args[idx_to_replace] = tmpdir_string
+
         self.add_args += ["-o", os.path.join(kwargs['align_dir'], input + self.out_suffix)]
         self.add_args.append(os.path.join(kwargs['align_dir'], input + self.in_suffix))
         return
@@ -628,10 +652,10 @@ class QualiMap(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".dup.srtd.bam", output_default="", **kwargs)
 
-        kwargs['target'] = input + '.qualimapReport.' + "_" + hashlib.sha224(
+        kwargs['target'] = input + '.qualimapReport' + "_" + hashlib.sha224(
             input + '.qualimapReport.html').hexdigest() + ".txt"
 
-        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + '_qualimap.log')
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + '_' + name + '.log')
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
 
@@ -1154,13 +1178,15 @@ class Gatk(BaseWrapper):
         name = self.prog_name_clean(name)
 
         ## set the checkpoint target file
-        #new_name = ' '.join(name.split("_"))
 
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
         kwargs['stdout'] = self.stdout
 
-        #self.init(new_name, **kwargs)
+        # We have to set name and run init so mem_str can be updated
+        # from the yaml and then we re-ddo name and init a second time
+        new_name = ' '.join(name.split("_"))
+        self.init(new_name, **kwargs)
 
         mem_str = ' -Xmx10000M'
         if kwargs.get('job_parms_type') != 'default':
@@ -1178,6 +1204,7 @@ class Gatk(BaseWrapper):
         new_name.insert(1, mem_str)
         new_name.insert(2, '-T')
         new_name = ' '.join(new_name)
+
         self.init(new_name, **kwargs)
 
         # kwargs['source'] = input + '.dedup.srtd.bam' + hashlib.sha224(input + '.dedup.rg.srtd.bam').hexdigest() + ".txt"
@@ -1253,7 +1280,7 @@ class Gatk(BaseWrapper):
         #  -known /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf \
         # -o $samp_realign_targets.intervals
         # kwargs.get()
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
@@ -1275,7 +1302,7 @@ class Gatk(BaseWrapper):
         # - I $mysamplebase"_sorted_dedup.bam" \
         # - o $mysamplebase"_sorted_dedup_realigned.bam" \
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
@@ -1298,7 +1325,7 @@ class Gatk(BaseWrapper):
 
         # kwargs.get()
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
@@ -1313,7 +1340,7 @@ class Gatk(BaseWrapper):
         print "Printing optional arguments"
         print args
         if "-BQSR" in args:
-            self.stdout = os.path.join(kwargs['log_dir'], input + '_gatk_BaseRecalibrator_BQSR.log')
+            self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
             new_args = list(args)
             idx_to_rm = [i for i, s in enumerate(new_args) if '-BQSR' in s][0]
             del new_args[idx_to_rm]
@@ -1334,7 +1361,7 @@ class Gatk(BaseWrapper):
         # -BQSR /gpfs/data/cbc/uzun/wes_analysis/wes_run_1/gatk_all_run/WESPE2932_recal_table.txt
         # -o /gpfs/data/cbc/uzun/wes_analysis/wes_run_1/gatk_all_run/WESPE2932_recal_gatk.bam
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = [
@@ -1358,7 +1385,7 @@ class Gatk(BaseWrapper):
 
         # kwargs.get()
 
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
@@ -1369,7 +1396,7 @@ class Gatk(BaseWrapper):
 
 
     def add_args_analyze_covariates(self, input, *args, **kwargs):
-        self.stdout = os.path.join(kwargs['log_dir'], input + kwargs['prog_id'] + '.log')
+        self.stdout = os.path.join(kwargs['log_dir'], input + "_" + kwargs['prog_id'] + '.log')
         self.reset_add_args()
 
         self.add_args = ["-R " + kwargs.get("ref_fasta_path"),
