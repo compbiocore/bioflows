@@ -227,6 +227,7 @@ class BaseWorkflow:
                               'samtools_index': wr.SamTools,
                               'samtools_sort': wr.SamTools,
                               'bammarkduplicates2': wr.Biobambam,
+                              'bamsort': wr.Biobambam,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
@@ -381,9 +382,11 @@ class BaseWorkflow:
         if 'SINGLE' in sample_sra.sra_records[query_val]['library_type']:
             print "SE library\n"
             self.paired_end = False
+            self.base_kwargs['paired_end'] = False
         elif 'PAIRED' in sample_sra.sra_records[query_val]['library_type']:
             print "PE library\n"
             self.paired_end = True
+            self.base_kwargs['paired_end'] = True
         return
 
     def set_paths(self):
@@ -505,7 +508,8 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "-vvv", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+                                          "fastq-dump", "-v", "-v", "-v", "--gzip",
+                                          os.path.join(self.sra_dir, sra_name), '-O',
                                           self.fastq_dir, ";",
                                           " mv -v", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
@@ -516,7 +520,7 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "-vvv", "--gzip", "--split-files",
+                                          "fastq-dump", "-v", "-v", "-v", "--gzip", "--split-files",
                                           os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",

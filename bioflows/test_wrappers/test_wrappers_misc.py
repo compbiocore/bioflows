@@ -298,6 +298,25 @@ class TestSamtoolsView(unittest.TestCase):
         print self.samtools_view_test.job_parms
 
 
+class TestSamtoolsIndex(unittest.TestCase):
+
+    def setUp(self):
+        self.parmsfile = "test_wrappers_pe.yaml"
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'samtools_index'
+        self.add_args = self.rw1.progs[self.wrapper_name]
+        # use  *self.add_args to unroll the list
+        self.rw1.update_job_parms(self.wrapper_name)
+        new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
+        self.samtools_index_test = wr.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
+                                               **dict(new_base_kwargs))
+
+    def test_samtools_wrapper(self):
+        print "\n***** Testing Samtools_index wrapper command *****\n"
+        print self.samtools_index_test.run_command
+        print self.samtools_index_test.job_parms
 
 if __name__ == '__main__':
     # unittest.main()

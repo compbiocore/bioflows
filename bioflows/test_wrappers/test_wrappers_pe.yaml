@@ -67,6 +67,14 @@ workflow_sequence:
     job_params:
       ncpus: 3
       mem: 30000
+- samtools:
+    subcommand: index
+    suffix:
+      input: ".srtd.bam"
+      output: ".srtd.bam.bai"
+    job_params:
+      ncpus: 1
+      mem: 30000
 - qualimap:
     subcommand: rnaseq
 - qualimap:

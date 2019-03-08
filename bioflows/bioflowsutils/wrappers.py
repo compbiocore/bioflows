@@ -411,7 +411,7 @@ class FastQC(BaseWrapper):
             self.setup_run()
             run_cmd1 = self.run_command
 
-            ## Re initialize the object for the second pair
+            ## Re initialize the object for the second in pair
             self.init(name, **kwargs)
             self.args += [' -o ' + self.qc_dir]
             self.args += args
@@ -481,7 +481,6 @@ class Gsnap(BaseWrapper):
         :param args: The arguments from the Options section in the YAML
         :return:
         """
-        self.args = []
         if any("--gunzip" in a for a in args):
             pass
         else:
@@ -493,7 +492,7 @@ class Gsnap(BaseWrapper):
         if any("-N1" in a for a in args):
             pass
         else:
-            self.args += "-N1"
+            self.args += ["-N1"]
         if any("--use-shared-memory=0" in a for a in args):
             pass
         else:
@@ -539,7 +538,7 @@ class SamTools(BaseWrapper):
                         self.args += [' -m ' + str(mem_per_thread) + "M"]
         else:
             self.job_parms.update({'mem': 4000, 'time': 300, 'ncpus': 1})
-        print self.add_args
+        # print self.add_args
         self.args += self.add_args
         self.setup_run()
         return
@@ -572,7 +571,7 @@ class SamTools(BaseWrapper):
         elif name.split('_')[1] == "index":
             self.target = input + self.in_suffix + ".bai." + "_" + hashlib.sha224(
                 input + self.in_suffix + ".bai").hexdigest() + ".txt"
-            # self.add_args_index(input, *args, **kwargs)
+            self.add_args_index(input, *args, **kwargs)
         return
 
     def add_args_view(self, input, *args, **kwargs):
@@ -600,6 +599,17 @@ class SamTools(BaseWrapper):
         return
 
     def add_args_index(self, input, *args, **kwargs):
+        if self.in_suffix == "default":
+            self.in_suffix = ".bam"
+        if any("-b" or "-c" or "-m" not in a for a in args):
+            self.add_args += ["-b"]
+            self.add_args += args
+        else:
+            self.add_args += args
+
+        self.add_args.append(os.path.join(kwargs['align_dir'], input + self.in_suffix))
+        if self.out_suffix != "default":
+            self.add_args.append(os.path.join(kwargs['align_dir'], input + self.out_suffix))
         return
 
 
@@ -613,7 +623,10 @@ class Biobambam(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         # TODO add update to input/output suffixes here
-        self.update_file_suffix(input_default=".srtd.bam", output_default=".dup.srtd.bam", **kwargs)
+        if name.split("_")[0] == "bammarkduplicates2":
+            self.update_file_suffix(input_default=".srtd.bam", output_default=".dup.srtd.bam", **kwargs)
+        elif name.split("_")[0] == "bamsort":
+            self.update_file_suffix(input_default=".bam", output_default=".srtd.bam", **kwargs)
 
         kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
@@ -1067,6 +1080,7 @@ class Picard(BaseWrapper):
                 input + self.out_suffix + ".txt").hexdigest() + ".txt"
             self.add_args_quality_score_distribution(input, *args, **kwargs)
         elif name.split('_')[1] == "MarkDuplicates":
+            self.update_file_suffix(input_default=".rg.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
             self.target = input + '_mark_dup_picard.txt' + "_" + hashlib.sha224(
                 input + '_mark_dup_picard.txt').hexdigest() + ".txt"
             self.add_args_markduplicates(input, *args, **kwargs)
@@ -1127,7 +1141,6 @@ class Picard(BaseWrapper):
         return
 
     def add_args_markduplicates(self, input, *args, **kwargs):
-        self.update_file_suffix(input_default=".rg.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
         self.reset_add_args()
 
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
