@@ -11,6 +11,7 @@ import saga
 import yaml
 
 import bioflows.bioflowsutils.wrappers as wr
+import bioflows.bioflowsutils.wrappers_qiime2 as wr_qiime2
 from bioflows.bioutils.access_sra.sra import SraUtils
 
 
@@ -212,10 +213,16 @@ class BaseWorkflow:
     progs = OrderedDict()
     sra_info = ''
     multi_run_var = "round"
+    qiime_info = ''
+    gatk_flag = False
+    rna_seq_flag = False
+    dna_seq_flag = False
+
     prog_job_parms = dict()
     prog_suffix_type = dict()
     prog_output_suffix = dict()
     prog_input_suffix = dict()
+
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
         self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
@@ -242,7 +249,15 @@ class BaseWorkflow:
                               'gatk_HaplotypeCaller': wr.Gatk,
                               'gatk_AnalyzeCovariates': wr.Gatk,
                               'trimmomatic_PE': wr.Trimmomatic,
-                              'fastq_screen': wr.FastqScreen
+                              'fastq_screen': wr.FastqScreen,
+                              'qiime_tools_import': wr_qiime2.Qiime2,
+                              'qiime_demux_emp-single': wr_qiime2.Qiime2,
+                              'qiime_demux_summarize': wr_qiime2.Qiime2,
+                              'qiime_dada2_denoise-single': wr_qiime2.Qiime2,
+                              'qiime_metadata_tabulate': wr_qiime2.Qiime2,
+                              'qiime_feature-table_summarize': wr_qiime2.Qiime2,
+                              'qiime_phylogeny_align-to-tree-mafft-fasttree': wr_qiime2.Qiime2
+
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -255,6 +270,11 @@ class BaseWorkflow:
             self.parse_sample_info_from_file()
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
+        elif 'qiime' in self.sample_manifest.keys():
+            self.parse_sample_info_qiime()
+        else:
+            print "Error: unknown Sample type option provided"
+            sys.exit(0)
 
         # todo close so we can trap errors else will fail silently
 
@@ -268,11 +288,18 @@ class BaseWorkflow:
         #self.paired_end = False
         if "log_dir" not in self.run_parms.keys():
             self.run_parms['log_dir'] = "logs"
+
         self.set_paths()
         self.set_base_kwargs()
 
-        self.paths_to_test = [self.work_dir, self.log_dir, self.scripts_dir, self.checkpoint_dir, self.sra_dir,
-                              self.fastq_dir, self.align_dir, self.qc_dir]
+        self.paths_to_test = [self.work_dir, self.log_dir, self.scripts_dir, self.checkpoint_dir]
+
+        if 'sra' in self.sample_manifest.keys():
+            self.paths_to_test += [self.sra_dir]
+        if 'qiime' in self.sample_manifest.keys():
+            self.paths_to_test += [self.qiime_dir]
+        else:
+            self.paths_to_test += [self.fastq_dir, self.align_dir, self.qc_dir]
 
         return
 
@@ -316,14 +343,20 @@ class BaseWorkflow:
         print "\n ****** Setting base Keywords ***** \n"
         self.base_kwargs = dict()
         self.base_kwargs['cwd'] = self.work_dir
-        self.base_kwargs['align_dir'] = self.align_dir
-        self.base_kwargs['qc_dir'] = self.qc_dir
         self.base_kwargs['work_dir'] = self.work_dir
         self.base_kwargs['log_dir'] = self.log_dir
         self.base_kwargs['checkpoint_dir'] = self.checkpoint_dir
-        self.base_kwargs['sra_dir'] = self.sra_dir
-        self.base_kwargs['fastq_dir'] = self.fastq_dir
-        self.base_kwargs['align_dir'] = self.align_dir
+
+        if 'sra' in self.sample_manifest.keys():
+            self.base_kwargs['sra_dir'] = self.sra_dir
+        if 'qiime' in self.sample_manifest.keys():
+            self.base_kwargs['qiime_dir'] = self.qiime_dir
+            self.base_kwargs['qiime_info'] = self.qiime_info
+        else:
+            self.base_kwargs['qc_dir'] = self.qc_dir
+            self.base_kwargs['fastq_dir'] = self.fastq_dir
+            self.base_kwargs['align_dir'] = self.align_dir
+
 
         self.base_kwargs['conda_command'] = self.run_parms.get('conda_command', 'source activate cbc_conda')
         self.base_kwargs['job_parms'] = self.job_params
@@ -389,6 +422,24 @@ class BaseWorkflow:
             self.base_kwargs['paired_end'] = True
         return
 
+    def parse_sample_info_qiime(self):
+        """
+        Read in the sample attributes from an SRA id and create the sample to fastq as a dictionary with
+        the sample id as the key
+        """
+        self.qiime_info = self.sample_manifest['qiime'].copy()
+        if self.qiime_info["--type"] == "EMPSingleEndSequences":
+            if "--input-path" not in self.qiime_info.keys():
+                print "Error !!! input path is required"
+                sys.exit(0)
+            elif "--output-path" not in self.qiime_info.keys():
+                print "Error !!! input path is required"
+                sys.exit(0)
+            elif "--m-barcodes-file" not in self.qiime_info.keys():
+                print "Error !!! input path is required"
+                sys.exit(0)
+        return
+
     def set_paths(self):
         '''
         Setup all the values for the minimum required paths for the analysis
@@ -400,11 +451,17 @@ class BaseWorkflow:
         self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
 
         # TODO refactor to make sra dir only if sra option is used
-        self.sra_dir = os.path.join(self.work_dir, 'sra')
+        if 'sra' in self.sample_manifest.keys():
+            self.sra_dir = os.path.join(self.work_dir, 'sra')
+        else:
+            pass
+        if 'qiime' in self.sample_manifest.keys():
+            self.qiime_dir = os.path.join(self.work_dir, 'qiime')
+        else:
+            self.fastq_dir = os.path.join(self.work_dir, 'fastq')
+            self.align_dir = os.path.join(self.work_dir, 'alignments')
+            self.qc_dir = os.path.join(self.work_dir, 'qc')
 
-        self.fastq_dir = os.path.join(self.work_dir, 'fastq')
-        self.align_dir = os.path.join(self.work_dir, 'alignments')
-        self.qc_dir = os.path.join(self.work_dir, 'qc')
         return
 
     def check_paths(self, path, remote=False):
@@ -845,7 +902,11 @@ class BaseWorkflow:
 
                     if 'subcommand' in v.keys():
                         # Update current program name by adding the subcommand
-                        new_key = '_'.join([k, v['subcommand']])
+                        if len(v['subcommand'].split()) < 2:
+                            new_key = '_'.join([k, v['subcommand']])
+                        else:
+                            # subcommands = '_'.join(v['subcommand'].split())
+                            new_key = '_'.join([k, '_'.join(v['subcommand'].split())])
 
                     # search if the same command was used before
                     tool_prefix.append(new_key)
@@ -860,9 +921,10 @@ class BaseWorkflow:
                     # Gather all arguments for the program in this list
                     self.progs[new_key] = []
 
+                    self.prog_suffix_type[new_key] = 'default'
                     self.prog_input_suffix[new_key] = 'default'
                     self.prog_output_suffix[new_key] = 'default'
-                    self.prog_suffix_type[new_key] = 'default'
+
 
                     if 'suffix' in v.keys():
                         suffixes = v['suffix']
@@ -873,6 +935,7 @@ class BaseWorkflow:
                         if 'output' in suffixes.keys():
                             self.prog_output_suffix[new_key] = suffixes['output']
 
+                    #todo add an else here
 
                     if 'options' in v.keys():
                         for k1, v1 in v['options'].iteritems():
@@ -1253,13 +1316,15 @@ class GatkFlow(BaseWorkflow):
         self.init(parmsfile)
 
         # Create  directory for storing GATK files
-        self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+        #self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
 
         # Update kwargs to include directory for VCFs
-        self.base_kwargs['gatk_dir'] = self.gatk_dir
+        #self.base_kwargs['gatk_dir'] = self.gatk_dir
+
         self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+
         # Update paths to check to include directory for VCFs
-        self.paths_to_test += [self.gatk_dir]
+        #self.paths_to_test += [self.gatk_dir]
 
         return
 
@@ -1300,6 +1365,54 @@ class GatkFlow(BaseWorkflow):
                     print tmp_prog.run_command
                     print tmp_prog.job_parms
                     samp_progs.append(jsonpickle.encode(tmp_prog))
+
+            self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
+
+        return
+
+    def chain_commands_qiime(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        # for samp, file in self.sample_fastq_work.iteritems():
+        #     print "\n *******Commands for Sample:%s ***** \n" % (samp)
+        samp_progs = []
+        if '--output-suffix' not in self.base_kwargs['qiime_info'].keys():
+            samp = self.base_kwargs['qiime_info']['--type']
+        else:
+            samp = self.base_kwargs['qiime_info']['--output-suffix']
+        # print "Sample Name"
+        # print samp
+
+        for key in self.progs.keys():
+            print "Printing original Parms\n"
+            print self.prog_job_parms
+            self.update_job_parms(key)
+            self.update_prog_suffixes(key)
+            if self.multi_run_var in key:
+                input_list = key.split('_')
+                idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                del input_list[idx_to_rm:]
+                new_key = '_'.join(input_list)
+                tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                print "new_key", new_key, key
+                print self.progs[key], self.progs[new_key]
+                print tmp_prog.run_command
+                print tmp_prog.job_parms
+
+                samp_progs.append(jsonpickle.encode(tmp_prog))
+            else:
+                # print "\n**** Base kwargs *** \n"
+                # print self.base_kwargs
+                tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                print self.progs[key]
+                print tmp_prog.run_command
+                print tmp_prog.job_parms
+                samp_progs.append(jsonpickle.encode(tmp_prog))
 
             self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
 
@@ -1509,10 +1622,15 @@ def gatk_main():
         gt1.download_sra_cmds()
         if gt1.sra_info['downloads']:
             sys.exit(0)
+    elif 'qiime' in gt1.sample_manifest.keys():
+        print "passing"
     else:
         gt1.symlink_fastqs()
 
-    gt1.chain_commands()
+    if 'qiime' in gt1.sample_manifest.keys():
+        gt1.chain_commands_qiime()
+    else:
+        gt1.chain_commands()
 
     # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
     # this can breask luigi

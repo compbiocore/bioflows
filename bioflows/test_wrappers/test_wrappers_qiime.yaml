@@ -1,0 +1,183 @@
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
+sample_manifest:
+  qiime:
+    --type: EMPSingleEndSequences
+    --input-path: emp-single-end-sequences
+    --output-path: emp-single-end-sequences.qza
+    --m-barcodes-file: sample-metadata.tsv
+    #--output-suffix: test1
+run_parms:
+  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda; conda activate qiime2-2019.1
+  work_dir: /gpfs/scratch/
+  log_dir: logs
+  paired_end: True
+  #local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  #luigi_local_path: /home/aragaven/scratch/test_workflow
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  reference_fasta_path: /gpfs/scratch/test.fa
+  gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+workflow_sequence:
+- qiime:
+    subcommand: "demux emp-single"
+    options:
+      --i-seqs: emp-single-end-sequences.qza
+      --m-barcodes-file: sample-metadata.tsv
+      --m-barcodes-column: BarcodeSequence
+      --o-per-sample-sequences: demux.qza
+
+- qiime:
+    subcommand: demux summarize
+    options:
+      --i-data: demux.qza
+      --o-visualization: demux.qzv
+- qiime:
+    subcommand: "dada2 denoise-single"
+    options:
+      --i-demultiplexed-seqs: demux.qza
+      --p-trim-left: 0
+      --p-trunc-len: 120
+      --o-representative-sequences: rep-seqs-dada2.qza
+      --o-table: table-dada2.qza
+      --o-denoising-stats: stats-dada2.qza
+
+- qiime:
+    subcommand: metadata tabulate
+    options:
+      --m-input-file: stats-dada2.qza
+      --o-visualization: stats-dada2.qzv
+
+- qiime:
+    subcommand: feature-table summarize
+    options:
+      --i-table: table.qza
+      --o-visualization: table.qzv
+      --m-sample-metadata-file: sample-metadata.tsv
+
+    #qiime feature-table tabulate-seqs \
+#  --i-data rep-seqs.qza \
+#  --o-visualization rep-seqs.qzv
+#
+#
+- qiime:
+    subcommand: phylogeny align-to-tree-mafft-fasttree
+    options:
+      --i-sequences: rep-seqs.qza
+      --o-alignment: aligned-rep-seqs.qza
+      --o-masked-alignment: masked-aligned-rep-seqs.qza
+      --o-tree: unrooted-tree.qza \
+      --o-rooted-tree: rooted-tree.qza
+
+# --input-format: |||CasavaOneEightSingleLanePerSampleDirFmt|CasavaOneEightSingleLanePerSampleDirFmt|SingleEndFastqManifestPhred33|PairedEndFastqManifestPhred64
+#--type: EMPSingleEndSequences|EMPPairedEndSequences|'SampleData[SequencesWithQuality]'|'SampleData[PairedEndSequencesWithQuality]'|'SampleData[SequencesWithQuality]'|'SampleData[PairedEndSequencesWithQuality]'|
+#--input-path: emp-single-end-sequences|emp-paired-end-sequences|casava-18-single-end-demultiplexed|casava-18-paired-end-demultiplexed|se-33-manifest|pe-64-manifest
+
+#
+#
+#qiime diversity core-metrics-phylogenetic \
+#  --i-phylogeny rooted-tree.qza \
+#  --i-table table.qza \
+#  --p-sampling-depth 1109 \
+#  --m-metadata-file sample-metadata.tsv \
+#  --output-dir core-metrics-results
+##
+#qiime diversity alpha-group-significance \
+#  --i-alpha-diversity core-metrics-results/faith_pd_vector.qza \
+#  --m-metadata-file sample-metadata.tsv \
+#  --o-visualization core-metrics-results/faith-pd-group-significance.qzv
+#
+##  # Duplicate
+###qiime diversity alpha-group-significance \
+###  --i-alpha-diversity core-metrics-results/evenness_vector.qza \
+###  --m-metadata-file sample-metadata.tsv \
+###  --o-visualization core-metrics-results/evenness-group-significance.qzv
+##
+#qiime diversity beta-group-significance \
+#  --i-distance-matrix core-metrics-results/unweighted_unifrac_distance_matrix.qza \
+#  --m-metadata-file sample-metadata.tsv \
+#  --m-metadata-column BodySite \
+#  --o-visualization core-metrics-results/unweighted-unifrac-body-site-significance.qzv \
+#  --p-pairwise
+#
+### Duplicate
+###qiime diversity beta-group-significance \
+###  --i-distance-matrix core-metrics-results/unweighted_unifrac_distance_matrix.qza \
+###  --m-metadata-file sample-metadata.tsv \
+###  --m-metadata-column Subject \
+###  --o-visualization core-metrics-results/unweighted-unifrac-subject-group-significance.qzv \
+###  --p-pairwise
+##
+##
+#qiime emperor plot \
+#  --i-pcoa core-metrics-results/unweighted_unifrac_pcoa_results.qza \
+#  --m-metadata-file sample-metadata.tsv \
+#  --p-custom-axes DaysSinceExperimentStart \
+#  --o-visualization core-metrics-results/unweighted-unifrac-emperor-DaysSinceExperimentStart.qzv
+##
+### Duplicate
+###qiime emperor plot \
+###  --i-pcoa core-metrics-results/bray_curtis_pcoa_results.qza \
+###  --m-metadata-file sample-metadata.tsv \
+###  --p-custom-axes DaysSinceExperimentStart \
+###  --o-visualization core-metrics-results/bray-curtis-emperor-DaysSinceExperimentStart.qzv
+##
+#qiime diversity alpha-rarefaction \
+#  --i-table table.qza \
+#  --i-phylogeny rooted-tree.qza \
+#  --p-max-depth 4000 \
+#  --m-metadata-file sample-metadata.tsv \
+#  --o-visualization alpha-rarefaction.qzv
+#
+##
+##qiime feature-classifier classify-sklearn \
+##  --i-classifier gg-13-8-99-515-806-nb-classifier.qza \
+##  --i-reads rep-seqs.qza \
+##  --o-classification taxonomy.qza
+##
+### Duplicate
+###qiime metadata tabulate \
+###  --m-input-file taxonomy.qza \
+###  --o-visualization taxonomy.qzv
+##
+##qiime taxa barplot \
+##  --i-table table.qza \
+##  --i-taxonomy taxonomy.qza \
+##  --m-metadata-file sample-metadata.tsv \
+##  --o-visualization taxa-bar-plots.qzv
+##
+#qiime feature-table filter-samples \
+#  --i-table table.qza \
+#  --m-metadata-file sample-metadata.tsv \
+#  --p-where "BodySite='gut'" \
+#  --o-filtered-table gut-table.qza
+#
+##qiime composition add-pseudocount \
+##  --i-table gut-table.qza \
+##  --o-composition-table comp-gut-table.qza
+##
+##qiime composition ancom \
+##  --i-table comp-gut-table.qza \
+##  --m-metadata-file sample-metadata.tsv \
+##  --m-metadata-column Subject \
+##  --o-visualization ancom-Subject.qzv
+##
+##qiime taxa collapse \
+##  --i-table gut-table.qza \
+##  --i-taxonomy taxonomy.qza \
+##  --p-level 6 \
+##  --o-collapsed-table gut-table-l6.qza
+#
+## Duplicate
+##qiime composition add-pseudocount \
+##  --i-table gut-table-l6.qza \
+##  --o-composition-table comp-gut-table-l6.qza
+#
+## Duplicate
+##qiime composition ancom \
+##  --i-table comp-gut-table-l6.qza \
+##  --m-metadata-file sample-metadata.tsv \
+##  --m-metadata-column Subject \
+##  --o-visualization l6-ancom-Subject.qzv
