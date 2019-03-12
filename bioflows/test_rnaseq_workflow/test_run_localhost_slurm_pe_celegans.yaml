@@ -18,6 +18,7 @@ run_parms:
   saga_scheduler: slurm
   gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
+  #TODO refactor to list
   fastqc: default
   gsnap:
     options:

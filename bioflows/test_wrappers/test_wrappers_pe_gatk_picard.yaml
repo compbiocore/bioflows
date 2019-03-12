@@ -1,0 +1,97 @@
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
+sample_manifest:
+  fastq_file: sampl_manifest_min_pe_celegans.csv
+  metadata:
+run_parms:
+  conda_command: source activate bioflows
+  work_dir: /gpfs/scratch/
+  log_dir: logs
+  paired_end: True
+  #local_targets: False
+  luigi_local_path: /Users/aragaven/scratch
+  saga_host: localhost
+  #ssh_user: aragaven
+  saga_scheduler: slurm
+  reference_fasta_path: /gpfs/scratch/test.fa
+workflow_sequence:
+- picard:
+    subcommand: CollectWgsMetrics
+    job_params:
+      mem: 30000
+      time: 900
+- picard:
+    subcommand: AddOrReplaceReadGroups
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- picard:
+    subcommand: MarkDuplicates
+    options:
+      REMOVE_DUPLICATES=true:
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: RealignerTargetCreator
+    options:
+      -known: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: IndelRealigner
+    options:
+      --filter_bases_not_stored:
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: BaseRecalibrator
+    options:
+      -knownSites:
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+      -nct: 8
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: BaseRecalibrator
+    options:
+      -BQSR:
+      -knownSites:
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
+      - /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+      -nct: 8
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: PrintReads
+- picard:
+    subcommand: BuildBamIndex
+    job_params:
+      mem: 30000
+      time: 900
+- gatk:
+    subcommand: HaplotypeCaller
+    options:
+      --dbsnp: /gpfs/data/cbc/references/ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf
+      -stand_call_conf: 30
+      --genotyping_mode: DISCOVERY
+      --emitRefConfidence: GVCF
+      -nct: 4
+    job_params:
+      mem: 30000
+      time: 900
+      ncpus: 4
+- gatk:
+    subcommand: AnalyzeCovariates
+

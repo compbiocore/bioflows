@@ -139,7 +139,8 @@ class SraUtils:
 
         for key, val in self.sample_to_file.iteritems():
             print key, ": ", val, "\n"
-        "\nPrinting Sample to Name\n"
+
+        print "\nPrinting Sample to Name\n"
         for key, val in self.sample_to_name.iteritems():
             print key, ": ", val, "\n"
         return
@@ -160,6 +161,9 @@ class SraUtils:
         out = ''
         if type(val) == list:
             out = ';'.join([v.encode("utf-8") for v in val])
+        elif val is None:
+            # Test for empty dicts
+            outp = "NA"
         else:
             out = val.encode("utf-8")
         return out

@@ -1,0 +1,35 @@
+site_name:        Computational Biology Core - Brown University
+site_author:      Ashok Ragavendran
+repo_url:         https://github.com/compbiocore/bioflows
+site_description: Documentation for running Bioinformatics/Computational workflows with bioflowa
+site_url:         https://compbiocore.github.io/
+
+theme:
+  name: material
+  feature:
+    tabs: true
+  palette:
+    primary: 'blue grey'
+    accent: 'indigo'
+  logo: images/cbc-logo.svg
+
+extra_css:
+- styles/dark_mode.css
+
+markdown_extensions:
+- extra
+- tables
+- admonition
+- codehilite
+- footnotes
+- pymdownx.superfences
+- pymdownx.details
+
+nav:
+- Home: index.md
+- Docs: intro.md
+- Specifications: yaml_description.md
+- Tutorials:
+  - About: tutorials/tutorials.md
+  - Setup the bioflows environment: tutorials/Setup_bioflows_env.md
+  - RNA-Seq tutorial: tutorials/rna-seq_tutorial.md

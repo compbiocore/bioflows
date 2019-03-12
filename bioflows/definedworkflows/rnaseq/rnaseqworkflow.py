@@ -1,7 +1,18 @@
-import luigi, yaml, saga, os, jsonpickle, time, subprocess, copy, sys
+import copy
+import os
+import subprocess
+import sys
+import time
 from collections import OrderedDict, defaultdict
+
+import jsonpickle
+import luigi
+import saga
+import yaml
+
 import bioflows.bioflowsutils.wrappers as wr
 from bioflows.bioutils.access_sra.sra import SraUtils
+
 
 def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     '''
@@ -12,6 +23,7 @@ def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     :return:
 
     Borrowed shamelessly from http://codegist.net/code/python2-yaml/
+    #todo fix hack
     '''
     class OrderedLoader(loader):
         pass
@@ -27,27 +39,47 @@ def ordered_load(stream, loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
     return yaml.load(stream, OrderedLoader)
 
 class BaseTask:
-    def setup(self):
-        self.parms = jsonpickle.decode(self.prog_parms[0])
+
+    # Variable for suffix for multiple run of a program
+
+    def setup(self, prog_input):
+        self.parms = jsonpickle.decode(prog_input)
         self.jobparms = self.parms.job_parms
+        self.jobparms['name'] = self.parms.name
         self.jobparms['workdir'] = self.parms.cwd
+        self.jobparms['scripts_dir'] = self.parms.scripts_dir
 
-        ## Hack to get the command to work for now
-        self.jobparms['command'] = '#SBATCH -vvvv\nset -e\necho $PATH\n'
+        # todo fix:  Hack to get the command to work for now
+        #              Clear all the environment variables
+        self.jobparms['command'] = "\n#SBATCH --export=NONE\n\n"
+        self.jobparms['command'] += "set -e\necho '***** Old PATH *****'\necho $PATH\n"
+        self.jobparms['command'] += "echo '**** Conda command***'\necho '" + self.parms.conda_command + "'\n"
         self.jobparms['command'] += self.parms.conda_command + "\n"
+        # todo Fix hack because CCV loads global modules
+        # with conda activate a new shell is created and the PATH gets muddled
+        # need to figure out how to clear out the env
+        # self.jobparms['command'] += "export PATH=$CONDA_PREFIX/bin:$PATH"
 
-        # self.jobparms['command'] +='source activate cbc_conda\n'
-        self.jobparms['command'] += 'srun '
+        self.jobparms['command'] += "\necho '***** New PATH *****'\necho $PATH\n\n"
+        self.jobparms['command'] += "\necho '***** checking Java ****'\njava -version 2>&1 \n\n"
+        self.jobparms['command'] += "\necho '***** checking env *****'\nprintenv\n\n"
+
+        # self.jobparms['command'] += 'conda activate $CONDA_PREFIX\n'
+        self.jobparms[
+            'command'] += "\necho '***** printing JOB INFO *****'\nscontrol write batch_script $SLURM_JOBID /dev/stdout \n"
+
+        # Add a script here to print out the actual commands used by the slurm using sbatch script
+        self.jobparms['command'] += 'srun --export=ALL '
         self.jobparms['command'] += self.parms.run_command + "\n"
         self.jobparms['command'] += " echo 'DONE' > " + self.parms.luigi_target
 
-        prog_name = self.parms.name.replace(" ", "_")
-        self.name = self.parms.input + "_" + prog_name
+        # self.jobparms['name'] = self.parms.name.replace(" ", "_")
+        # self.jobparms['script_name'] = self.parms.input + "_" + self.jobparms['name']
+        self.jobparms['script_name'] = self.parms.input + "_" + self.parms.prog_id
         ## Replace class name to be reflected in the luigi visualizer
         ##self.__class__.__name__ = self.name
-
-        self.jobparms['out'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stdout")
-        self.jobparms['error'] = os.path.join(self.parms.log_dir, self.name + "_mysagajob.stderr")
+        self.jobparms['out'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stdout")
+        self.jobparms['error'] = os.path.join(self.parms.log_dir, self.jobparms['script_name'] + "_slurm.stderr")
         if self.jobparms['saga_host'] != 'localhost':
             self.jobparms['outfilesource'] = 'ssh.ccv.brown.edu:' + self.parms.luigi_target
             self.jobparms['outfiletarget'] = '' + os.path.dirname(self.parms.luigi_local_target) + "/"
@@ -64,6 +96,9 @@ class BaseTask:
         if host != 'localhost':
             session.add_context(ctx)
         # describe our job
+        # these parameters are standard saga parameters that map tp slurm specific ones:
+        # ref: line 410+ https://github.com/radical-cybertools/saga-python/blob/devel/src/saga/adaptors/slurm/slurm_job.py
+
         jd = saga.job.Description()
         jd.executable = ''
         jd.arguments = [kwargs.get('command')]  # cmd
@@ -73,9 +108,16 @@ class BaseTask:
         jd.number_of_processes = 1
         jd.processes_per_host = 1
         jd.total_cpu_count = kwargs.get('ncpus', 1)
-        jd.output = kwargs.get('out', os.path.join(jd.working_directory, "mysagajob.stdout"))
-        jd.error = kwargs.get('error', "mysagajob.stderr")
+        jd.output = kwargs.get('out', os.path.join(jd.working_directory, "slurmlog.stdout"))
+        jd.error = kwargs.get('error', "slurmlog.stderr")
         js = saga.job.Service(scheduler + "://" + host, session=session)
+
+        f = open(os.path.join(kwargs.get('scripts_dir'), kwargs.get('script_name') + "_sbatch_cmds"), 'w')
+        f.write("#/bin/bash\n\n#*************\n")
+        f.write(kwargs.get('command'))
+        f.write("\n\n#*************\n")
+        f.close()
+
         myjob = js.create_job(jd)
         # Now we can start our job.
         # print " \n ***** SAGA: job Started ****\n"
@@ -100,14 +142,15 @@ class TopTask(luigi.Task, BaseTask):
     prog_parms = luigi.ListParameter()
 
     def run(self):
-        self.setup()
-        self.__class__.__name__ = str(self.name)
+
+        self.setup(self.prog_parms[0])
+        self.__class__.__name__ = str(self.jobparms['name'])
         job = self.create_saga_job(**self.jobparms)
         return
 
     def output(self):
-        self.setup()
-        self.__class__.__name__ = str(self.name)
+        self.setup(self.prog_parms[0])
+        self.__class__.__name__ = str(self.jobparms['name'])
         if self.parms.local_target:
             # lcs.RemoteFileSystem("ssh.ccv.brown.edu").get( self.parms.luigi_target,self.parms.luigi_local_target)
             return luigi.LocalTarget(self.parms.luigi_local_target)
@@ -117,25 +160,31 @@ class TopTask(luigi.Task, BaseTask):
 
 class TaskSequence(luigi.Task, BaseTask):
     prog_parms = luigi.ListParameter()
-
+    n_tasks = luigi.IntParameter()
     def requires(self):
-        self.setup()
+        self.setup(self.prog_parms[0])
         newParms = [x for x in self.prog_parms]
-        del newParms[0]
-        if len(newParms) > 1:
-            return TaskSequence(prog_parms=newParms)
+
+        # Test if only one command is submitted or more commands are submitted
+        if self.n_tasks > 1:
+            del newParms[0]
+            if len(newParms) > 1:
+                return TaskSequence(prog_parms=newParms, n_tasks=self.n_tasks)
+            else:
+                return TopTask(prog_parms=newParms)
         else:
-            return TopTask(prog_parms=newParms)
+            return []
+            # return TopTask(prog_parms=newParms)
 
     def run(self):
-        self.setup()
-        self.__class__.__name__ = str(self.name)
+        self.setup(self.prog_parms[0])
+        self.__class__.__name__ = str(self.jobparms['name'])
         job = self.create_saga_job(**self.jobparms)
         return
 
     def output(self):
-        self.setup()
-        self.__class__.__name__ = str(self.name)
+        self.setup(self.prog_parms[0])
+        self.__class__.__name__ = str(self.jobparms['name'])
         if self.parms.local_target:
             return luigi.LocalTarget(self.parms.luigi_local_target)
         else:
@@ -156,12 +205,17 @@ class TaskFlow(luigi.WrapperTask):
 
 
 class BaseWorkflow:
-    base_kwargs = dict()
-    sample_fastq = dict()
+    base_kwargs = ''
+    new_base_kwargs = ''
+    sample_fastq = ''
     sample_fastq_work = dict()
     progs = OrderedDict()
     sra_info = ''
-
+    multi_run_var = "round"
+    prog_job_parms = dict()
+    prog_suffix_type = dict()
+    prog_output_suffix = dict()
+    prog_input_suffix = dict()
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
         self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
@@ -169,20 +223,31 @@ class BaseWorkflow:
                               'fastqc': wr.FastQC,
                               'qualimap_rnaseq': wr.QualiMap,
                               'qualimap_bamqc': wr.QualiMap,
-                              'samtobam': wr.SamToBam,
-                              'bamtomapped': wr.BamToMappedBam,
-                              'bamtounmapped': wr.BamToUnmappedBam,
-                              'samindex': wr.SamIndex,
-                              'samsort': wr.SamToolsSort,
-                              'bammarkduplicates2': wr.BiobambamMarkDup,
+                              'samtools_view': wr.SamTools,
+                              'samtools_index': wr.SamTools,
+                              'samtools_sort': wr.SamTools,
+                              'bammarkduplicates2': wr.Biobambam,
+                              'bamsort': wr.Biobambam,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
-                              'picard_CollectWgsMetrics': wr.Picard
+                              'picard_CollectWgsMetrics': wr.Picard,
+                              'picard_MarkDuplicates': wr.Picard,
+                              'picard_BuildBamIndex': wr.Picard,
+                              'picard_AddOrReplaceReadGroups': wr.Picard,
+                              'gatk_RealignerTargetCreator': wr.Gatk,
+                              'gatk_IndelRealigner': wr.Gatk,
+                              'gatk_BaseRecalibrator': wr.Gatk,
+                              'gatk_PrintReads': wr.Gatk,
+                              'gatk_HaplotypeCaller': wr.Gatk,
+                              'gatk_AnalyzeCovariates': wr.Gatk,
+                              'trimmomatic_PE': wr.Trimmomatic,
+                              'fastq_screen': wr.FastqScreen
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
-                           'mem': 3000
+                           'mem': 3000,
+                           'ncpus': 1
                            }
 
         # Check and make sure both fastq_file and sra don't exist
@@ -191,18 +256,23 @@ class BaseWorkflow:
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
 
+        # todo close so we can trap errors else will fail silently
+
         # Setup saga parameters
         self.set_saga_parms()
 
         # Setup the Conda PATH
         if 'conda_command' not in self.run_parms.keys():
-            self.run_parms['conda_command'] = 'source activate /gpfs/data/cbc/cbc_conda_v1/envs/cbc_conda/bin'
+            self.run_parms['conda_command'] = 'source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda'
 
         #self.paired_end = False
+        if "log_dir" not in self.run_parms.keys():
+            self.run_parms['log_dir'] = "logs"
         self.set_paths()
         self.set_base_kwargs()
-        self.paths_to_test = [self.work_dir, self.log_dir, self.checkpoint_dir, self.sra_dir,
-                         self.fastq_dir, self.align_dir, self.qc_dir]
+
+        self.paths_to_test = [self.work_dir, self.log_dir, self.scripts_dir, self.checkpoint_dir, self.sra_dir,
+                              self.fastq_dir, self.align_dir, self.qc_dir]
 
         return
 
@@ -214,6 +284,7 @@ class BaseWorkflow:
 
         for k, v in ordered_load(open(fileHandle, 'r'), yaml.SafeLoader).iteritems():
             setattr(self, k, v)
+
         return
 
 
@@ -238,9 +309,12 @@ class BaseWorkflow:
 
     def set_base_kwargs(self):
         """
-        Setup the generic keyword arguments for the wrappers to use
+        Setup the generic keyword arguments for the wrappers to use. These keywords are the
+        global parameters for the entire workflow.
         :return:
         """
+        print "\n ****** Setting base Keywords ***** \n"
+        self.base_kwargs = dict()
         self.base_kwargs['cwd'] = self.work_dir
         self.base_kwargs['align_dir'] = self.align_dir
         self.base_kwargs['qc_dir'] = self.qc_dir
@@ -256,6 +330,7 @@ class BaseWorkflow:
         self.base_kwargs['job_parms_type'] = "default"
         self.base_kwargs['add_job_parms'] = None
         self.base_kwargs['log_dir'] = self.log_dir
+        self.base_kwargs['scripts_dir'] = self.scripts_dir
         self.base_kwargs['paired_end'] = self.run_parms.get('paired_end', False)
         self.base_kwargs['local_targets'] = self.run_parms.get('local_targets', False)
         self.base_kwargs['luigi_local_path'] = self.run_parms.get('luigi_local_path', os.getcwd())
@@ -264,6 +339,8 @@ class BaseWorkflow:
         self.base_kwargs['gtf_file'] = self.run_parms.get('gtf_file', None)
         self.base_kwargs['ref_fasta_path'] = self.run_parms.get('reference_fasta_path', None)
         self.base_kwargs['genome_file'] = self.run_parms.get('genome_file', None)
+        # self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # Does not work keeps the object in memory
         return
 
     def parse_sample_info_from_file(self):
@@ -272,6 +349,7 @@ class BaseWorkflow:
         the sample id as the key
         :return:
         """
+        self.sample_fastq = dict()
         for line in open(self.sample_manifest['fastq_file'], 'r'):
             tmpline = line.strip('\n').split(',')
             # print tmpline[0], tmpline[1]
@@ -304,9 +382,11 @@ class BaseWorkflow:
         if 'SINGLE' in sample_sra.sra_records[query_val]['library_type']:
             print "SE library\n"
             self.paired_end = False
+            self.base_kwargs['paired_end'] = False
         elif 'PAIRED' in sample_sra.sra_records[query_val]['library_type']:
             print "PE library\n"
             self.paired_end = True
+            self.base_kwargs['paired_end'] = True
         return
 
     def set_paths(self):
@@ -316,8 +396,12 @@ class BaseWorkflow:
         '''
         self.work_dir = self.run_parms['work_dir']
         self.log_dir = os.path.join(self.work_dir, self.run_parms['log_dir'])
+        self.scripts_dir = os.path.join(self.work_dir, "slurm_scripts")
         self.checkpoint_dir = os.path.join(self.work_dir, 'checkpoints')
+
+        # TODO refactor to make sra dir only if sra option is used
         self.sra_dir = os.path.join(self.work_dir, 'sra')
+
         self.fastq_dir = os.path.join(self.work_dir, 'fastq')
         self.align_dir = os.path.join(self.work_dir, 'alignments')
         self.qc_dir = os.path.join(self.work_dir, 'qc')
@@ -411,8 +495,11 @@ class BaseWorkflow:
         Download sra based on ftp urls and process to fastq
         :return:
         '''
-        cmds = []
+
         # Add commands to the command list
+        cmds = []
+
+        # Add samples to a list
         samp_list =[]
         for samp, fileName in self.sample_fastq.iteritems():
             self.sample_fastq_work[samp] = []
@@ -421,9 +508,10 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+                                          "fastq-dump", "-v", "-v", "-v", "--gzip",
+                                          os.path.join(self.sra_dir, sra_name), '-O',
                                           self.fastq_dir, ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+                                          " mv -v", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -432,12 +520,15 @@ class BaseWorkflow:
                     sra_name = os.path.basename(fileName[0])
 
                     cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                          "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
+                                          "fastq-dump", "-v", "-v", "-v", "--gzip", "--split-files",
+                                          os.path.join(self.sra_dir, sra_name),
                                           '-O',
                                           self.fastq_dir, ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
+                                          " mv -v",
+                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
-                                          " mv", os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
+                                          " mv -v",
+                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -450,7 +541,8 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
+                                              "fastq-dump", "-vvv", "--gzip", os.path.join(self.sra_dir, sra_name),
+                                              '-O',
                                               self.fastq_dir, ";",
                                               " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
@@ -463,18 +555,17 @@ class BaseWorkflow:
                     for srr_file in fileName:
                         sra_name = os.path.basename(srr_file)
                         cmds.append(' '.join([self.run_parms['conda_command'], ";",
-                                              "fastq-dump", "--gzip", "--split-files",
-                                              os.path.join(self.sra_dir, sra_name), '-O',
-                                              self.fastq_dir, ";",
+                                              "fastq-dump", "-vvv", "--gzip", "--split-files",
+                                              os.path.join(self.sra_dir, sra_name), '-O', self.fastq_dir, ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
-                                              "rm",
+                                              "rm -v",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")), ";",
                                               "cat",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
-                                              "rm",
+                                              "rm -v",
                                               os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")), ";",
                                               "echo DONE:", srr_file, "> "]))
                         samp_list.append(samp)
@@ -482,9 +573,8 @@ class BaseWorkflow:
 
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
                     self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
-        #print cmds
-        # Create a dictionary of Sample and commands
-        #cmds_dict = dict(zip(samp_list,cmds))
+
+        # defaultdict with a default factory of list. A new list is created for each new key.
 
         cmds_dict = defaultdict(list)
         for samp,cmd in zip(samp_list,cmds):
@@ -512,14 +602,14 @@ class BaseWorkflow:
         f = open(outfile, 'w')
         for samp, cmds in cmds_set.iteritems():
             if type(cmds) == list:
-                f.write(samp + ":" + '; '.join(cmds) + "\n")
+                f.write(samp + ":" + '\n'.join(cmds) + "\n")
             else:
                 f.write(samp + ":" + cmds + "\n")
 
         f.close()
         return
 
-    def symlink_fastqs_submit_jobs(self, cmds, job_output_suffix, run_time):
+    def symlink_fastqs_submit_jobs(self, cmds, job_output_suffix, run_time, depend=False):
         """
         take in a dictionary of sample and associated commands to run for the sample and submit each command as a job
         :param cmds:
@@ -571,17 +661,43 @@ class BaseWorkflow:
         jobs = []
         for samp,cmd in cmds.iteritems():
             num = 1
+            prev_job_id = None
+
             for c in cmd:
                 job_output = os.path.join(self.log_dir, samp + "_" + str(num) + "_" + job_output_suffix)
-                #jd.error = os.path.join(self.log_dir, samp +".symlink.stderr")
+                jd.error = os.path.join(self.log_dir, samp + "_" + str(num) + "_slurm.err")
+                jd.output = os.path.join(self.log_dir, samp + "_" + str(num) + "_slurm.out")
 
                 ## Always redirect stderr to stdout in this case
-                jd.arguments = c + job_output + " 2>&1 "
-                myjob = js.create_job(jd)
-                myjob.run()
-                jobs.append(myjob)
+                myjob = ''
+
+                if num == 1 and depend:
+                    jd.arguments = c + " 2>&1 " + job_output
+                    myjob = js.create_job(jd)
+                    myjob.run()
+                    jobs.append(myjob)
+                    prev_job_id = myjob.get_id().split('-')[1].strip('[').strip(']')
+                elif num > 1 and depend:
+                    # Hack to append other SBATCH defs
+                    tmp_args = "#SBATCH--dependency=afterok:" + str(prev_job_id) + "\n"
+                    jd.output += "\n" + tmp_args
+                    jd.arguments = c + job_output + " 2>&1 "
+                    myjob = js.create_job(jd)
+                    myjob.run()
+                    jobs.append(myjob)
+                    prev_job_id = myjob.get_id().split('-')[1].strip('[').strip(']')
+                else:
+                    jd.arguments = c + job_output + " 2>&1 "
+                    myjob = js.create_job(jd)
+                    myjob.run()
+                    jobs.append(myjob)
+
+                # myjob.run()
+                # jobs.append(myjob)
                 print ' * Submitted %s for %s. Output will be written to: %s' % (myjob.id, samp, job_output)
+
                 num += 1
+
         # Wait for all jobs to finish
 
         while len(jobs) > 0:
@@ -714,45 +830,140 @@ class BaseWorkflow:
         ## This whole section needs to be refactored
         ## to allow for program options to be updated
 
-        for k, v in self.workflow_sequence.iteritems():
-            self.progs[k] = []
-            print k, v
-            if isinstance(v, dict):
-                # Add the specific program options
-                # Need to modify to dict so that default values can be updated
-                # Right now program options are directly added as text
-                # Also need to edit this in wrappers so that two sets of arg dicts are used
-                # one for options and one for job parms
+        tool_prefix = []
+        for p in self.workflow_sequence:
 
-                if 'options' in v.keys():
-                    for k1, v1 in v['options'].iteritems():
-                        # Should we test for flag options?
-                        if v1 is not None:
-                            self.progs[k].append("%s %s" % (k1, v1))
-                        else:
-                            self.progs[k].append("%s" % (k1))
-                else:
-                    self.progs[k].append('')
-                # Add the specific program job parameters
-                if 'job_params' in v.keys():
-                    self.progs_job_parms[k] = v['job_params']
-                else:
-                    self.progs_job_parms[k] = 'default'
-            elif v == 'default':
-                self.progs[k].append('')
+            # round_counter = 0
+            for k, v in p.iteritems():
+                new_key = k
+                if isinstance(v, dict):
+                    # Add the specific program options
+                    # Need to modify to dict so that default values can be updated
+                    # Right now program options are directly added as text
+                    # Also need to edit this in wrappers so that two sets of arg dicts are used
+                    # one for options and one for job parms
 
-                # self.progs[k].append(v1)
+                    if 'subcommand' in v.keys():
+                        # Update current program name by adding the subcommand
+                        new_key = '_'.join([k, v['subcommand']])
+
+                    # search if the same command was used before
+                    tool_prefix.append(new_key)
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
+
+                    # If this command is a repeat update the program key to include the times it was called
+
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
+                        # Update Current Program name by adding the number of times called
+                        new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+
+                    # Gather all arguments for the program in this list
+                    self.progs[new_key] = []
+
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
+                    self.prog_suffix_type[new_key] = 'default'
+
+                    if 'suffix' in v.keys():
+                        suffixes = v['suffix']
+                        self.prog_suffix_type[new_key] = "custom"
+
+                        if 'input' in suffixes.keys():
+                            self.prog_input_suffix[new_key] = suffixes['input']
+                        if 'output' in suffixes.keys():
+                            self.prog_output_suffix[new_key] = suffixes['output']
+
+
+                    if 'options' in v.keys():
+                        for k1, v1 in v['options'].iteritems():
+                            # Should we test for flag options?
+                            if v1 is not None:
+
+                                # This If-else block checks if options are repeated for example
+                                # in GATK -knownSites can be specified multiple times
+
+                                if not isinstance(v1, list):
+                                    self.progs[new_key].append("%s %s" % (k1, v1))
+                                else:  # isinstance(v1, list):
+                                    for v11 in v1:
+                                        self.progs[new_key].append("%s %s" % (k1, v11))
+                            else:
+                                print "Flag type argument " + k1
+                                self.progs[new_key].append("%s" % (k1))
+                    else:
+                        self.progs[new_key].append('')
+
+                    # Add the specific program job parameters
+                    if 'job_params' in v.keys():
+                        self.prog_job_parms[new_key] = v['job_params']
+                    else:
+                        self.prog_job_parms[new_key] = 'default'
+
+                # Todo should we use an else here instead of elif
+                elif v == 'default':
+
+                    tool_prefix.append(new_key)
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
+
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
+                        # Update Current Program name by adding the number of times called
+                        new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+
+                    self.progs[new_key] = []
+                    self.progs[new_key].append('')
+                    self.prog_job_parms[new_key] = 'default'
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
+                    self.prog_suffix_type[new_key] = 'default'
+
+
         self.progs = OrderedDict(reversed(self.progs.items()))
+        # print self.progs
         return
 
+    def find_command_rounds(self, new_key, prog_list):
+        """
+        Find the number of times a program has been called
+        :param new_key:
+        :param prog_list:
+        :return:
+        """
+        round_cnt = sum([new_key in S for S in prog_list])
+        return round_cnt
+
+
     def update_job_parms(self, key):
-        new_base_kwargs = copy.deepcopy(self.base_kwargs)
-        if self.progs_job_parms[key] != 'default':
-            new_base_kwargs['job_parms_type'] = "custom"
-            new_base_kwargs['add_job_parms'] = self.progs_job_parms[key]
-        return new_base_kwargs
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        if isinstance(self.prog_job_parms, dict) and self.prog_job_parms[key] == 'default':
+            print "Using default **kwarg Values"
+            self.new_base_kwargs['job_parms_type'] = "default"
+            self.new_base_kwargs['job_parms'] = self.job_params
+            print self.new_base_kwargs['job_parms']
+        else:
+            print "Using Custom Values for job parms"
+            self.new_base_kwargs['job_parms_type'] = "custom"
+            self.new_base_kwargs['add_job_parms'] = self.prog_job_parms[key]
+            print self.new_base_kwargs['job_parms']
 
+        # Alternate version
+        # if isinstance(self.prog_job_parms, dict) and self.prog_job_parms[key] != 'default':
+        #         self.new_base_kwargs['job_parms_type'] = "custom"
+        #         self.new_base_kwargs['add_job_parms'] = self.prog_job_parms[key]
+        # else:
+        #     print "Using default Values for job parms"
+        #     self.new_base_kwargs['job_parms_type'] = "default"
+        return self.new_base_kwargs
 
+    def update_prog_suffixes(self, key):
+        if self.prog_suffix_type[key] != 'default':
+            self.new_base_kwargs['suffix_type'] = "custom"
+        else:
+            print "Using default **kwarg Values"
+            self.new_base_kwargs['suffix_type'] = "default"
+
+        self.new_base_kwargs['suffix'] = {"input": self.prog_input_suffix[key],
+                                          "output": self.prog_output_suffix[key]}
+        return self.new_base_kwargs
 
 class RnaSeqFlow(BaseWorkflow):
     allTasks = []
@@ -766,9 +977,9 @@ class RnaSeqFlow(BaseWorkflow):
 
         # Update kwargs to include directory for expression quantification
         self.base_kwargs['expression_dir'] = self.expression_dir
-
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
         # Update paths to check to include directory for expression quantification
-        self.paths_to_test += self.expression_dir
+        self.paths_to_test += [self.expression_dir]
 
         return
 
@@ -783,10 +994,10 @@ class RnaSeqFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
-
+                new_base_kwargs = self.update_job_parms(key)
                 if key == 'gsnap':
                     # update job parms
-                    new_base_kwargs = self.update_job_parms(key)
+                    # new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
 
                     tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
@@ -806,6 +1017,7 @@ class RnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                    # TODO why use new_base_kwargs instead of base_kwargs like the others
                     tmp_prog = self.prog_wrappers['samsort']('samtools', samp,
                                                              stdout=os.path.join(self.log_dir, samp + '_bamsrt.log'),
                                                              **dict(new_base_kwargs)
@@ -849,6 +1061,23 @@ class RnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                # Remove the duprun from the the key and create the wrapper command
+                elif self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+
+                    # Testing here
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                       **dict(self.new_base_kwargs)
+                                                       )
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs
@@ -856,36 +1085,13 @@ class RnaSeqFlow(BaseWorkflow):
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                            self.run_parms['log_dir'],
                                                                            samp + '_' + key + '.log'),
-                                                       **dict(self.base_kwargs)
+                                                       **dict(self.new_base_kwargs)
                                                        )
 
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
-                    # print self.job_params
-                    # tmp_prog.job_parms['mem'] = 1000
-                    # tmp_prog.job_parms['time'] = 80
-                    # tmp_prog.job_parms['ncpus'] = 1
-                    ## Need to fix to read in options and parms
 
-            # Remove the first job and re-add it without any targets
-
-            # del samp_progs[-1]
-            # tmp_prog = self.prog_wrappers[key](key, samp,
-            #                                    stdout=os.path.join(self.log_dir,samp + '_' + key + '.log'),
-            #                                    **dict(self.base_kwargs)
-            #                                    )
-            # tmp_prog.luigi_source = "None"
-            # samp_progs.append(jsonpickle.encode(tmp_prog))
-            # print "\n**** Command after removal *** \n"
-            # print tmp_prog.run_command
-            # for k,v in tmp_prog.__dict__.iteritems():
-            #     print k,v
-            # # print self.job_params
-            # # print tmp_prog.job_parms
-            # print tmp_prog.luigi_source
-            # self.allTasks.append(TaskSequence(samp_progs))
-            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
-            # print self.allTasks
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs, n_tasks=len(samp_progs))))
 
         return
 
@@ -897,7 +1103,7 @@ class DnaSeqFlow(BaseWorkflow):
     def __init__(self, parmsfile):
         self.init(parmsfile)
 
-        # Create Expression quantification directory for RNASeq
+        # Create  quantification directory for
         #self.expression_dir = os.path.join(self.work_dir, 'expression')
 
         # Update kwargs to include directory for expression quantification
@@ -919,10 +1125,10 @@ class DnaSeqFlow(BaseWorkflow):
             samp_progs = []
 
             for key in self.progs.keys():
-
+                new_base_kwargs = self.update_job_parms(key)
                 if key == 'bwa_mem':
                     # update job parms
-                    new_base_kwargs = self.update_job_parms(key)
+                    # new_base_kwargs = self.update_job_parms(key)
                     # Add additional samtools processing steps to GSNAP output
 
                     tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
@@ -985,6 +1191,20 @@ class DnaSeqFlow(BaseWorkflow):
 
                     samp_progs.append(jsonpickle.encode(tmp_prog))
 
+                elif self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](new_key, samp, *self.progs[key],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                           **dict(self.new_base_kwargs)
+                                                           )
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
                 else:
                     # print "\n**** Base kwargs *** \n"
                     # print self.base_kwargs
@@ -992,7 +1212,7 @@ class DnaSeqFlow(BaseWorkflow):
                                                        stdout=os.path.join(self.run_parms['work_dir'],
                                                                            self.run_parms['log_dir'],
                                                                            samp + '_' + key + '.log'),
-                                                       **dict(self.base_kwargs)
+                                                       **dict(self.new_base_kwargs)
                                                        )
                     print tmp_prog.run_command
                     samp_progs.append(jsonpickle.encode(tmp_prog))
@@ -1019,10 +1239,201 @@ class DnaSeqFlow(BaseWorkflow):
             # # print tmp_prog.job_parms
             # print tmp_prog.luigi_source
             # self.allTasks.append(TaskSequence(samp_progs))
-            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs)))
+            self.allTasks.append(jsonpickle.encode(TaskSequence(samp_progs, n_tasks=len(samp_progs))))
             # print self.allTasks
 
         return
+
+
+class GatkFlow(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create  directory for storing GATK files
+        self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+
+        # Update kwargs to include directory for VCFs
+        self.base_kwargs['gatk_dir'] = self.gatk_dir
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # Update paths to check to include directory for VCFs
+        self.paths_to_test += [self.gatk_dir]
+
+        return
+
+    def chain_commands(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        for samp, file in self.sample_fastq_work.iteritems():
+            print "\n *******Commands for Sample:%s ***** \n" % (samp)
+            samp_progs = []
+
+            for key in self.progs.keys():
+                print "Printing original Parms\n"
+                print self.prog_job_parms
+                self.update_job_parms(key)
+                self.update_prog_suffixes(key)
+                if self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                    print "new_key", new_key, key
+                    print self.progs[key], self.progs[new_key]
+                    print tmp_prog.run_command
+                    print tmp_prog.job_parms
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                    print self.progs[key]
+                    print tmp_prog.run_command
+                    print tmp_prog.job_parms
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+            self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
+
+        return
+
+
+class GatkFlow2(BaseWorkflow):
+    allTasks = []
+    progs_job_parms = dict()
+
+    def __init__(self, parmsfile):
+        self.init(parmsfile)
+
+        # Create  directory for storing GATK files
+        self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+
+        # Update kwargs to include directory for VCFs
+        self.base_kwargs['gatk_dir'] = self.gatk_dir
+        self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
+        # Update paths to check to include directory for VCFs
+        self.paths_to_test += [self.gatk_dir]
+
+        return
+
+    def chain_commands(self):
+        """
+        Create a n ordered list of commands to be run sequentially for each sample for use with the Luigi scheduler.
+        :return:
+        """
+
+        for samp, file in self.sample_fastq_work.iteritems():
+            print "\n *******Commands for Sample:%s ***** \n" % (samp)
+            samp_progs = []
+
+            for key in self.progs.keys():
+                new_base_kwargs = self.update_job_parms(key)
+                if key == 'bwa_mem':
+                    # update job parms
+                    # new_base_kwargs = self.update_job_parms(key)
+                    # Add additional samtools processing steps to GSNAP output
+
+                    tmp_prog = self.prog_wrappers['bammarkduplicates2']('bammarkduplicates2', samp,
+                                                                        stdout=os.path.join(self.log_dir,
+                                                                                            samp + '_bamdup.log'),
+                                                                        **dict(self.base_kwargs)
+                                                                        )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samindex']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir, samp + '_bamidx.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samsort']('samtools', samp,
+                                                             stdout=os.path.join(self.log_dir, samp + '_bamsrt.log'),
+                                                             **dict(new_base_kwargs)
+                                                             )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtomapped']('samtools', samp,
+                                                                 stdout=os.path.join(self.log_dir,
+                                                                                     samp + '_bamtomappedbam.log'),
+                                                                 **dict(self.base_kwargs)
+                                                                 )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['bamtounmapped']('samtools', samp,
+                                                                   stdout=os.path.join(self.log_dir,
+                                                                                       samp + '_bamtounmappedbam.log'),
+                                                                   **dict(self.base_kwargs)
+                                                                   )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers['samtobam']('samtools', samp,
+                                                              stdout=os.path.join(self.log_dir,
+                                                                                  samp + '_samtobam.log'),
+                                                              **dict(self.base_kwargs)
+                                                              )
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.align_dir, samp + '.sam'),
+                                                       **dict(new_base_kwargs))
+
+                    print tmp_prog.run_command
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+                elif self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    # Testing here
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key],
+                                                           stdout=os.path.join(self.run_parms['work_dir'],
+                                                                               self.run_parms['log_dir'],
+                                                                               samp + '_' + key + '.log'),
+                                                           **dict(self.new_base_kwargs)
+                                                           )
+
+                    # print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key],
+                                                       stdout=os.path.join(self.run_parms['work_dir'],
+                                                                           self.run_parms['log_dir'],
+                                                                           samp + '_' + key + '.log'),
+                                                       **dict(self.new_base_kwargs)
+                                                       )
+                    print tmp_prog.run_command
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+
+            self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
+
+        return
+
+
+
 
 
 def rna_seq_main():
@@ -1032,26 +1443,9 @@ def rna_seq_main():
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     rw1 = RnaSeqFlow(parmsfile)
-    #
-    # print "\n***** Printing config Parsing ******\n"
-    # for k, v in rw1.__dict__.iteritems():
-    #     print k, v
-    #     #
-    #
-    # print "\n***** Printing Sample Info ******\n"
-    # for k, v in rw1.sample_fastq.iteritems():
-    #     print k, v
-    #
 
     rw1.parse_prog_info()
-    # print "\n***** Printing Progs dict ******\n"
-    # for k, v in rw1.progs.iteritems():
-    #     print k, v
-    #
-    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
-    # print "\n***** Printing Progs dict in reverse ******\n"
-    # for k, v in rev_progs.iteritems():
-    #     print k, v
+
 
     print "\n***** Printing Chained Commands ******\n"
 
@@ -1064,8 +1458,11 @@ def rna_seq_main():
     else:
         rw1.symlink_fastqs()
     rw1.chain_commands()
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
     luigi.build([TaskFlow(tasks=rw1.allTasks, task_name=rw1.bioproject)], local_scheduler=True,
-                workers=len(rw1.sample_fastq_work.keys()), lock_size=1)
+                workers=min(50, len(rw1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
     return
 
 
@@ -1075,26 +1472,8 @@ def dna_seq_main():
     # parmsfile = "/home/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run_remote_tdat.yaml"
     parmsfile = sys.argv[1]
     dw1 = DnaSeqFlow(parmsfile)
-    #
-    # print "\n***** Printing config Parsing ******\n"
-    # for k, v in rw1.__dict__.iteritems():
-    #     print k, v
-    #     #
-    #
-    # print "\n***** Printing Sample Info ******\n"
-    # for k, v in rw1.sample_fastq.iteritems():
-    #     print k, v
-    #
 
     dw1.parse_prog_info()
-    # print "\n***** Printing Progs dict ******\n"
-    # for k, v in rw1.progs.iteritems():
-    #     print k, v
-    #
-    # rev_progs = OrderedDict(reversed(rw1.progs.items()))
-    # print "\n***** Printing Progs dict in reverse ******\n"
-    # for k, v in rev_progs.iteritems():
-    #     print k, v
 
     print "\n***** Printing Chained Commands ******\n"
 
@@ -1108,97 +1487,41 @@ def dna_seq_main():
         dw1.symlink_fastqs()
 
     dw1.chain_commands()
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
     luigi.build([TaskFlow(tasks=dw1.allTasks, task_name=dw1.bioproject)], local_scheduler=True,
-                workers=len(dw1.sample_fastq_work.keys()), lock_size=1)
+                workers=min(50, len(dw1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
     return
+
+def gatk_main():
+    print "success intall worked"
+    parmsfile = sys.argv[1]
+    gt1 = GatkFlow(parmsfile)
+
+    gt1.parse_prog_info()
+
+    print "\n***** Printing Chained Commands ******\n"
+
+    # Actual jobs start here
+    gt1.test_paths()
+    if 'sra' in gt1.sample_manifest.keys():
+        gt1.download_sra_cmds()
+        if gt1.sra_info['downloads']:
+            sys.exit(0)
+    else:
+        gt1.symlink_fastqs()
+
+    gt1.chain_commands()
+
+    # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
+    # this can breask luigi
+
+    luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
+                workers=min(50, len(gt1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
+    return
+
 
 
 if __name__ == '__main__':
     rna_seq_main()
-
-
- # BAD CODING KEEP function
- # def download_sra_cmds(self):
- #        '''
- #        Download sra based on ftp urls and process to fastq
- #        :return:
- #        '''
- #        cmds = []
- #        # Add commands to the command list
- #
- #        for samp, fileName in self.sample_fastq.iteritems():
- #            self.sample_fastq_work[samp] = []
- #            # Test if there are multiple runs per sample
- #            if len(fileName) < 2:
- #                if not self.paired_end:
- #                    sra_name = os.path.basename(fileName[0])
- #
- #                    cmds.append(' '.join([self.run_parms['conda_command'], ";",
- #                                          'wget', '-P', self.sra_dir, fileName[0], ";",
- #                                          "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
- #                                          self.fastq_dir, ";",
- #                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
- #                                          os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
- #                                          "echo DONE:", fileName[0], ">> "]))
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
- #                else:
- #                    sra_name = os.path.basename(fileName[0])
- #
- #                    cmds.append(' '.join([self.run_parms['conda_command'], ";",
- #                                          'wget', '-P', self.sra_dir, fileName[0], ";",
- #                                          "fastq-dump", "--gzip", "--split-files", os.path.join(self.sra_dir, sra_name),
- #                                          '-O',
- #                                          self.fastq_dir, ";",
- #                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
- #                                          os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
- #                                          " mv", os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
- #                                          os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
- #                                          "echo DONE:", fileName[0], ">> "]))
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
- #            else:
- #                if not self.paired_end:
- #                    num = 1
- #                    for srr_file in fileName:
- #                        sra_name = os.path.basename(srr_file)
- #                        cmds.append(' '.join([self.run_parms['conda_command'], ";",
- #                                              'wget', '-P', self.sra_dir, srr_file, ";",
- #                                              "fastq-dump", "--gzip", os.path.join(self.sra_dir, sra_name), '-O',
- #                                              self.fastq_dir, ";",
- #                                              " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
- #                                              ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
- #                                              "echo DONE:", srr_file, ">> "]))
- #                        num += 1
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + ".fq.gz"))
- #                else:
- #                    num = 1
- #                    for srr_file in fileName:
- #                        sra_name = os.path.basename(srr_file)
- #                        cmds.append(' '.join([self.run_parms['conda_command'], ";",
- #                                              'wget', '-P', self.sra_dir, srr_file, ";",
- #                                              "fastq-dump", "--gzip", "--split_files",
- #                                              os.path.join(self.sra_dir, sra_name), '-O',
- #                                              self.fastq_dir, ";",
- #                                              "cat",
- #                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")),
- #                                              ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
- #                                              "rm",
- #                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_1.fastq.gz")), ";",
- #                                              "cat",
- #                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")),
- #                                              ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
- #                                              "rm",
- #                                              os.path.join(self.fastq_dir, sra_name.replace("sra", "_2.fastq.gz")), ";",
- #                                              "echo DONE:", srr_file, ">> "]))
- #                        num += 1
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_1.fq.gz"))
- #                    self.sample_fastq_work[samp].append(os.path.join(self.fastq_dir, samp + "_2.fq.gz"))
- #        print cmds
- #
- #        # Create a dictionary of Sample and commands
- #        cmds_dict = dict(zip(self.sample_fastq.keys(),cmds))
- #        self.symlink_fastqs_submit_jobs(cmds_dict)
- #        for k, v in self.sample_fastq_work.iteritems():
- #            print k, ":", v, "\n"
- #
- #        return
