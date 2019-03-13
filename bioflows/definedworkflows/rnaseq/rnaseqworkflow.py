@@ -252,6 +252,7 @@ class BaseWorkflow:
                               'fastq_screen': wr.FastqScreen,
                               'qiime_tools_import': wr_qiime2.Qiime2,
                               'qiime_demux_emp-single': wr_qiime2.Qiime2,
+                              'qiime_demux_emp-paired': wr_qiime2.Qiime2,
                               'qiime_demux_summarize': wr_qiime2.Qiime2,
                               'qiime_dada2_denoise-single': wr_qiime2.Qiime2,
                               'qiime_metadata_tabulate': wr_qiime2.Qiime2,
@@ -272,6 +273,7 @@ class BaseWorkflow:
             self.parse_sample_info_from_sra()
         elif 'qiime' in self.sample_manifest.keys():
             self.parse_sample_info_qiime()
+            # subprocess.check_output('cp ' + self.qiime_info["--m-barcodes-file"] + ' ' + self.run_parms['work_dir']+"/" , shell=True)
         else:
             print "Error: unknown Sample type option provided"
             sys.exit(0)
@@ -290,6 +292,16 @@ class BaseWorkflow:
             self.run_parms['log_dir'] = "logs"
 
         self.set_paths()
+        # todo hack to fix
+        if 'qiime' in self.sample_manifest.keys():
+            os.mkdir(os.path.join(self.run_parms['work_dir'], 'qiime'))
+            ln_com = 'ln -s ' + self.qiime_info["--input-path"] + ' ' + self.run_parms['work_dir'] + "/qiime/"
+            cp_com = 'cp ' + self.qiime_info["--m-barcodes-file"] + ' ' + self.run_parms['work_dir'] + "/qiime/"
+            print cp_com
+            print ln_com
+            subprocess.check_output(cp_com, shell=True)
+            subprocess.check_output(ln_com, shell=True)
+
         self.set_base_kwargs()
 
         self.paths_to_test = [self.work_dir, self.log_dir, self.scripts_dir, self.checkpoint_dir]
@@ -428,15 +440,15 @@ class BaseWorkflow:
         the sample id as the key
         """
         self.qiime_info = self.sample_manifest['qiime'].copy()
-        if self.qiime_info["--type"] == "EMPSingleEndSequences":
+        if self.qiime_info["--type"] == "EMPSingleEndSequences" or self.qiime_info["--type"] == "EMPPairedEndSequences":
             if "--input-path" not in self.qiime_info.keys():
                 print "Error !!! input path is required"
                 sys.exit(0)
             elif "--output-path" not in self.qiime_info.keys():
-                print "Error !!! input path is required"
+                print "Error !!! output path is required"
                 sys.exit(0)
             elif "--m-barcodes-file" not in self.qiime_info.keys():
-                print "Error !!! input path is required"
+                print "Error !!! barcodes file is required"
                 sys.exit(0)
         return
 
@@ -1627,16 +1639,17 @@ def gatk_main():
     else:
         gt1.symlink_fastqs()
 
+    luigi_workers =1
     if 'qiime' in gt1.sample_manifest.keys():
         gt1.chain_commands_qiime()
     else:
         gt1.chain_commands()
-
+        luigi_workers = len(gt1.sample_fastq_work.keys())
     # todo make the number of workers a parameter for luigi as slurm has limits on the number of submissions and
     # this can breask luigi
 
     luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
-                workers=min(50, len(gt1.sample_fastq_work.keys())), lock_size=1, log_level='WARNING')
+                workers=min(50, luigi_workers), lock_size=1, log_level='WARNING')
     return
 
 

@@ -8,7 +8,7 @@ sample_manifest:
     --m-barcodes-file: sample-metadata.tsv
     #--output-suffix: test1
 run_parms:
-  conda_command: source activate /gpfs/runtime/opt/conda/envs/cbc_conda; conda activate qiime2-2019.1
+  conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda; conda activate qiime2-2019.1
   work_dir: /gpfs/scratch/
   log_dir: logs
   paired_end: True
@@ -28,7 +28,12 @@ workflow_sequence:
       --m-barcodes-file: sample-metadata.tsv
       --m-barcodes-column: BarcodeSequence
       --o-per-sample-sequences: demux.qza
-
+    options:
+      --i-seqs: emp-paired-end-sequences.qza
+      --m-barcodes-file: sample-metadata.tsv
+      --m-barcodes-column: BarcodeSequence
+      --o-per-sample-sequences: demux.qza
+      --p-rev-comp-mapping-barcodes
 - qiime:
     subcommand: demux summarize
     options:

@@ -174,10 +174,14 @@ class Qiime2(BaseWrapper):
 
         for k, v in default_args.iteritems():
             if k not in args_list:
-                self.add_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
-            elif '--i-' in k or '--o-' in k or '-file' in k:
+                # self.add_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
+                if '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
+                    tmp_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
+                else:
+                    tmp_args += [' '.join([k, v])]
+            elif '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
                 k_pos = [i for i, s in enumerate(args) if k in s][0]
-                print "Printing"
+                print "Printing tmp_args while updating"
                 print tmp_args[k_pos]
                 tmp_args[k_pos] = tmp_args[k_pos].replace(v, os.path.join(kwargs['qiime_dir'], v))
                 print tmp_args[k_pos]
@@ -188,11 +192,12 @@ class Qiime2(BaseWrapper):
 
     def add_args_tools(self, sub_option, *args, **kwargs):
         default_args = dict()
-
+        # todo fix this to read from kwargs
         if sub_option == "import":
-            default_args = {'--type': 'EMPPairedEndSequences',
-                            '--input-path': 'emp-paired-end-sequences',
-                            '--output-path': 'emp-paired-end-sequences.qza'}
+            qiime_info = kwargs.get('qiime_info')
+            default_args = {'--type': qiime_info.get('--type', 'EMPPairedEndSequences'),
+                            '--input-path': qiime_info.get('--input-path', 'emp-paired-end-sequences'),
+                            '--output-path': qiime_info.get('--output-path', 'emp-paired-end-sequences.qza')}
         else:
             pass
         updated_args = self.update_qiime_args(default_args, *args, **kwargs)
