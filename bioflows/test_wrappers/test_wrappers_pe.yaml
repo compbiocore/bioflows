@@ -31,7 +31,7 @@ workflow_sequence:
       time: 600
 - fastq_screen:
     options:
-      --conf:
+      --conf: my.conf
       --aligner: bwa
       --force:
       --outdir:

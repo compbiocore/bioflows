@@ -28,12 +28,12 @@ workflow_sequence:
       --m-barcodes-file: sample-metadata.tsv
       --m-barcodes-column: BarcodeSequence
       --o-per-sample-sequences: demux.qza
-    options:
-      --i-seqs: emp-paired-end-sequences.qza
-      --m-barcodes-file: sample-metadata.tsv
-      --m-barcodes-column: BarcodeSequence
-      --o-per-sample-sequences: demux.qza
-      --p-rev-comp-mapping-barcodes
+#    options:
+#      --i-seqs: emp-paired-end-sequences.qza
+#      --m-barcodes-file: sample-metadata.tsv
+#      --m-barcodes-column: BarcodeSequence
+#      --o-per-sample-sequences: demux.qza
+#      --p-rev-comp-mapping-barcodes
 - qiime:
     subcommand: demux summarize
     options:
@@ -70,11 +70,12 @@ workflow_sequence:
 - qiime:
     subcommand: phylogeny align-to-tree-mafft-fasttree
     options:
-      --i-sequences: rep-seqs.qza
-      --o-alignment: aligned-rep-seqs.qza
-      --o-masked-alignment: masked-aligned-rep-seqs.qza
-      --o-tree: unrooted-tree.qza \
-      --o-rooted-tree: rooted-tree.qza
+      --p-n-threads: 2
+#      --i-sequences: rep-seqs.qza
+#      --o-alignment: aligned-rep-seqs.qza
+#      --o-masked-alignment: masked-aligned-rep-seqs.qza
+#      --o-tree: unrooted-tree.qza
+#      --o-rooted-tree: rooted-tree.qza
 
 # --input-format: |||CasavaOneEightSingleLanePerSampleDirFmt|CasavaOneEightSingleLanePerSampleDirFmt|SingleEndFastqManifestPhred33|PairedEndFastqManifestPhred64
 #--type: EMPSingleEndSequences|EMPPairedEndSequences|'SampleData[SequencesWithQuality]'|'SampleData[PairedEndSequencesWithQuality]'|'SampleData[SequencesWithQuality]'|'SampleData[PairedEndSequencesWithQuality]'|

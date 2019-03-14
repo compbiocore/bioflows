@@ -1,6 +1,7 @@
 import unittest
 
 import bioflows.bioflowsutils.wrappers as wr
+import bioflows.bioflowsutils.wrappers_samtools as wr_samtools
 from bioflows.definedworkflows.rnaseq.rnaseqworkflow import GatkFlow as rsw
 
 
@@ -247,10 +248,16 @@ class TestFastqScreen(unittest.TestCase):
         self.wrapper_name = 'fastq_screen'
         self.add_args = self.rw1.progs[self.wrapper_name]
         # use  *self.add_args to unroll the list
-        new_base_kwargs = self.rw1.update_job_parms(self.wrapper_name)
+        self.rw1.update_job_parms(self.wrapper_name)
+        self.rw1.update_prog_suffixes(self.wrapper_name)
+        new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
         self.fastq_screen_test = wr.FastqScreen(self.wrapper_name, "test_samp", *self.add_args,
                                                 **dict(new_base_kwargs))
 
+    def test_fastq_screen_wrapper(self):
+        print "\n***** Testing Fastq_screen wrapper command *****\n"
+        print self.fastq_screen_test.run_command
+        print self.fastq_screen_test.job_parms
 
 class TestSamtools(unittest.TestCase):
 
@@ -265,14 +272,14 @@ class TestSamtools(unittest.TestCase):
         self.rw1.update_job_parms(self.wrapper_name)
         self.rw1.update_prog_suffixes(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
-        self.samtools_sort_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
-                                              **dict(new_base_kwargs))
+        self.samtools_sort_test = wr_samtools.SamTools(self.wrapper_name, "test_samp", *self.add_args,
+                                                       **dict(new_base_kwargs))
 
     def test_samtools_wrapper(self):
         print "\n***** Testing Samtools_wrapper command *****\n"
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
-        self.samtools_sort_test = wr.SamTools(self.wrapper_name, "test_samp", *self.add_args,
-                                              **dict(new_base_kwargs))
+        self.samtools_sort_test = wr_samtools.SamTools(self.wrapper_name, "test_samp", *self.add_args,
+                                                       **dict(new_base_kwargs))
         print self.samtools_sort_test.run_command
         print self.samtools_sort_test.job_parms
 
@@ -289,8 +296,8 @@ class TestSamtoolsView(unittest.TestCase):
         # use  *self.add_args to unroll the list
         self.rw1.update_job_parms(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
-        self.samtools_view_test = wr.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
-                                              **dict(new_base_kwargs))
+        self.samtools_view_test = wr_samtools.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
+                                                       **dict(new_base_kwargs))
 
     def test_samtools_wrapper(self):
         print "\n***** Testing Samtools_view wrapper command *****\n"
@@ -310,8 +317,8 @@ class TestSamtoolsIndex(unittest.TestCase):
         # use  *self.add_args to unroll the list
         self.rw1.update_job_parms(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
-        self.samtools_index_test = wr.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
-                                               **dict(new_base_kwargs))
+        self.samtools_index_test = wr_samtools.SamTools(self.wrapper_name + "_round_2", "test_samp", *self.add_args,
+                                                        **dict(new_base_kwargs))
 
     def test_samtools_wrapper(self):
         print "\n***** Testing Samtools_index wrapper command *****\n"

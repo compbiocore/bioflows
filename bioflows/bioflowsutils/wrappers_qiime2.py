@@ -111,7 +111,7 @@ class Qiime2(BaseWrapper):
             if sub_option == "align-to-tree-mafft-fasttree":
                 self.target = input + "_" + name + "_" + hashlib.sha224(
                     input + "_" + name).hexdigest() + ".txt"
-                self.add_args_phylogeny(input, *args, **kwargs)
+                self.add_args_phylogeny(sub_option, *args, **kwargs)
             else:
                 print "Error !!! unknown subcommand used for the Qiime phylogeny plugin"
                 sys.exit(0)
@@ -178,7 +178,7 @@ class Qiime2(BaseWrapper):
                 if '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
                     tmp_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
                 else:
-                    tmp_args += [' '.join([k, v])]
+                    tmp_args += [' '.join([k, str(v)])]
             elif '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
                 k_pos = [i for i, s in enumerate(args) if k in s][0]
                 print "Printing tmp_args while updating"
@@ -274,14 +274,15 @@ class Qiime2(BaseWrapper):
         default_args = dict()
 
         if sub_option == "align-to-tree-mafft-fasttree":
-            default_args = {'  --i-sequences': 'rep-seqs.qza',
+            default_args = {'--i-sequences': 'rep-seqs.qza',
                             '--o-alignment': 'aligned-rep-seqs.qza',
                             '--o-masked-alignment': 'masked-aligned-rep-seqs.qza',
                             '--o-tree': 'unrooted-tree.qza',
                             '--o-rooted-tree': 'rooted-tree.qza'}
         else:
             pass
-
+        print "printing Default args"
+        print default_args
         updated_args = self.update_qiime_args(default_args, *args, **kwargs)
         self.add_args += updated_args
         return

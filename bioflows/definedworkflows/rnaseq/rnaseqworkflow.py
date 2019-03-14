@@ -11,7 +11,10 @@ import saga
 import yaml
 
 import bioflows.bioflowsutils.wrappers as wr
+import bioflows.bioflowsutils.wrappers_gatk as wr_gatk
+import bioflows.bioflowsutils.wrappers_picard as wr_picard
 import bioflows.bioflowsutils.wrappers_qiime2 as wr_qiime2
+import bioflows.bioflowsutils.wrappers_samtools as wr_samtools
 from bioflows.bioutils.access_sra.sra import SraUtils
 
 
@@ -230,24 +233,24 @@ class BaseWorkflow:
                               'fastqc': wr.FastQC,
                               'qualimap_rnaseq': wr.QualiMap,
                               'qualimap_bamqc': wr.QualiMap,
-                              'samtools_view': wr.SamTools,
-                              'samtools_index': wr.SamTools,
-                              'samtools_sort': wr.SamTools,
+                              'samtools_view': wr_samtools.SamTools,
+                              'samtools_index': wr_samtools.SamTools,
+                              'samtools_sort': wr_samtools.SamTools,
                               'bammarkduplicates2': wr.Biobambam,
                               'bamsort': wr.Biobambam,
                               'salmon': wr.SalmonCounts,
                               'htseq-count': wr.HtSeqCounts,
                               'bwa_mem': wr.Bwa,
-                              'picard_CollectWgsMetrics': wr.Picard,
-                              'picard_MarkDuplicates': wr.Picard,
-                              'picard_BuildBamIndex': wr.Picard,
-                              'picard_AddOrReplaceReadGroups': wr.Picard,
-                              'gatk_RealignerTargetCreator': wr.Gatk,
-                              'gatk_IndelRealigner': wr.Gatk,
-                              'gatk_BaseRecalibrator': wr.Gatk,
-                              'gatk_PrintReads': wr.Gatk,
-                              'gatk_HaplotypeCaller': wr.Gatk,
-                              'gatk_AnalyzeCovariates': wr.Gatk,
+                              'picard_CollectWgsMetrics': wr_picard.Picard,
+                              'picard_MarkDuplicates': wr_picard.Picard,
+                              'picard_BuildBamIndex': wr_picard.Picard,
+                              'picard_AddOrReplaceReadGroups': wr_picard.Picard,
+                              'gatk_RealignerTargetCreator': wr_gatk.Gatk,
+                              'gatk_IndelRealigner': wr_gatk.Gatk,
+                              'gatk_BaseRecalibrator': wr_gatk.Gatk,
+                              'gatk_PrintReads': wr_gatk.Gatk,
+                              'gatk_HaplotypeCaller': wr_gatk.Gatk,
+                              'gatk_AnalyzeCovariates': wr_gatk.Gatk,
                               'trimmomatic_PE': wr.Trimmomatic,
                               'fastq_screen': wr.FastqScreen,
                               'qiime_tools_import': wr_qiime2.Qiime2,
@@ -255,10 +258,11 @@ class BaseWorkflow:
                               'qiime_demux_emp-paired': wr_qiime2.Qiime2,
                               'qiime_demux_summarize': wr_qiime2.Qiime2,
                               'qiime_dada2_denoise-single': wr_qiime2.Qiime2,
+                              'qiime_dada2_denoise-paired': wr_qiime2.Qiime2,
                               'qiime_metadata_tabulate': wr_qiime2.Qiime2,
                               'qiime_feature-table_summarize': wr_qiime2.Qiime2,
+                              'qiime_feature-table_tabulate-seqs': wr_qiime2.Qiime2,
                               'qiime_phylogeny_align-to-tree-mafft-fasttree': wr_qiime2.Qiime2
-
                               }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
@@ -292,15 +296,6 @@ class BaseWorkflow:
             self.run_parms['log_dir'] = "logs"
 
         self.set_paths()
-        # todo hack to fix
-        if 'qiime' in self.sample_manifest.keys():
-            os.mkdir(os.path.join(self.run_parms['work_dir'], 'qiime'))
-            ln_com = 'ln -s ' + self.qiime_info["--input-path"] + ' ' + self.run_parms['work_dir'] + "/qiime/"
-            cp_com = 'cp ' + self.qiime_info["--m-barcodes-file"] + ' ' + self.run_parms['work_dir'] + "/qiime/"
-            print cp_com
-            print ln_com
-            subprocess.check_output(cp_com, shell=True)
-            subprocess.check_output(ln_com, shell=True)
 
         self.set_base_kwargs()
 
@@ -1040,6 +1035,15 @@ class BaseWorkflow:
                                           "output": self.prog_output_suffix[key]}
         return self.new_base_kwargs
 
+    def create_qiime_inputs(self):
+        ln_com = 'ln -s ' + self.base_kwargs['qiime_info']["--input-path"] + ' ' + self.base_kwargs['qiime_dir'] + '/'
+        cp_com = 'cp ' + self.base_kwargs['qiime_info']["--m-barcodes-file"] + ' ' + self.run_parms['qiime_dir'] + '/'
+        print cp_com
+        print ln_com
+        subprocess.check_output(cp_com, shell=True)
+        subprocess.check_output(ln_com, shell=True)
+        return
+
 class RnaSeqFlow(BaseWorkflow):
     allTasks = []
     progs_job_parms = dict()
@@ -1630,12 +1634,13 @@ def gatk_main():
 
     # Actual jobs start here
     gt1.test_paths()
+
     if 'sra' in gt1.sample_manifest.keys():
         gt1.download_sra_cmds()
         if gt1.sra_info['downloads']:
             sys.exit(0)
     elif 'qiime' in gt1.sample_manifest.keys():
-        print "passing"
+        gt1.create_qiime_inputs()
     else:
         gt1.symlink_fastqs()
 
