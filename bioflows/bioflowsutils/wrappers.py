@@ -499,6 +499,16 @@ class Gsnap(BaseWrapper):
             self.args += ["--use-shared-memory=0"]
         return
 
+class Kneaddata(BaseWrapper):
+    '''
+    Wrapper class for kneaddata
+    '''
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+        self.args += args
+        self.args.append(input)
+        self.setup_run()
+        return
 
 class SamTools(BaseWrapper):
     '''
