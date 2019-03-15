@@ -34,10 +34,9 @@ workflow_sequence:
       --conf: my.conf
       --aligner: bwa
       --force:
-      --outdir:
-      --threads: 8
+      --threads: 16
     job_params:
-      ncpus: 4
+      ncpus: 10
       mem: 40000
       time: 60
 - gsnap:

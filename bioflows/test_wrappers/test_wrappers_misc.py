@@ -243,18 +243,20 @@ class TestFastqScreen(unittest.TestCase):
     def setUp(self):
         self.parmsfile = "test_wrappers_pe.yaml"
         self.rw1 = rsw(self.parmsfile)
+        self.rw1.paired_end = False
         self.rw1.set_base_kwargs()
         self.rw1.parse_prog_info()
+
+    def test_fastq_screen_wrapper(self):
         self.wrapper_name = 'fastq_screen'
         self.add_args = self.rw1.progs[self.wrapper_name]
         # use  *self.add_args to unroll the list
         self.rw1.update_job_parms(self.wrapper_name)
         self.rw1.update_prog_suffixes(self.wrapper_name)
         new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
+
         self.fastq_screen_test = wr.FastqScreen(self.wrapper_name, "test_samp", *self.add_args,
                                                 **dict(new_base_kwargs))
-
-    def test_fastq_screen_wrapper(self):
         print "\n***** Testing Fastq_screen wrapper command *****\n"
         print self.fastq_screen_test.run_command
         print self.fastq_screen_test.job_parms

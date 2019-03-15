@@ -373,6 +373,23 @@ class BaseWrapper(object):
         self.add_args = []
         return
 
+    def update_default_args(self, default_args, *args, **kwargs):
+        tmp_args = []
+        tmp_args += args
+        args_list = [y for x in args for y in x.split()]
+
+        for k, v in default_args.iteritems():
+            if k not in args_list:
+                tmp_args += [' '.join([k, str(v)])]
+            else:
+                # k_pos = [i for i, s in enumerate(args) if k in s][0]
+                # print "Printing tmp_args while updating"
+                # print tmp_args[k_pos]
+                # tmp_args[k_pos] = tmp_args[k_pos].replace(v, v))
+                # print tmp_args[k_pos]
+                pass
+
+        return tmp_args
 ### Third-party command line tools ###
 
 class FastQC(BaseWrapper):
@@ -788,15 +805,20 @@ class FastqScreen(BaseWrapper):
         self.input = input
         self.update_file_suffix(input_default='.fq.gz', output_default='', **kwargs)
         kwargs['target'] = input + "." + name + "_" + hashlib.sha224(input + name).hexdigest() + ".txt"
+        # kwargs['paired_end'] = False
+        # if kwargs.get('paired_end'):
+        #    kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
+        # print "Printing FastqScreen target"
+        # print kwargs['paired_end']
 
-        if kwargs.get('paired_end'):
-            kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
-
-        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
+        kwargs['stdout_append'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
 
         self.init(name, **kwargs)
+
+        fastq_screen_dir = os.path.join(kwargs.get('qc_dir'), "fastq_screen")
+        default_args = {"--outdir": fastq_screen_dir, "--force": '', "--aligner": "bwa" }
 
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
@@ -804,40 +826,44 @@ class FastqScreen(BaseWrapper):
             # Update threads if cpus given
             # TODO make sure threads are not given in the args
             if 'ncpus' in kwargs.get('add_job_parms').keys():
-                self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'])]
+                # self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'])]
+                default_args["--threads"] = str(2 * (kwargs.get('add_job_parms')['ncpus']))
             else:
                 # Set default memory and cpu options
                 self.job_parms.update({'mem': 10000, 'time': 600, 'ncpus': 4})
                 # TODO make sure threads are not given in the args
-                self.args += ['--threads 4']
-
-        fastq_screen_dir = os.path.join(kwargs.get('qc_dir'), "fastq_screen")
+                # self.args += ['--threads 4']
+                default_args["--threads"] = str(4)
 
         if self.paired_end:
-            self.args = ["--outdir ", fastq_screen_dir, "--force"]
-            self.args += args
+
+            self.reset_add_args()
+            self.add_args = self.update_default_args(default_args, *args, **kwargs)
+            self.args += self.add_args
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix)]
-            # self.args.append(os.path.join(self.cwd, 'fastq', input + "_1.fq.gz"))
             self.setup_run()
             run_cmd1 = self.run_command
 
             ## Re initialize the object for the second pair
             self.init(name, **kwargs)
-            self.args = ["--outdir ", fastq_screen_dir, "--force"]
-            self.args += args
-            self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix)]
+            self.reset_add_args()
+            self.add_args = self.update_default_args(default_args, *args, **kwargs)
+            self.args += self.add_args
+            self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
             self.setup_run()
             run_cmd2 = self.run_command
 
             self.run_command = run_cmd1 + "; " + run_cmd2
         else:
-            self.args = ["--outdir ", fastq_screen_dir, "--force"]
-            self.args += args
-            self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix)]
-            self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
+
+            self.reset_add_args()
+            self.add_args = self.update_default_args(default_args, *args, **kwargs)
+            self.args += self.add_args
+            self.args += [os.path.join(kwargs.get('fastq_dir'), input + self.in_suffix)]
+            #self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
             self.setup_run()
 
-        self.run_command = "mkdir -pv " + fastq_screen_dir + ";" + self.run_command
+        self.run_command = "mkdir -pv " + fastq_screen_dir + "; " + self.run_command
         return
 
 

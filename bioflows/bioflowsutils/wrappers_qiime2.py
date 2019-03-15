@@ -20,7 +20,10 @@ class Qiime2(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.reset_add_args()
+        # Is usually sample name for Qiime the --type get used instead
         self.input = input
+
+        #
         self.make_target(name, input, *args, **kwargs)
         kwargs['target'] = self.target
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
@@ -53,7 +56,15 @@ class Qiime2(BaseWrapper):
         return
 
     def make_target(self, name, input, *args, **kwargs):
+        """
+            This function creates a target that luigi checks to see if the jobs are done
 
+        :param name:
+        :param input:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         if name.split('_')[1] == "tools":
             sub_option = name.split('_')[2]
             if sub_option == "import":
