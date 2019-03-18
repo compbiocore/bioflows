@@ -626,30 +626,43 @@ class SalmonCounts(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
+        self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
+        if name.split('_')[1] == "quant":
+            kwargs['target'] = input + '_' + name + "_" + hashlib.sha224(input + '_' + name).hexdigest() + ".txt"
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
 
-        kwargs['target'] = input + '.salmoncounts.' + hashlib.sha224(input + '.salmoncounts').hexdigest() + ".txt"
-        new_name = name + " quant"
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+        new_name = ' '.join(name.split("_"))
         self.init(new_name, **kwargs)
 
+        default_args = {'-l': 'A'}
         # update job parameters if needed
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
-
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                # TODO make sure threads are not given in the args
+                default_args['-p'] = str(2 * kwargs.get('add_job_parms')['ncpus'])
         else:
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 8})
+            default_args['-p'] = str(2 * self.job_parms['ncpus'])
 
-        gtf = kwargs.get('gtf_file')
-        self.args += args
-        self.args += ["-l A"]
+        default_args['-g'] = kwargs.get('gtf_file')
+
+        self.reset_add_args()
+        self.add_args = self.update_default_args(default_args, *args, **kwargs)
+        self.args += self.add_args
 
         if not self.paired_end:
             self.args += ["-r", os.path.join(kwargs.get('fastq_dir'), input + ".fq.gz")]
         else:
-            self.args += ["-1", os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz"),
-                          "-2", os.path.join(kwargs.get('fastq_dir'), input + "_2.fq.gz")]
+            self.args += ["-1", os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix),
+                          "-2", os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
+
 
         self.args += [" -o " + os.path.join(kwargs.get('work_dir'), kwargs.get('expression_dir'),
                                             input + "_salmon_counts")]
+
         rename_results = ' '.join(
             [" cp ", os.path.join(kwargs.get('expression_dir'), input + "_salmon_counts", "quant.genes.sf"),
              os.path.join(kwargs.get('expression_dir'), input + "_salmon_quant.genes.txt")])
