@@ -145,24 +145,33 @@ class TestQualimap(unittest.TestCase):
         self.assertEqual(self.qualimap_test.run_command.split(), out_command.split())
 
 
-# class TestSalmon(unittest.TestCase):
-#     def setUp(self):
-#         self.parmsfile = "test_wrappers_pe.yaml"
-#         self.rw1 = rsw(self.parmsfile)
-#         self.rw1.parse_prog_info()
-#         self.wrapper_name = 'salmon'
-#         self.salmon_test = wr.SalmonCounts(self.wrapper_name, "test_samp", *self.rw1.progs['salmon'],
-#                                            **dict(self.rw1.base_kwargs))
-#
-#     def test_salmon_counts_wrapper(self):
-#         print "\n***** Testing Salmon_wrapper command *****\n"
-#         print self.salmon_test.run_command
-#         out_command = "salmon quant -g /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf "
-#         out_command += "-i /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index "
-#         out_command += "-l A -1 /gpfs/scratch/fastq/test_samp_1.fq.gz -2 /gpfs/scratch/fastq/test_samp_2.fq.gz -o /gpfs/scratch/expression/test_samp_salmon_counts "
-#         out_command += "2>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log 1>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log; "
-#         out_command += "cp  /gpfs/scratch/expression/test_samp_salmon_counts/quant.genes.sf /gpfs/scratch/expression/test_samp_salmon_quant.genes.txt"
-#         self.assertEqual(self.salmon_test.run_command.split(), out_command.split())
+class TestSalmon(unittest.TestCase):
+    def setUp(self):
+        self.parmsfile = "test_wrappers_pe.yaml"
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'salmon_quant'
+        self.add_args = self.rw1.progs[self.wrapper_name]
+        # use  *self.add_args to unroll the list
+        self.rw1.update_job_parms(self.wrapper_name)
+        new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
+        # self.bwa_test = wr.Bwa(self.wrapper_name, "test_samp", *self.add_args,
+        #                       **dict(new_base_kwargs))
+
+        self.salmon_test = wr.SalmonCounts(self.wrapper_name, "test_samp", *self.add_args,
+                                           **dict(new_base_kwargs))
+
+    def test_salmon_counts_wrapper(self):
+        print "\n***** Testing Salmon_wrapper command *****\n"
+        print self.salmon_test.run_command
+        out_command = "salmon quant -g /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf "
+        out_command += "-i /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/Mus_musculus.GRCm38.cdna.all_transcripts_sal_index "
+        out_command += "-l A -o /gpfs/scratch/expression/test_samp_salmon_counts "
+        out_command += "-1 /gpfs/scratch/fastq/test_samp_1.fq.gz -p 16 -2 /gpfs/scratch/fastq/test_samp_2.fq.gz "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_salmon_quant_err.log 1>/gpfs/scratch/logs/test_samp_salmon_quant.log; "
+        out_command += "cp  /gpfs/scratch/expression/test_samp_salmon_counts/quant.genes.sf /gpfs/scratch/expression/test_samp_salmon_quant.genes.txt"
+        self.assertEqual(self.salmon_test.run_command.split(), out_command.split())
 
 
 # class TestHtSeq(unittest.TestCase):
