@@ -11,11 +11,12 @@ theme:
   palette:
     primary: 'blue grey'
     accent: 'indigo'
-  logo: images/cbc-logo.svg
+  logo: assets/cbc-logo.svg
 
 extra_css:
 - styles/dark_mode.css
-
+- docs/assets/adm.css
+- https://use.fontawesome.com/releases/v5.8.0/css/all.css
 markdown_extensions:
 - extra
 - tables
@@ -33,3 +34,4 @@ nav:
   - About: tutorials/tutorials.md
   - Setup the bioflows environment: tutorials/Setup_bioflows_env.md
   - RNA-Seq tutorial: tutorials/rna-seq_tutorial.md
+  - Qiime2 tutorial: tutorials/qiime2_tutorial.md

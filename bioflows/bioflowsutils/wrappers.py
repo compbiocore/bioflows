@@ -374,6 +374,13 @@ class BaseWrapper(object):
         return
 
     def update_default_args(self, default_args, *args, **kwargs):
+        """
+        Override the default values for program args to those provided by the user for a  wrapper
+        :param default_args:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         tmp_args = []
         tmp_args += args
         args_list = [y for x in args for y in x.split()]
@@ -401,11 +408,12 @@ class FastQC(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        kwargs['target'] = input + '.fastqc.zip.' + "_" + hashlib.sha224(input + '.fastqc.zip').hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
 
         # only need second part as fastqc is run on each file sequentially in the same job
         if kwargs.get('paired_end'):
-            kwargs['target'] = input + '.2.fastqc' + "_" + hashlib.sha224(input + '.2.fastqc.zip').hexdigest() + ".txt"
+            kwargs['target'] = input + "_" + name + "_PE_" + hashlib.sha224(
+                input + "_" + name + "_PE").hexdigest() + ".txt"
 
         # Ssetup inputs/outputs
         self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
@@ -627,35 +635,83 @@ class SalmonCounts(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
 
-        kwargs['target'] = input + '.salmoncounts.' + hashlib.sha224(input + '.salmoncounts').hexdigest() + ".txt"
-        new_name = name + " quant"
-        self.init(new_name, **kwargs)
+        self.make_target(name, input)
+        kwargs['target'] = self.target
+        self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
 
+        kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+        new_name = ' '.join(name.split("_"))
+        self.init(new_name, **kwargs)
+        default_args = dict()
         # update job parameters if needed
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
-
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                # TODO make sure threads are not given in the args
+                default_args['-p'] = str(2 * kwargs.get('add_job_parms')['ncpus'])
         else:
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 8})
+            default_args['-p'] = str(2 * self.job_parms['ncpus'])
 
-        gtf = kwargs.get('gtf_file')
-        self.args += args
-        self.args += ["-l A"]
+        rename_results = ''
+        if name.split('_')[1] == "quant":
+            self.add_args_quant(input, default_args, *args, **kwargs)
+            rename_results = ' '.join(
+                [" cp ", os.path.join(kwargs.get('expression_dir',
+                                                 os.path.join(kwargs['work_dir'], "expression")),
+                                      input + "_salmon_counts", "quant.genes.sf"),
+                 os.path.join(kwargs.get('expression_dir',
+                                         os.path.join(kwargs['work_dir'], "expression")),
+                              input + "_salmon_quant.genes.txt")])
 
-        if not self.paired_end:
-            self.args += ["-r", os.path.join(kwargs.get('fastq_dir'), input + ".fq.gz")]
-        else:
-            self.args += ["-1", os.path.join(kwargs.get('fastq_dir'), input + "_1.fq.gz"),
-                          "-2", os.path.join(kwargs.get('fastq_dir'), input + "_2.fq.gz")]
-
-        self.args += [" -o " + os.path.join(kwargs.get('work_dir'), kwargs.get('expression_dir'),
-                                            input + "_salmon_counts")]
-        rename_results = ' '.join(
-            [" cp ", os.path.join(kwargs.get('expression_dir'), input + "_salmon_counts", "quant.genes.sf"),
-             os.path.join(kwargs.get('expression_dir'), input + "_salmon_quant.genes.txt")])
+        self.args += self.add_args
         self.setup_run(add_command=rename_results)
+
         return
 
+    def make_target(self, name, input):
+        """
+        Create the luigi targets
+        :param name:
+        :param input:
+        :return:
+        """
+        if name.split('_')[1] == "quant":
+            self.target = input + '_' + name + "_" + hashlib.sha224(input + '_' + name).hexdigest() + ".txt"
+        else:
+            print "Not implemented yet"
+        return
+
+    def add_args_quant(self, input, default_args, *args, **kwargs):
+        """
+        Generic function that takes care of adding default args and updating them with user provided values if needed. Each function is\
+        custom generated for the wrapper depending on how the program options are defined.
+
+        :param input: The Sample ID
+        :param default_args: Dictionary of defaults
+        :param args: list of program specific options parsed from the YAML
+        :param kwargs: List of general options across the entire workflow
+        :return:
+        """
+        self.reset_add_args()
+        default_args.update({'-l': 'A', '-g': kwargs.get('gtf_file')})
+
+        if not self.paired_end:
+            default_args["-r"] = os.path.join(kwargs.get('fastq_dir'), input + self.in_suffix)
+        else:
+            default_args["-1"] = os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix)
+            default_args["-2"] = os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)
+
+        default_args["-o"] = os.path.join(kwargs.get('expression_dir',
+                                                     os.path.join(kwargs['work_dir'], "expression")),
+                                          input + "_salmon_counts")
+        print default_args
+
+        updated_args = self.update_default_args(default_args, *args, **kwargs)
+        self.add_args += updated_args
+        return
 
 class HtSeqCounts(BaseWrapper):
     """
@@ -804,7 +860,7 @@ class FastqScreen(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         self.update_file_suffix(input_default='.fq.gz', output_default='', **kwargs)
-        kwargs['target'] = input + "." + name + "_" + hashlib.sha224(input + name).hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
         # kwargs['paired_end'] = False
         # if kwargs.get('paired_end'):
         #    kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
@@ -876,7 +932,7 @@ class Trimmomatic(BaseWrapper):
         print "Printing trimmomatic args"
         print args
         self.input = input
-
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
 

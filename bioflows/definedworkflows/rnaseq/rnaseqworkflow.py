@@ -69,8 +69,10 @@ class BaseTask:
         self.jobparms['command'] += "\necho '***** checking env *****'\nprintenv\n\n"
 
         # self.jobparms['command'] += 'conda activate $CONDA_PREFIX\n'
-        self.jobparms[
-            'command'] += "\necho '***** printing JOB INFO *****'\nscontrol write batch_script $SLURM_JOBID /dev/stdout \n"
+        self.jobparms['command'] += "\necho '***** printing JOB INFO *****'\n"
+        self.jobparms['command'] += "\nSCRIPT_TMP_FILE=`mktemp`\n"
+        self.jobparms['command'] += "\nscontrol write batch_script $SLURM_JOBID $SCRIPT_TMP_FILE\n"
+        self.jobparms['command'] += "\ncat $SCRIPT_TMP_FILE \n\nrm -f $SCRIPT_TMP_FILE\n\n\n"
 
         # Add a script here to print out the actual commands used by the slurm using sbatch script
         self.jobparms['command'] += 'srun --export=ALL '
@@ -92,6 +94,7 @@ class BaseTask:
 
     def create_saga_job(self, **kwargs):
         ctx = saga.Context("ssh")
+        # Fix the default user
         ctx.user_id = kwargs.get('saga_user', 'aragaven')
         host = kwargs.get('saga_host', 'localhost')
         scheduler = kwargs.get('saga_scheduler', 'fork')
@@ -275,6 +278,7 @@ class BaseWorkflow:
             self.parse_sample_info_from_file()
         elif 'sra' in self.sample_manifest.keys():
             self.parse_sample_info_from_sra()
+            self.run_parms['paired_end'] = self.paired_end
         elif 'qiime' in self.sample_manifest.keys():
             self.parse_sample_info_qiime()
             # subprocess.check_output('cp ' + self.qiime_info["--m-barcodes-file"] + ' ' + self.run_parms['work_dir']+"/" , shell=True)
@@ -422,11 +426,11 @@ class BaseWorkflow:
         if 'SINGLE' in sample_sra.sra_records[query_val]['library_type']:
             print "SE library\n"
             self.paired_end = False
-            self.base_kwargs['paired_end'] = False
+            # self.base_kwargs['paired_end'] = False
         elif 'PAIRED' in sample_sra.sra_records[query_val]['library_type']:
             print "PE library\n"
             self.paired_end = True
-            self.base_kwargs['paired_end'] = True
+            #self.base_kwargs['paired_end'] = True
         return
 
     def parse_sample_info_qiime(self):
@@ -1330,13 +1334,17 @@ class GatkFlow(BaseWorkflow):
 
     def __init__(self, parmsfile):
         self.init(parmsfile)
+        # main_prog =
+        if (any("gatk" in x.keys() for x in self.workflow_sequence)):
 
-        # Create  directory for storing GATK files
-        #self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
-
-        # Update kwargs to include directory for VCFs
-        #self.base_kwargs['gatk_dir'] = self.gatk_dir
-
+            # Create  directory for storing GATK files
+            self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
+            # Update kwargs to include directory for VCFs
+            self.base_kwargs['gatk_dir'] = self.gatk_dir
+            # Update paths to check to include directory for VCFs
+            self.paths_to_test += [self.gatk_dir]
+        else:
+            pass
         self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
 
         # Update paths to check to include directory for VCFs
@@ -1654,7 +1662,7 @@ def gatk_main():
     # this can breask luigi
 
     luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
-                workers=min(50, luigi_workers), lock_size=1, log_level='WARNING')
+                workers=min(50, luigi_workers), lock_size=1, log_level='INFO')
     return
 
 

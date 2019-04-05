@@ -2,7 +2,9 @@
 
 ## Overview
 
-This tutorial shows how to run a standard predefined QIIME2 analysis on the Brown HPC cluster OSCAR, using the bioflows tool.
+This tutorial shows how to run a standard predefined QIIME2 analysis on the Brown HPC cluster OSCAR, using the bioflows tool. The particular analysis is the first half of the [Moving pictures tutorial](https://docs.qiime2.org/2019.1/tutorials/moving-pictures/) from QIIME2.
+
+We will assume that you have run through the [RNA-Seq tutorial](#/docs/tutorials/rna-seq_tutorial) and know how to set up a control file, create a working directory, and setup a screen session as well as have the prerequisites set up. The following is more details specific to the workflow and YAML setup.
 
 ## Getting Started
 
@@ -18,40 +20,25 @@ This tutorial shows how to run a standard predefined QIIME2 analysis on the Brow
 -  **qiime taxa barplot** for generating interactive taxonomy barplots
 -  **qiime composition** for differential abundance testing with ANCOM
 
-#### The basic steps to running a workflow are:
-
-1. [Create a control file](#Setup the YAML configuration file)
-2. Create your working directory if does not exist, here we assume it is `/users/username`.
-3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
-
-### Prerequisites
-Make sure you have access to the OSCAR cluster or request one by contacting support@ccv.brown.edu. If you are not comfortable with the Linux environment, you can consult the tutorial [here.](https://compbiocore.github.io/cbc-linux-tutorial/linux_explication/) You should also [set up bioflows.](#/docs/tutorials/Setup_bioflows_env)
-
-The next section provide a short how-to with all the commands to
-execute the test workflow on Brown University's CCV cluster.
-
-!!! caution
-    The working directory in a real example can end up being quite large: up to a few terabytes. On OSCAR, you would create the working directory in a location such as your `data` folder or the `scratch` folder.
-
 #### Setup the YAML configuration file (control file)
 
-Bioflows uses YAML configuration files. A
-detailed documentation of the YAML file and all the options is shown
-[here](#/docs/yaml_description.md). For the current example, copy the following code into a text file and save it in `/users/username` as `test_run.yaml`.
+For the current example, copy the following code into a text file and save it in `/users/username` as `test_run.yaml`.
 
 !!! note
     Don't forget to edit the work_dir parameter to reflect the path to your own working directory.
 
-[todo: YAML file will look like...]
-
 ```
-bioproject: Project_test_localhost
-experiment: rnaseq_pilot
+bioproject: Project_test_localhost # Project Name  Required
+experiment: rnaseq_pilot # Experiment type  Required
 sample_manifest:
-  fastq_file: sample_manifest_min.csv
-  metadata:
+  qiime:
+    --type: EMPSingleEndSequences
+    --input-path: emp-single-end-sequences
+    --output-path: emp-single-end-sequences.qza
+    --m-barcodes-file: sample-metadata.tsv
+    #--output-suffix: test1
 run_parms:
-  conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
+  conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda; conda activate qiime2-2019.1
   work_dir: */users/username*
   log_dir: logs
   paired_end: True
@@ -59,34 +46,62 @@ run_parms:
   saga_host: localhost
   ssh_user: *ccv username*
   saga_scheduler: slurm
-  gtf_file: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_hg_GRCh37_rel87/Homo_sapiens.GRCh37.87.gtf
+  reference_fasta_path: /gpfs/scratch/test.fa
+  gtf_file: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
 workflow_sequence:
-  - fastqc: default
-  - gsnap:
-      options:
-       -d: Ensembl_Homo_sapiens_GRCh37
-       -s: /gpfs/data/cbc/cbcollab/cbc_ref/gmapdb_2017.01.14/Ensembl_Homo_sapiens_GRCh37/Ensembl_Homo_sapiens_GRCh37.maps/Ensembl_Homo_sapiens.GRCh37.87.splicesites.iit
-      job_params:
-        ncpus: 8
-        mem: 40000
-        time: 60
-  - qualimap_rnaseq: default
-  - htseq-count: default
+- qiime:
+    subcommand: "demux emp-single"
+    options:
+      --i-seqs: emp-single-end-sequences.qza
+      --m-barcodes-file: sample-metadata.tsv
+      --m-barcodes-column: BarcodeSequence
+      --o-per-sample-sequences: demux.qza
+- qiime:
+    subcommand: demux summarize
+    options:
+      --i-data: demux.qza
+      --o-visualization: demux.qzv
+- qiime:
+    subcommand: "dada2 denoise-single"
+    options:
+      --i-demultiplexed-seqs: demux.qza
+      --p-trim-left: 0
+      --p-trunc-len: 120
+      --o-representative-sequences: rep-seqs-dada2.qza
+      --o-table: table-dada2.qza
+      --o-denoising-stats: stats-dada2.qza
 
+- qiime:
+    subcommand: metadata tabulate
+    options:
+      --m-input-file: stats-dada2.qza
+      --o-visualization: stats-dada2.qzv
+
+- qiime:
+    subcommand: feature-table summarize
+    options:
+      --i-table: table.qza
+      --o-visualization: table.qzv
+      --m-sample-metadata-file: sample-metadata.tsv
+- qiime:
+    subcommands: feature-table tabulate-seqs
+    options:
+      --i-data rep-seqs.qza
+      --o-visualization rep-seqs.qzv
+- qiime:
+    subcommand: phylogeny align-to-tree-mafft-fasttree
+    options:
+      --p-n-threads: 2
+      --i-sequences: rep-seqs.qza
+      --o-alignment: aligned-rep-seqs.qza
+      --o-masked-alignment: masked-aligned-rep-seqs.qza
+      --o-tree: unrooted-tree.qza
+      --o-rooted-tree: rooted-tree.qza
 ```
 
 ### Submit the workflow
 
-If you haven't done so already, copy the above into a text file and save it in `/users/username` as `test_run.yaml`
-
-For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, so it should run within the hour and you should see that the alignments are completed.
-
-We will now create the sample manifest file, which is in `csv` format. You can find more information about sample manifest files [here](#/docs/yaml_description.md). Copy the manifest below into a text file and save it in `/users/username` as `sample_manifest_min.csv`
-
-```
-samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
-samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_2.gz
-```
+If you haven't done so already, copy the above into a text file and save it in `/users/username` as `test_run.yaml`. The data here is the same as from the Moving pictures tutorial. Because it follows the EMP format, no manifest file is needed, but if providing other data the user will need to provide a manifest file matching the [description in QIIME2](https://docs.qiime2.org/2019.1/tutorials/importing/#fastq-manifest-formats), specified in the YAML in the same way as in the [RNA-seq tutorial](#/docs/tutorials/rna-seq_tutorial)
 
 If you haven't already started a screen session in the [setup](#/docs/tutorials/Setup_bioflows_env), start one using the following command:
 ```
@@ -96,12 +111,14 @@ In your screen session, run the following commands to setup your conda environme
 
 ```
 source activate_cbc_conda
-bioflows-rnaseq test_run.yaml
+bioflows-qiime2 test_run.yaml
 ```
+
+(TODO: bioflows-qiime2 is not a defined wrapper...)
 
 ### Workflow outputs
 
-The bioflows-rnaseq call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: `sra`, `fastq`, `alignments`, `qc`, `slurm_scripts`, `logs`, `expression`, and `checkpoints`.
+The bioflows-qiime2 call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: `qiime2`, `slurm_scripts`, `logs`, and `checkpoints`. (TODO: not actually sure what output gets made)
 
 `sra` Will be empty in this tutorial.
 
