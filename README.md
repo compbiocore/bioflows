@@ -17,10 +17,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-This package requires the `conda-forge` and the `compbiocore` conda channels to have a higher priority than that of defaults
+This package requires the `conda-forge` and the `compbiocore` conda channels to have a higher priority than that of defaults. So your `.condarc` should look like
 
 ```
-
+channels
+ - compbiocore
+ - conda-forge
+ - defaults
 ```
 
 ### Installing

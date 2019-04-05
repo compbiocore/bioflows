@@ -408,11 +408,12 @@ class FastQC(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        kwargs['target'] = input + '.fastqc.zip.' + "_" + hashlib.sha224(input + '.fastqc.zip').hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
 
         # only need second part as fastqc is run on each file sequentially in the same job
         if kwargs.get('paired_end'):
-            kwargs['target'] = input + '.2.fastqc' + "_" + hashlib.sha224(input + '.2.fastqc.zip').hexdigest() + ".txt"
+            kwargs['target'] = input + "_" + name + "_PE_" + hashlib.sha224(
+                input + "_" + name + "_PE").hexdigest() + ".txt"
 
         # Ssetup inputs/outputs
         self.update_file_suffix(input_default=".fq.gz", output_default="", **kwargs)
@@ -671,6 +672,12 @@ class SalmonCounts(BaseWrapper):
         return
 
     def make_target(self, name, input):
+        """
+        Create the luigi targets
+        :param name:
+        :param input:
+        :return:
+        """
         if name.split('_')[1] == "quant":
             self.target = input + '_' + name + "_" + hashlib.sha224(input + '_' + name).hexdigest() + ".txt"
         else:
@@ -678,6 +685,16 @@ class SalmonCounts(BaseWrapper):
         return
 
     def add_args_quant(self, input, default_args, *args, **kwargs):
+        """
+        Generic function that takes care of adding default args and updating them with user provided values if needed. Each function is\
+        custom generated for the wrapper depending on how the program options are defined.
+
+        :param input: The Sample ID
+        :param default_args: Dictionary of defaults
+        :param args: list of program specific options parsed from the YAML
+        :param kwargs: List of general options across the entire workflow
+        :return:
+        """
         self.reset_add_args()
         default_args.update({'-l': 'A', '-g': kwargs.get('gtf_file')})
 
@@ -843,7 +860,7 @@ class FastqScreen(BaseWrapper):
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         self.update_file_suffix(input_default='.fq.gz', output_default='', **kwargs)
-        kwargs['target'] = input + "." + name + "_" + hashlib.sha224(input + name).hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
         # kwargs['paired_end'] = False
         # if kwargs.get('paired_end'):
         #    kwargs['target'] = input + '.2.' + name + hashlib.sha224(input + '.2.' + name).hexdigest() + ".txt"
@@ -915,7 +932,7 @@ class Trimmomatic(BaseWrapper):
         print "Printing trimmomatic args"
         print args
         self.input = input
-
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
 
