@@ -3,7 +3,7 @@
 
 This tutorial shows how to run a standard predefined RNA-seq analysis on the Brown HPC cluster OSCAR, using the bioflows tool. A visual overview of the workflow is shown below
 
-![RNA Seq Workflow](../images/bioflows-rna-seq.png)
+![RNA Seq Workflow](../assets/bioflows-rna-seq.png)
 
 ## Getting Started
 The workflow consists of the following programs run sequentially on each sample:

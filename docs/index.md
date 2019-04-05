@@ -9,16 +9,16 @@ pipelines to analyse NGS datasets. Currently, we have implemented some standard 
 <div markdown="1" class="md-flex__cell md-flex__cell--shrink" style="display: flex; width: 100%;">
 
 !!! rna "RNA Seq with GSNAP"
-    [![RNASeq Tutorial](images/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px; float: none; margin-left: 7px; margin-top: 7px;"}](tutorials/rna-seq_tutorial.md) RNA-Seq on CCV
+    [![RNASeq Tutorial](assets/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px; float: none; margin-left: 7px; margin-top: 7px;"}](tutorials/rna-seq_tutorial.md) RNA-Seq on CCV
 
 !!! warning "QIIME2"
-    [![](images/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}](tutorials/qiime2_tutorial.md) QIIME2 on CCV
+    [![](assets/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}](tutorials/qiime2_tutorial.md) QIIME2 on CCV
     
 !!! info "GATK GERMLINE"
-    [![](images/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}]() Variant Calling on CCV
+    [![](assets/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}]() Variant Calling on CCV
 
 !!! example "GATK SOMATIC"
-    [![](images/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}]() Somatic variant Calling on CCV
+    [![](assets/ngxbio_icons_b_rna_sequencing_1_4.jpg){:style="width: 100px;float: left ;margin-left: 7px;margin-top: 7px;"}]() Somatic variant Calling on CCV
   
 </div>
 </div>
