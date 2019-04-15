@@ -1,10 +1,10 @@
-# `bioflows`
+# **bioflows**
 
-## Summary
+## **Summary**
 This is a guide to using the `bioflows` package for running standard
 pipelines to analyse NGS datasets. Currently, we have implemented some standard workflows alongwith tutorials using this package. To start using bioflows use the quick start to go to any of the tutorials implemented
 
-## Quickstart
+## **Quickstart**
 <div markdown="1" class="row" style="max-width: 100%;">
 <div markdown="1" class="md-flex__cell md-flex__cell--shrink" style="display: flex; width: 100%;">
 
@@ -23,28 +23,32 @@ pipelines to analyse NGS datasets. Currently, we have implemented some standard 
 </div>
 </div>
 
-## Motivation
-A primary objective of the [Computational Biology Core](https://cbc.brown.edu) at Brown's [Centre for Computational Biology of Human Disease](https://www.brown.edu/research/projects/computational-biology-of-human-disease/home), is to enable reproducibility in computational analysis of NGS data. Critical to this objective is to provide a simple tool for creating/running bioinformatics workflows as well as consistent software environments across multiple platforms. To achieve this goal we have:
-- Developed `bioflows` a workflow tool to ensure consistency in analysis steps and stages with interoperability across multiple job submission systems
-- [**Use CONDA**](https://conda.io/docs/) package management system for managing software tools
-- Container based approach using [**docker**](https://www.docker.com) for cross-platform interoperability of the analysis environment
+## **Motivation**
+A primary objective of the [Computational Biology Core](https://cbc.brown.edu) at Brown's [Centre for Computational Biology of Human Disease](https://www.brown.edu/research/projects/computational-biology-of-human-disease/home), is to enable reproducibility in computational analysis of NGS data. Critical to this objective is to provide a simple tool for creating/running bioinformatics workflows as well as consistent software environments across multiple platforms. To this we:
 
-## Overview
-`bioflows` is an user-friendly python implementation of a workflow manager. The user is expected to not have any programming knowledge and needs to only provide a control file in a YAML format, chosen for its human readability. The goal here is to provide users with a simple and straight-forward interface for processing NGS datasets with many samples using standard bioinformatics pipelines, e.g  RNA-seq, GATK variant calling etc. The tool is developed to alleviate some of the primary issues with scaling up pipelines, such as file naming, management of data, output and logs. 
+- Developed **bioflows** a workflow tool to ensure consistency in analysis steps and stages with interoperability across multiple job submission systems
+- **Use [CONDA](https://conda.io/docs/)** package management system for managing software tools
+- Container based approach using **[docker](https://www.docker.com)** for cross-platform interoperability of the analysis environment
 
-## How it works
+## **Overview**
+**bioflows** is an user-friendly python implementation of a workflow manager. The user is expected to not have any programming knowledge and needs to only provide a control file in a YAML format, chosen for its human readability. The goal here is to provide users with a simple and straight-forward interface for processing NGS datasets with many samples using standard bioinformatics pipelines, e.g  RNA-seq, GATK variant calling etc. The tool is developed to alleviate some of the primary issues with scaling up pipelines, such as file naming, management of data, output and logs. 
 
-## Key Features
-Currently `bioflows` provides the following features:
-- A straightforward approach to management of
-    1) data
-    2) logs
-    3) results
-    4) scripts
+## **How it works**
+
+## **Key Features**
+Currently **bioflows** provides the following features:
+
+- Simple management of
+    1. data
+    2. logs
+    3. results
+    4. scripts
+        
 - A module to easily download data from NCBI's SRA archive and to optionally directly continue processing the data through the pipelines. A few key elements of this module are:
     - Only download and convert the data to usable fastqs
     - Data from multiple runs are concatenated automatically
     - Metadata associated with the SRA data is also provided as a seperate table
+        
 - Conda packages for all dependencies are already pre-built and provided alongwith the software
 
 ## Conda Package Management
