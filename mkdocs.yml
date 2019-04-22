@@ -3,6 +3,7 @@ site_author:      Ashok Ragavendran
 repo_url:         https://github.com/compbiocore/bioflows
 site_description: Documentation for running Bioinformatics/Computational workflows with bioflowa
 site_url:         https://compbiocore.github.io/
+google_analytics: ['UA-115983496-2', 'compbiocore.github.io']
 
 theme:
   name: material
