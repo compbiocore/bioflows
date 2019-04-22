@@ -69,34 +69,47 @@ class Picard(BaseWrapper):
     def make_target(self, name, input, *args, **kwargs):
         if name.split('_')[1] == "CollectWgsMetrics":
             self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_wgs_stats_picard.txt', **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+                input + "_" + name + "_" + self.out_suffix).hexdigest() + ".txt"
             self.add_args_collect_wgs_metrics(input, *args, **kwargs)
+
         elif name.split('_')[1] == "MeanQualityByCycle":
             self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_by_cycle_picard',
                                     **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix + ".txt").hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+                input + "_" + name + "_" + self.out_suffix + ".txt").hexdigest() + ".txt"
             self.add_args_mean_quality_by_cycle(input, *args, **kwargs)
+
         elif name.split('_')[1] == "QualityScoreDistribution":
             self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_read_qual_overall_picard', **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix + ".txt").hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+                input + "_" + name + "_" + self.out_suffix + ".txt").hexdigest() + ".txt"
             self.add_args_quality_score_distribution(input, *args, **kwargs)
+
         elif name.split('_')[1] == "MarkDuplicates":
             self.update_file_suffix(input_default=".rg.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
-            self.target = input + '_mark_dup_picard.txt' + "_" + hashlib.sha224(
-                input + '_mark_dup_picard.txt').hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + 'mark_dup_picard.txt' + "_" + hashlib.sha224(
+                input + "_" + name + "_" + 'mark_dup_picard.txt').hexdigest() + ".txt"
             self.add_args_markduplicates(input, *args, **kwargs)
+
         elif name.split('_')[1] == "AddOrReplaceReadGroups":
             self.update_file_suffix(input_default=".dup.srtd.bam", output_default=".rg.srtd.bam", **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+                input + "_" + name + "_" + self.out_suffix).hexdigest() + ".txt"
             self.add_args_addorreplacereadgroups(input, *args, **kwargs)
+
         elif name.split('_')[1] == "BuildBamIndex":
             self.update_file_suffix(input_default=".gatk.recal.bam", output_default="", **kwargs)
-            self.target = input + self.in_suffix + ".bai_" + hashlib.sha224(
-                input + self.in_suffix + '.bai').hexdigest() + ".txt"
+            self.target = input + "_" + name + "_" + self.in_suffix + ".bai_" + hashlib.sha224(
+                input + "_" + name + "_" + self.in_suffix + '.bai').hexdigest() + ".txt"
+
+            self.add_args_buildbamindex(input, *args, **kwargs)
+
+        elif name.split('_')[1] == "SamToFastq":
+            self.update_file_suffix(input_default=".bam", output_default="fq.gz", **kwargs)
+            self.target = input + "_" + name + "_" + self.in_suffix + "_" + hashlib.sha224(
+                input + "_" + name + "_" + self.in_suffix).hexdigest() + ".txt"
+
             self.add_args_buildbamindex(input, *args, **kwargs)
         return
 
@@ -166,6 +179,15 @@ class Picard(BaseWrapper):
         return
 
     def add_args_buildbamindex(self, input, *args, **kwargs):
+        self.reset_add_args()
+
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'),
+                                                 input + self.in_suffix),
+                         "VALIDATION_STRINGENCY=LENIENT"]
+        self.add_args += args
+        return
+
+    def add_args_samtofastq(self, input, *args, **kwargs):
         self.reset_add_args()
 
         self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'),

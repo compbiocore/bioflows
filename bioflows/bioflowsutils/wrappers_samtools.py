@@ -58,6 +58,7 @@ class SamTools(BaseWrapper):
 
     def make_target(self, name, input, *args, **kwargs):
         # Make sure output suffix is enforced
+        name_str = "_" + name + "_"
         if kwargs['suffix_type'] != "custom":
             print "Error1!!! you need to specify an output suffix"
             sys.exit(0)
@@ -70,19 +71,19 @@ class SamTools(BaseWrapper):
 
         if name.split('_')[1] == "view":
             # self.stdout_as_output = True
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_view(input, *args, **kwargs)
 
         elif name.split('_')[1] == "sort":
             # self.stdout_as_output = True
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_sort(input, *args, **kwargs)
 
         elif name.split('_')[1] == "index":
-            self.target = input + self.in_suffix + ".bai." + "_" + hashlib.sha224(
-                input + self.in_suffix + ".bai").hexdigest() + ".txt"
+            self.target = input + name_str + self.in_suffix + ".bai." + "_" + hashlib.sha224(
+                input + name_str + self.in_suffix + ".bai").hexdigest() + ".txt"
             self.add_args_index(input, *args, **kwargs)
         return
 

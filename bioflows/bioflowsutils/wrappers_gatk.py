@@ -74,18 +74,19 @@ class Gatk(BaseWrapper):
         return
 
     def make_target(self, name, input, *args, **kwargs):
+        name_str = "_" + name + "_"
         if name.split('_')[1] == "RealignerTargetCreator":
             self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='_realign_targets.intervals',
                                     **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_realigner_target_creator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "IndelRealigner":
             self.update_file_suffix(input_default=".dedup.rg.srtd.bam", output_default='.dedup.rg.srtd.realigned.bam',
                                     **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_indel_realigner(input, *args, **kwargs)
 
         elif name.split('_')[1] == "BaseRecalibrator":
@@ -93,35 +94,36 @@ class Gatk(BaseWrapper):
             self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='_recal_table.txt',
                                     **kwargs)
             if "-BQSR" in args:
-                self.target = input + '_post' + self.out_suffix + "_" + hashlib.sha224(
-                    input + '_post' + self.out_suffix).hexdigest() + ".txt"
+                self.target = input + name_str + 'post' + self.out_suffix + "_" + hashlib.sha224(
+                    input + name_str + 'post' + self.out_suffix).hexdigest() + ".txt"
             else:
-                self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                    input + self.out_suffix).hexdigest() + ".txt"
+                self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                    input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_base_recalibrator(input, *args, **kwargs)
 
         elif name.split('_')[1] == "PrintReads":
             self.update_file_suffix(input_default='.dedup.rg.srtd.realigned.bam', output_default='.gatk.recal.bam',
                                     **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_print_reads(input, *args, **kwargs)
 
         elif name.split('_')[1] == "HaplotypeCaller":
             self.update_file_suffix(input_default='.gatk.recal.bam', output_default='.GATK-HC.g.vcf', **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_haplotype_caller(input, *args, **kwargs)
 
         elif name.split('_')[1] == "VariantRecalibrator":
-            self.target = input + '._mark_dup_picard.' + hashlib.sha224(
-                input + '._mark_dup_picard.txt').hexdigest() + ".vcf"
+            # TODO Fix this
+            self.target = input + name_str + 'mark_dup_picard.' + hashlib.sha224(
+                input + name_str + 'mark_dup_picard.txt').hexdigest() + ".vcf"
 
         elif name.split('_')[1] == "AnalyzeCovariates":
             self.update_file_suffix(input_default="_recal_table.txt", output_default="_recalibration_plots.pdf",
                                     **kwargs)
-            self.target = input + self.out_suffix + "_" + hashlib.sha224(
-                input + self.out_suffix).hexdigest() + ".txt"
+            self.target = input + name_str + self.out_suffix + "_" + hashlib.sha224(
+                input + name_str + self.out_suffix).hexdigest() + ".txt"
             self.add_args_analyze_covariates(input, *args, **kwargs)
         return
 

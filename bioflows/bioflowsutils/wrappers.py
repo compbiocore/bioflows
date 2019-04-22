@@ -465,7 +465,8 @@ class Gsnap(BaseWrapper):
         ## Setup the inputs/output
         self.update_file_suffix(input_default=".fq.gz", output_default=".sam", **kwargs)
         ## set the checkpoint target file
-        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+            input + "_" + name + "_" + self.out_suffix).hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
         kwargs['prog_id'] = name
@@ -550,7 +551,8 @@ class Biobambam(BaseWrapper):
         elif name.split("_")[0] == "bamsort":
             self.update_file_suffix(input_default=".bam", output_default=".srtd.bam", **kwargs)
 
-        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+            input + "_" + name + "_" + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
@@ -587,8 +589,8 @@ class QualiMap(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.update_file_suffix(input_default=".dup.srtd.bam", output_default="", **kwargs)
 
-        kwargs['target'] = input + '.qualimapReport' + "_" + hashlib.sha224(
-            input + '.qualimapReport.html').hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + 'qualimapReport' + "_" + hashlib.sha224(
+            input + "_" + name + "_" + 'qualimapReport').hexdigest() + ".txt"
 
         kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + '_' + name + '.log')
         kwargs['prog_id'] = name
@@ -727,7 +729,8 @@ class HtSeqCounts(BaseWrapper):
         # TODO add update to input/output suffixes here
         self.in_suffix = ".dup.srtd.bam"
 
-        kwargs['target'] = input + '.htseqcounts.' + hashlib.sha224(input + '.htseqcounts').hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + 'htseqcounts.' + hashlib.sha224(
+            input + "_" + name + "_" + 'htseqcounts').hexdigest() + ".txt"
         new_name = name
         kwargs['stderr'] = kwargs.get('stdout')
         kwargs.update({'stdout': os.path.join(kwargs.get('work_dir'), kwargs.get('expression_dir'),
@@ -762,7 +765,8 @@ class Bwa(BaseWrapper):
         self.update_file_suffix(input_default=".fq.gz", output_default=".sam", **kwargs)
 
         ## set the checkpoint target file
-        kwargs['target'] = input + self.out_suffix + "_" + hashlib.sha224(input + self.out_suffix).hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
+            input + "_" + name + "_" + self.out_suffix).hexdigest() + ".txt"
         kwargs['stdout'] = os.path.join(kwargs['align_dir'], input + self.out_suffix)
 
         kwargs['prog_id'] = name
@@ -838,7 +842,8 @@ class FeatureCounts(BaseWrapper):
         # TODO add update to input/output suffixes here
         in_suffix = ".dup.srtd.bam"
 
-        kwargs['target'] = hashlib.sha224(input + '.featureCounts.csv').hexdigest() + ".txt"
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(
+            input + "_" + name).hexdigest() + ".txt"
         # name = name + " multicov "
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
@@ -970,6 +975,8 @@ class Trimmomatic(BaseWrapper):
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.in_suffix),
                           os.path.join(kwargs.get('fastq_dir'), input + "_2" + self.in_suffix)]
 
+            self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + self.out_suffix)]
+
             add_command = "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_1P.fq.gz") + " "
             add_command += os.path.join(kwargs.get('fastq_dir'), input + "_1" + self.out_suffix) + "; "
             add_command += "mv -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2P.fq.gz") + " "
@@ -978,9 +985,8 @@ class Trimmomatic(BaseWrapper):
             add_command += "rm -v " + os.path.join(kwargs.get('fastq_dir'), input + "_tr_2U.fq.gz") + "; "
         else:
             self.args += [os.path.join(kwargs.get('fastq_dir'), input + self.in_suffix)]
+            self.args += [os.path.join(kwargs.get('fastq_dir'), input + self.out_suffix)]
             # Todo need to check what move commands are added for SingleEnd
-
-        self.args += ["-baseout", os.path.join(kwargs.get('fastq_dir'), input + self.out_suffix)]
 
         # Add all other optional trimming specification arguments
         self.args += args

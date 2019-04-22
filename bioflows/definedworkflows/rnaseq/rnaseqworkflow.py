@@ -255,6 +255,7 @@ class BaseWorkflow:
                               'gatk_HaplotypeCaller': wr_gatk.Gatk,
                               'gatk_AnalyzeCovariates': wr_gatk.Gatk,
                               'trimmomatic_PE': wr.Trimmomatic,
+                              'trimmomatic_SE': wr.Trimmomatic,
                               'fastq_screen': wr.FastqScreen,
                               'qiime_tools_import': wr_qiime2.Qiime2,
                               'qiime_demux_emp-single': wr_qiime2.Qiime2,
