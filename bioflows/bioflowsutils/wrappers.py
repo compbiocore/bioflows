@@ -355,12 +355,18 @@ class BaseWrapper(object):
         else:
             if kwargs['suffix']['output'] != "default":
                 self.out_suffix = kwargs['suffix']['output']
-            else:
+            elif output_default is not None:
                 self.out_suffix = output_default
+            else:
+                print "Error!!! you need to specify an output suffix"
+                sys.exit(0)
             if kwargs['suffix']['input'] != "default":
                 self.in_suffix = kwargs['suffix']['input']
-            else:
+            elif input_default is not None:
                 self.in_suffix = input_default
+            else:
+                print "Error!!! you need to specify an input suffix"
+                sys.exit(0)
         return
 
     def reset_add_args(self):
