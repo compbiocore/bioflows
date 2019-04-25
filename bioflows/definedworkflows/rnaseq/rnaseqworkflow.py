@@ -1349,7 +1349,7 @@ class GatkFlow(BaseWorkflow):
 
             # Update paths to check to include directory for VCFs
             self.paths_to_test += [self.gatk_dir]
-        elif (any(x in ["gsnap", "htseq-count", "feature_counts"] for x in self.workflow_sequence.keys())):
+        elif (any(x.keys() in ["gsnap", "htseq-count", "featureCounts"] for x in self.workflow_sequence)):
             # Create Expression quantification directory for RNASeq
             self.expression_dir = os.path.join(self.work_dir, 'expression')
 
@@ -1685,4 +1685,4 @@ def gatk_main():
 
 
 if __name__ == '__main__':
-    rna_seq_main()
+    gatk_main()

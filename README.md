@@ -34,7 +34,7 @@ Installation is simple using conda environments
 conda install -c compbiocore bioflows
 ```
 
-This will install bioflows and all the necessary bio-informatics tools that are part of the standard workflows. 
+This will install bioflows and all the necessary bioinformatics tools that are part of the standard workflows. 
 
 [//]: # (End with an example of getting some data out of the system or using it for a little demo)
 

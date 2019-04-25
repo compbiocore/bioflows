@@ -52,7 +52,12 @@ class Gatk(BaseWrapper):
 
         new_name = name.split("_")
         new_name.insert(1, mem_str)
-        new_name.insert(2, '-T')
+        # Adding control to make the the same wrappers usable
+        # for gatk4 which does not use the '-T' delimiter for subcommands
+        if name.split('_')[0] != "gatk4":
+            new_name.insert(2, '-T')
+        else:
+            pass
         new_name = ' '.join(new_name)
 
         self.init(new_name, **kwargs)

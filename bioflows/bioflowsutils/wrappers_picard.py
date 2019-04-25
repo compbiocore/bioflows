@@ -67,6 +67,14 @@ class Picard(BaseWrapper):
         return
 
     def make_target(self, name, input, *args, **kwargs):
+        '''
+
+        :param name: the name of the program including subcommand and roung
+        :param input: the sample id
+        :param args: the arguments passed as Program options in YAML
+        :param kwargs: Generic options passed to bioflows
+        :return:
+        '''
         if name.split('_')[1] == "CollectWgsMetrics":
             self.update_file_suffix(input_default=".dup.srtd.bam", output_default='_wgs_stats_picard.txt', **kwargs)
             self.target = input + "_" + name + "_" + self.out_suffix + "_" + hashlib.sha224(
@@ -110,7 +118,74 @@ class Picard(BaseWrapper):
             self.target = input + "_" + name + "_" + self.in_suffix + "_" + hashlib.sha224(
                 input + "_" + name + "_" + self.in_suffix).hexdigest() + ".txt"
 
-            self.add_args_buildbamindex(input, *args, **kwargs)
+            self.add_args_samtofastq(input, *args, **kwargs)
+
+        elif name.split('_')[1] == "CollectHsMetrics":
+            self.update_file_suffix(input_default=".dedup.rg.srtd.realigned.bam", output_default="_hs_metrics.txt",
+                                    **kwargs)
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigest() + ".txt"
+            self.add_args_collect_hs_metrics(input, *args, **kwargs)
+            # TODO add tests for BAIT_INTERVALS and TARGET_INTERVALS
+
+        elif name.split('_')[1] == "CollectAlignmentSummaryMetrics":
+            self.update_file_suffix(input_default=".rg.srtd.bam", output_default="_alignment_summary_metrics.txt",
+                                    **kwargs)
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigest() + ".txt"
+            self.add_args_collect_alignment_summary_metrics(input, *args, **kwargs)
+
+        elif name.split('_')[1] == "CollectGcBiasMetrics":
+            self.update_file_suffix(input_default=".rg.srtd.bam", output_default="_gc_bias_metrics.txt", **kwargs)
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigest() + ".txt"
+            self.add_args_collect_alignment_summary_metrics(input, *args, **kwargs)
+
+        elif name.split('_')[1] == "CollectInsertSizeMetrics":
+            self.update_file_suffix(input_default=".rg.srtd.bam", output_default="_insert_size_metrics.txt", **kwargs)
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigest() + ".txt"
+            self.add_args_collect_alignment_summary_metrics(input, *args, **kwargs)
+        return
+
+    def add_args_collect_alignment_summary_metrics(self, input, *args, **kwargs):
+        self.reset_add_args()
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
+                         "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix),
+                         "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path")]
+        self.add_args += args
+        return
+
+    def add_args_collect_gcbias_metrics(self, input, *args, **kwargs):
+        self.reset_add_args()
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
+                         "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix),
+                         "CHART=" + os.path.join(kwargs.get('qc_dir'),
+                                                 input + self.out_suffix.replace(".txt", "_plots.pdf")),
+                         "SUMMARY_OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + "_summary" + self.out_suffix),
+                         "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path")]
+        self.add_args += args
+        return
+
+    def add_args_collect_insert_size_metrics(self, input, *args, **kwargs):
+        self.reset_add_args()
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
+                         "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix),
+                         "HISTOGRAM_FILE=" + os.path.join(kwargs.get('qc_dir'),
+                                                          input + self.out_suffix.replace(".txt", "_histogram.pdf")),
+                         "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path")]
+        self.add_args += args
+        return
+
+    def add_args_collect_hs_metrics(self, input, *args, **kwargs):
+        self.reset_add_args()
+        self.add_args = ["INPUT=" + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
+                         "OUTPUT=" + os.path.join(kwargs.get('qc_dir'), input + self.out_suffix),
+                         "PER_TARGET_COVERAGE=" + os.path.join(kwargs.get('qc_dir'),
+                                                               input + self.out_suffix.replace(".txt",
+                                                                                               "_per_target_cov.txt")),
+                         "REFERENCE_SEQUENCE=" + kwargs.get("ref_fasta_path")]
+        self.add_args += args
         return
 
     def add_args_collect_wgs_metrics(self, input, *args, **kwargs):

@@ -87,10 +87,13 @@ workflow_sequence:
       -nr: 10000
       -c:
 - salmon:
-  options:
-    -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
-    -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
-- htseq-count: default
+    options:
+      -g: /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf
+      -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/c_elegans_PRJNA13758_WBPS8_mRNA_transcripts_index
+- htseq-count:
+    options:
+      -r: name
+      --secondary-alignments=ignore:
 - bwa:
     subcommand: mem
     options:

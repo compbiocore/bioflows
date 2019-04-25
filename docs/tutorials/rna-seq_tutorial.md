@@ -109,6 +109,7 @@ workflow_sequence:
       suffix:
         output: ".unmapped.bam"
       options:
+        -f: "0x4"
   - bamsort:
       suffix:
         input: ".mapped.bam"

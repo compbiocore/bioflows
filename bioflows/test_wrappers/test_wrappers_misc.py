@@ -174,21 +174,26 @@ class TestSalmon(unittest.TestCase):
         self.assertEqual(self.salmon_test.run_command.split(), out_command.split())
 
 
-# class TestHtSeq(unittest.TestCase):
-#     def setUp(self):
-#         self.parmsfile = "test_wrappers_pe.yaml"
-#         self.rw1 = rsw(self.parmsfile)
-#         self.rw1.parse_prog_info()
-#         self.wrapper_name = 'htseq-count'
-#         self.htseq_test = wr.HtSeqCounts(self.wrapper_name, "test_samp",
-#                                          stdout=os.path.join(self.rw1.run_parms['work_dir'],
-#                                                              self.rw1.run_parms['log_dir'],
-#                                                              'test_samp.log'),
-#                                          **dict(self.rw1.base_kwargs))
-#
-#     def test_htseq_counts_wrapper(self):
-#         print "\n***** Testing Htseq_wrapper command *****\n"
-#         print self.htseq_test.run_command
+class TestHtSeq(unittest.TestCase):
+    def setUp(self):
+        self.parmsfile = "test_wrappers_pe.yaml"
+        self.rw1 = rsw(self.parmsfile)
+        self.rw1.set_base_kwargs()
+        self.rw1.parse_prog_info()
+        self.wrapper_name = 'htseq-count'
+        self.add_args = self.rw1.progs[self.wrapper_name]
+        new_base_kwargs = self.rw1.update_prog_suffixes(self.wrapper_name)
+        self.htseq_test = wr.HtSeqCounts(self.wrapper_name, "test_samp", *self.add_args,
+                                         **dict(new_base_kwargs))
+
+    def test_htseq_counts_wrapper(self):
+        print "\n***** Testing Htseq_wrapper command *****\n"
+        print self.htseq_test.run_command
+        out_command = "htseq-count  -t exon -f bam -a 0 -r pos --additional-attr=gene_name  --nonunique=all "
+        out_command += "-i gene_id --secondary-alignments=score  /gpfs/scratch/alignments/test_samp.dup.srtd.bam "
+        out_command += "/gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf "
+        out_command += "2>>/gpfs/scratch/logs/test_samp_htseq-count.log 1>/gpfs/scratch/expression/test_samp_htseq_counts"
+        self.assertEqual(self.htseq_test.run_command.split(), out_command.split())
 
 class TestBwaMem(unittest.TestCase):
 
@@ -346,8 +351,8 @@ if __name__ == '__main__':
     # suite.addTest(TestSalmon("test_salmon_counts_wrapper"))
     # suite.addTest(TestSamMarkDup("test_sammarkdup_wrapper"))
     #suite.addTest(TestQualimapRna("test_qualimap_wrapper"))
-    suite.addTest(TestFastqc("test_fastqc_wrapper"))
-    suite.addTest(TestFastqc("test_bwa_wrapper"))
+    # suite.addTest(TestFastqc("test_fastqc_wrapper"))
+    # suite.addTest(TestFastqc("test_bwa_wrapper"))
 
     # runner = unittest.TextTestRunner()
     # runner.run(suite)
