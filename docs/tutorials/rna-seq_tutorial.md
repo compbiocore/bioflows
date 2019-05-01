@@ -184,5 +184,6 @@ For this tutorial you should see the following directories
 - `expression` Expression values from featureCounts/Salmon/htseq depending on whats specified.
 - `checkpoints` Contains checkpoint records to confirm that bioflows has progressed through each step of the analysis.
 
+Within each folder you will see files that are annotated by `samplename_program_suffix`. We provide a list of outputs and their contents below
 ## Alternative workflow YAMLs
 These YAML's can be used as templates for alternative workflows using various combinations of programs and sequences from the programs defined in the [Basic workflow](#Basic Workflow)

@@ -571,8 +571,7 @@ class Biobambam(BaseWrapper):
         else:
             self.job_parms.update({'mem': 10000, 'time': 300, 'ncpus': 1})
 
-        self.args = ["index=0",
-                     "I=" + os.path.join(self.align_dir, input + self.in_suffix),
+        self.args = ["I=" + os.path.join(self.align_dir, input + self.in_suffix),
                      "O=" + os.path.join(self.align_dir, input + self.out_suffix),
                      "M=" + os.path.join(self.qc_dir, input + ".dup.metrics.txt")]
         self.args += args
