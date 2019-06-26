@@ -255,7 +255,10 @@ class Gatk(BaseWrapper):
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-R " + kwargs.get("ref_fasta_path")]
         self.add_args += args
-        self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+        if kwargs['prog_id'].split('_')[0] == "gatk4":
+            self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+        else:
+            self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
         return
 
     def add_args_analyze_covariates(self, input, *args, **kwargs):

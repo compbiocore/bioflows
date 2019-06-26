@@ -424,7 +424,7 @@ class BaseWorkflow:
         self.sra_info['outfile'] = os.path.join(self.run_parms['work_dir'],"sra_manifest.csv")
         sample_sra = SraUtils(self.sra_info)
         self.sample_fastq = copy.deepcopy(sample_sra.sample_to_file)
-
+        print self.sample_fastq
         self.write_cmds(self.sample_fastq,os.path.join(self.run_parms['work_dir'], "sra_to_sample.txt"))
 
         print self.sample_fastq
@@ -432,7 +432,8 @@ class BaseWorkflow:
         # need to check that all samples are SE or PE
         key = self.sample_fastq.keys()[0]
         query_val = os.path.basename(self.sample_fastq[key][0])
-        query_val = query_val.replace('.sra', '')
+        #query_val = query_val.replace('.sra', '')
+        query_val = query_val.split('.')[0]
 
         if 'SINGLE' in sample_sra.sra_records[query_val]['library_type']:
             print "SE library\n"
@@ -591,7 +592,7 @@ class BaseWorkflow:
                                           "fastq-dump", "-v", "-v", "-v", "--gzip",
                                           os.path.join(self.sra_dir, sra_name), '-O',
                                           self.fastq_dir, ";",
-                                          " mv -v", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+                                          " mv -v", os.path.join(self.fastq_dir, sra_name + ".fastq.gz"),
                                           os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -605,10 +606,10 @@ class BaseWorkflow:
                                           '-O',
                                           self.fastq_dir, ";",
                                           " mv -v",
-                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
+                                          os.path.join(self.fastq_dir, sra_name + "_1.fastq.gz"),
                                           os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
                                           " mv -v",
-                                          os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
+                                          os.path.join(self.fastq_dir, sra_name + "_2.fastq.gz"),
                                           os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                           "echo DONE:", fileName[0], "> "]))
                     samp_list.append(samp)
@@ -624,7 +625,7 @@ class BaseWorkflow:
                                               "fastq-dump", "-vvv", "--gzip", os.path.join(self.sra_dir, sra_name),
                                               '-O',
                                               self.fastq_dir, ";",
-                                              " cat", os.path.join(self.fastq_dir, sra_name.replace("sra", "fastq.gz")),
+                                              " cat", os.path.join(self.fastq_dir, sra_name +  ".fastq.gz"),
                                               ">>", os.path.join(self.fastq_dir, samp + ".fq.gz"), ";",
                                               "echo DONE:", srr_file, "> "]))
                         samp_list.append(samp)
@@ -638,15 +639,15 @@ class BaseWorkflow:
                                               "fastq-dump", "-vvv", "--gzip", "--split-files",
                                               os.path.join(self.sra_dir, sra_name), '-O', self.fastq_dir, ";",
                                               "cat",
-                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")),
+                                              os.path.join(self.fastq_dir, sra_name + "_1.fastq.gz"),
                                               ">>", os.path.join(self.fastq_dir, samp + "_1.fq.gz"), ";",
                                               "rm -v",
-                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_1.fastq.gz")), ";",
+                                              os.path.join(self.fastq_dir, sra_name + "_1.fastq.gz"), ";",
                                               "cat",
-                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")),
+                                              os.path.join(self.fastq_dir, sra_name + "_2.fastq.gz"),
                                               ">>", os.path.join(self.fastq_dir, samp + "_2.fq.gz"), ";",
                                               "rm -v",
-                                              os.path.join(self.fastq_dir, sra_name.replace(".sra", "_2.fastq.gz")), ";",
+                                              os.path.join(self.fastq_dir, sra_name +  "_2.fastq.gz"), ";",
                                               "echo DONE:", srr_file, "> "]))
                         samp_list.append(samp)
                         num += 1
@@ -1078,7 +1079,7 @@ class GatkFlow(BaseWorkflow):
         self.init(parmsfile)
         # main_prog =
         list_to_flatten = [x.keys() for x in self.workflow_sequence]
-        flat_list = [item for sublist in list_to_flattern for item in sublist]
+        flat_list = [item for sublist in list_to_flatten for item in sublist]
         print flat_list
 
         if (any("gatk" in x for x in flat_list)):

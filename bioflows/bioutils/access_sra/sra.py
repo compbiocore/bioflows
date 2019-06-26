@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with BioLite.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
+import copy, subprocess as sp, time, StringIO
 
 from Bio import Entrez
 from lxml import etree
@@ -39,12 +39,13 @@ class SraUtils:
     def __init__(self, sra_info):
         """
         Inititate the class with a dictionary containing necessary elements to query sra
-        :param sra_info: A dict containing the the following keys entrez_email and ids
+        :param sra_info: A dict containing the the following keys entrez_email and ids where ids are either a list or a single value
         """
         Entrez.email = sra_info['entrez_email']
         self.check_email()
         self.all_ids(sra_info['id'])
         print self.accession_record_ids
+        time.sleep(1)
         self.download_xmls(self.accession_record_ids)
         self.get_sra_records()
         self.write_records(sra_info['outfile'])
@@ -64,10 +65,9 @@ class SraUtils:
         Returns the URL for downloading the data for accession `id` from SRA's
         FTP server.
         """
-
-        return 'ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/{0}/{1}/{2}/{2}.sra'.format(id[:3],
-                                                                                                             id[:6],
-                                                                                                             id)
+        sra_path =  sp.check_output( "source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda && srapath " + id , shell = True)
+        return sra_path.strip('\n')
+        #return 'ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/{0}/{1}/{2}/{2}.sra'.format(id[:3],id[:6], id)
 
     def all_ids(self, id, db='sra'):
         """
@@ -76,11 +76,13 @@ class SraUtils:
         """
         if type(id)== list:
             for i in id:
-                handle = Entrez.esearch(db=db, RetMax=1000, term=i)
+                handle = Entrez.esearch(db=db, RetMax=100000, term=i)
                 record = Entrez.read(handle)
+                handle.close()
+                time.sleep(1)
                 self.accession_record_ids += record['IdList']
         else:
-            handle = Entrez.esearch(db=db, RetMax=1000, term=id)
+            handle = Entrez.esearch(db=db, RetMax=100000, term=id)
             record = Entrez.read(handle)
             self.accession_record_ids = record['IdList']
         return
@@ -89,7 +91,13 @@ class SraUtils:
         """
         Returns a list of XML files for the given list of SRA accession `ids`.
         """
-        self.downloaded_xmls = [Entrez.efetch(db=db, id=i) for i in ids]
+        self.downloaded_xmls=[]
+        for i in ids:
+            handle = Entrez.efetch(db=db, id=ids)
+            xml_data = ''.join([h.strip('\n') for h in handle.readlines()])
+            handle.close()
+            time.sleep(0.400)
+            self.downloaded_xmls += [xml_data]
         return
 
     def get_sra_records(self):
@@ -113,7 +121,8 @@ class SraUtils:
                 self.sample_to_name[key_name] = test_record.record['sample_primary_id']
 
             #self.sample_to_file[test_record.record['sample_primary_id']] = [self.ftp_url(key_url)]
-            self.sample_to_file[key_name] = [self.ftp_url(key_url)]
+            #self.sample_to_file[key_name] = [self.ftp_url(key_url)]
+            self.sample_to_file[key_name] = [self.ftp_url(key_name)]
             self.sra_records[key_url] = copy.deepcopy(test_record.record)
 
             if len(test_record.record['paths']) > 1:
@@ -205,7 +214,7 @@ class Sra_Element:
 
         """
         parser = etree.XMLParser(remove_blank_text=True)
-        self.package = etree.parse(xml, parser)
+        self.package = etree.parse(StringIO.StringIO(xml), parser)
         #print(etree.tostring(self.package, pretty_print=True))
 
         base = '//EXPERIMENT_PACKAGE_SET/EXPERIMENT_PACKAGE'
