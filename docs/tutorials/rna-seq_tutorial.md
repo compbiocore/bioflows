@@ -41,7 +41,7 @@ The next section provide a short how-to with all the commands to execute the tes
     Make sure you have access to the OSCAR cluster or request one by contacting support@ccv.brown.edu. If you are not comfortable with the Linux environment, you can consult the tutorial [here.](https://compbiocore.github.io/cbc-linux-tutorial/linux_explication/) You should also [set up bioflows.](#/docs/tutorials/Setup_bioflows_env)
     
     !!! danger
-        You need to have an priority account on OSACAR to run this with real datasets as the resources for exploratory accounts are not sufficient. 
+        You need to have an priority account on OSCAR to run this with real datasets as the resources for exploratory accounts are not sufficient. 
     
 
     !!! caution
@@ -142,15 +142,16 @@ workflow_sequence:
   - qualimap:
       subcommand: rnaseq
   - htseq-count: default
+  - feature
 
 ```
 
 If you haven't done so already, copy the above into a text file and save it in `/users/mydir` as `test_run.yaml`
 
-For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, thats available to all user on OSCAR. It should run within the hour and you should see that all the steps from the workflow have completed.
+For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, thats available to all users on OSCAR. It should run within the hour and you should see that all the steps from the workflow have completed.
 
 #### Create the manifest file
-We will now create the sample manifest file, which is in `csv` format. You can find more information about sample manifest files [here](#/docs/yaml_description.md). Copy the manifest below into a text file and save it in `/users/mydir` as `sample_manifest_min.csv`
+We will now create the sample manifest file, which is in `csv` format. You can find more information about sample manifest files [here](#/docs/yaml_description.md). Copy the manifest below into a text file and save it in `/users/mydir` as `sample_manifest_min.csv`. As you might notice this is a comma-seperated file.
 
 ``` bash
 samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
@@ -172,7 +173,7 @@ bioflows-run test_run.yaml
 
 ### Workflow outputs
 
-The `bioflows-gatk` call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: `sra`, `fastq`, `alignments`, `qc`, `slurm_scripts`, `logs`, `expression`, and `checkpoints`.
+The `bioflows-run` call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: `sra`, `fastq`, `alignments`, `qc`, `slurm_scripts`, `logs`, `expression`, and `checkpoints`.
 
 For this tutorial you should see the following directories
 
@@ -185,5 +186,6 @@ For this tutorial you should see the following directories
 - `checkpoints` Contains checkpoint records to confirm that bioflows has progressed through each step of the analysis.
 
 Within each folder you will see files that are annotated by `samplename_program_suffix`. We provide a list of outputs and their contents below
+
 ## Alternative workflow YAMLs
 These YAML's can be used as templates for alternative workflows using various combinations of programs and sequences from the programs defined in the [Basic workflow](#Basic Workflow)
