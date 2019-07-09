@@ -51,8 +51,14 @@ class Gatk(BaseWrapper):
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
 
         new_name = name.split("_")
-        new_name.insert(1, mem_str)
-        new_name.insert(2, '-T')
+
+        # Adding control to make the the same wrappers usable
+        # for gatk4 which does not use the '-T' delimiter for subcommands
+        if name.split('_')[0] != "gatk4":
+            new_name.insert(1, mem_str)
+            new_name.insert(2, '-T')
+        else:
+            pass
         new_name = ' '.join(new_name)
 
         self.init(new_name, **kwargs)
@@ -198,11 +204,17 @@ class Gatk(BaseWrapper):
             del new_args[idx_to_rm]
             self.add_args += new_args
             # self.out_suffix is used as input and the output has '_post` appended to it
-            self.add_args += ["-BQSR " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix),
-                              "-o " + os.path.join(kwargs.get('gatk_dir'), input + "_post" + self.out_suffix)]
+            self.add_args += ["-BQSR " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+            if kwargs['prog_id'].split('_')[0] == "gatk4":
+                self.add_args += ["-O " + os.path.join(kwargs.get('gatk_dir'), input + "_post" + self.out_suffix)]
+            else:
+                self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + "_post" + self.out_suffix)]
         else:
             self.add_args += args
-            self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+            if kwargs['prog_id'].split('_')[0] == "gatk4":
+                self.add_args += ["-O " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+            else:
+                self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
 
         return
 
@@ -243,7 +255,10 @@ class Gatk(BaseWrapper):
         self.add_args = ["-I " + os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
                          "-R " + kwargs.get("ref_fasta_path")]
         self.add_args += args
-        self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+        if kwargs['prog_id'].split('_')[0] == "gatk4":
+            self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
+        else:
+            self.add_args += ["-o " + os.path.join(kwargs.get('gatk_dir'), input + self.out_suffix)]
         return
 
     def add_args_analyze_covariates(self, input, *args, **kwargs):

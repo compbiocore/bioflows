@@ -34,6 +34,7 @@ A primary objective of the [Computational Biology Core](https://cbc.brown.edu) a
 **bioflows** is an user-friendly python implementation of a workflow manager. The user is expected to not have any programming knowledge and needs to only provide a control file in a YAML format, chosen for its human readability. The goal here is to provide users with a simple and straight-forward interface for processing NGS datasets with many samples using standard bioinformatics pipelines, e.g  RNA-seq, GATK variant calling etc. The tool is developed to alleviate some of the primary issues with scaling up pipelines, such as file naming, management of data, output and logs. 
 
 ## **How it works**
+ **bioflows**  uses two main python packages: 1)  **[luigi](https://luigi.readthedocs.io/en/stable/)** developed at **spotify**  for managing dependencies among task and 2) **SAGA** python API to launch jobs across different types of systems. All the necessary tools are provided from the **[CBCs anaconda channel](https://anaconda.org/compbiocore/dashboard). 
 
 ## **Key Features**
 Currently **bioflows** provides the following features:

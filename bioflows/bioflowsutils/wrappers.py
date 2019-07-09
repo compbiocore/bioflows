@@ -347,7 +347,7 @@ class BaseWrapper(object):
                 print "Error!!! you need to specify an output suffix"
                 sys.exit(0)
             elif input_default is None and output_default is not None:
-                print "Error!!! you need to specify an output suffix"
+                print "Error!!! you need to specify an input suffix"
                 sys.exit(0)
             else:
                 print "Error!!! you need to specify BOTH input  and output suffixes"
@@ -355,12 +355,18 @@ class BaseWrapper(object):
         else:
             if kwargs['suffix']['output'] != "default":
                 self.out_suffix = kwargs['suffix']['output']
-            else:
+            elif output_default is not None:
                 self.out_suffix = output_default
+            else:
+                print "Error!!! you need to specify an output suffix"
+                sys.exit(0)
             if kwargs['suffix']['input'] != "default":
                 self.in_suffix = kwargs['suffix']['input']
-            else:
+            elif input_default is not None:
                 self.in_suffix = input_default
+            else:
+                print "Error!!! you need to specify an input suffix"
+                sys.exit(0)
         return
 
     def reset_add_args(self):
@@ -397,6 +403,7 @@ class BaseWrapper(object):
                 pass
 
         return tmp_args
+
 ### Third-party command line tools ###
 
 class FastQC(BaseWrapper):
@@ -564,8 +571,7 @@ class Biobambam(BaseWrapper):
         else:
             self.job_parms.update({'mem': 10000, 'time': 300, 'ncpus': 1})
 
-        self.args = ["index=0",
-                     "I=" + os.path.join(self.align_dir, input + self.in_suffix),
+        self.args = ["I=" + os.path.join(self.align_dir, input + self.in_suffix),
                      "O=" + os.path.join(self.align_dir, input + self.out_suffix),
                      "M=" + os.path.join(self.qc_dir, input + ".dup.metrics.txt")]
         self.args += args
@@ -647,6 +653,7 @@ class SalmonCounts(BaseWrapper):
         new_name = ' '.join(name.split("_"))
         self.init(new_name, **kwargs)
         default_args = dict()
+
         # update job parameters if needed
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
@@ -726,28 +733,44 @@ class HtSeqCounts(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        # TODO add update to input/output suffixes here
-        self.in_suffix = ".dup.srtd.bam"
 
-        kwargs['target'] = input + "_" + name + "_" + 'htseqcounts.' + hashlib.sha224(
-            input + "_" + name + "_" + 'htseqcounts').hexdigest() + ".txt"
-        new_name = name
-        kwargs['stderr'] = kwargs.get('stdout')
-        kwargs.update({'stdout': os.path.join(kwargs.get('work_dir'), kwargs.get('expression_dir'),
-                                              input + "_htseq_counts")})
+        # Update input/output suffixes here
+        self.update_file_suffix(input_default=".dup.srtd.bam", output_default="", **kwargs)
+
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(
+            input + "_" + name).hexdigest() + ".txt"
+
+        kwargs['stderr'] = os.path.join(kwargs['log_dir'], input + "_" + name + ".log")
+
+        kwargs['stdout'] = os.path.join(kwargs.get('expression_dir', os.path.join(kwargs.get('work_dir'), 'expression'))
+                                        , input + "_htseq_counts")
+
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+
+        new_name = name.split('_')[0]
         self.init(new_name, **kwargs)
         # update job parameters if needed
         if kwargs.get('job_parms_type') != 'default':
             self.job_parms.update(kwargs.get('add_job_parms'))
         else:
             self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 2})
+        if kwargs.get('gtf_file') is not None:
+            gtf = kwargs.get('gtf_file')
+        else:
+            print "Error!!!  you need to specify a gtf file to run htseq-counts"
+            sys.exit(0)
 
-        gtf = kwargs.get('gtf_file')
-        self.args += args
-        self.args += ["-f", "bam", "-r", "pos", "-a", "0", "-t", "exon", "-i", "gene_id", "--additional-attr=gene_name",
-                      "--nonunique=all", "--secondary-alignments=score"]
-        self.args += [os.path.join(kwargs.get('align_dir'), input + self.in_suffix),
-                      gtf]
+        default_args = {'-f': "bam", "-r": "pos", "-a": "0", "-t": "exon", "-i": "gene_id",
+                        "--additional-attr=gene_name": '', "--nonunique=all": '',
+                        "--secondary-alignments=score": ''}
+        # self.args += args
+        # self.args += ["-f", "bam", "-r", "pos", "-a", "0", "-t", "exon", "-i", "gene_id", "--additional-attr=gene_name",
+        #              "--nonunique=all", "--secondary-alignments=score"]
+        self.reset_add_args()
+        self.add_args = self.update_default_args(default_args, *args, **kwargs)
+        self.args += self.add_args
+        self.args += [os.path.join(kwargs.get('align_dir'), self.input + self.in_suffix), gtf]
 
         self.setup_run()
         return
@@ -784,13 +807,7 @@ class Bwa(BaseWrapper):
             self.job_parms.update({'mem': 4000, 'time': 80, 'ncpus': 12})
             self.args += ['-t 12']
 
-        # the below if block might be unecessary
-        # if self.paired_end:
-        #     kwargs['source'] = hashlib.sha224(input + '_2_fastqc.gzip').hexdigest() + ".txt"
-        # else:
-        #     kwargs['source'] = hashlib.sha224(input + '_fastqc.gzip').hexdigest() + ".txt"
-
-        # self.setup_args()
+        #TODO add update default args if needed
 
         self.args += args
 
@@ -799,7 +816,6 @@ class Bwa(BaseWrapper):
             self.args.append(os.path.join(self.cwd, 'fastq', input + "_2" + self.in_suffix))
         else:
             self.args.append(os.path.join(self.cwd, 'fastq', input + self.in_suffix))
-        # self.cmd = ' '.join(chain(self.cmd, map(str, self.args), map(str,input)))
 
         self.setup_run()
         return
@@ -839,20 +855,27 @@ class FeatureCounts(BaseWrapper):
 
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
-        # TODO add update to input/output suffixes here
-        in_suffix = ".dup.srtd.bam"
+
+        # Update input/output suffixes here
+        self.update_file_suffix(input_default=".dup.srtd.bam", output_default=".featureCounts.txt", **kwargs)
 
         kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(
             input + "_" + name).hexdigest() + ".txt"
-        # name = name + " multicov "
+
         kwargs['prog_id'] = name
         name = self.prog_name_clean(name)
 
         self.init(name, **kwargs)
-        self.args = ["-split", "-D", "-f 0.95",
-                     "-a " + os.path.join(self.cwd, input + self.in_suffix),
-                     "-b " + os.path.join(self.cwd, input + ".dup.metrics.txt")]
-        self.args += args
+
+        default_args = {"--fracOverlap": '80', "-M": '', "-O": '', '-s': 1}
+        self.reset_add_args()
+        self.add_args = self.update_default_args(default_args, *args, **kwargs)
+        self.args += self.add_args
+        self.args += ["-a " + kwargs.get('gtf_file'),
+                      "-o " + os.path.join(
+                          kwargs.get('expression_dir', os.path.join(kwargs.get('work_dir'), 'expression')),
+                          input + self.out_suffix),
+                      os.path.join(kwargs.get('align_dir'), input + self.in_suffix)]
         self.setup_run()
         return
 

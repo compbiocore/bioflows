@@ -39,15 +39,19 @@
         reads (True/False)
     
     -   `local_targets`: Whether this workflow is being run from a local
-        machine
-    -   `saga_host`: The hostname if workflow is run from a local machine
+        machine. Usually can be safely ignored
+    -   `saga_host`: The hostname if workflow is run from a local machine, elsee defaults to `localhost`. If you were planning to launch in OSCAR from your local machine you would provide `ssh.ccv.brown.edu`
+    !!! warning
+        This is an experimental feature and may not work as intended
     
     -   `ssh_user`: The user name if workflow is run from a local machine
     
     -   `saga_scheduler`: The scheduler being used, for CCV the value
-        used here is
+        used here is slurm. 
+        !!! note 
+            Currently only tested with `slurm` scheduler. Will add test to others soon
     
-    -   `gtf_file`: The full path to the gtf file for gene annotations
+    -   `gtf_file`: The full path to the gtf file for gene annotations, needed if you are planning to run rna-seq analysis
 
 ## Workflow parameters
 -   `workflow_sequence`: This section specifies the sequence of tools to

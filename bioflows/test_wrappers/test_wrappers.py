@@ -1,6 +1,7 @@
+import os
+import unittest
+
 import bioflows.bioflowsutils.wrappers as wr
-import unittest, os, saga
-from bioflows.definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwflw
 from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
 
 
@@ -102,71 +103,6 @@ class TestKneaddata(unittest.TestCase):
         # for k, v in self.fastqc_test.__dict__.iteritems():
         #     print k + ": " + str(v) +  "\n"
 
-class TestSamMarkDup(unittest.TestCase):
-
-    def setUp(self):
-        self.parmsfile = "/Users/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run.yaml"
-        self.rw1 = rsw(self.parmsfile)
-        self.rw1.set_base_kwargs()
-        self.rw1.parse_prog_info()
-        self.wrapper_name = 'bammarkduplicates2'
-        self.biobambammarkdup_test=wr.BiobambamMarkDup(self.wrapper_name,"test_samp",
-                                                       stdout=os.path.join(self.rw1.log_dir, 'bammarkduplicates.log'),
-                                                       **dict(self.rw1.base_kwargs))
-
-    def test_sammarkdup_wrapper(self):
-        print "\n***** Testing biobambam_wrapper command *****\n"
-        print self.biobambammarkdup_test.run_command
-        out_command = "bammarkduplicates2 index=0 I=/gpfs/scratch/aragaven/test_workflow/alignments/test_samp.srtd.bam O=/gpfs/scratch/aragaven/test_workflow/alignments/test_samp.dup.srtd.bam M=/gpfs/scratch/aragaven/test_workflow/qc/test_samp.dup.metrics.txt 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_bammarkduplicates2_err.log 1>/gpfs/scratch/aragaven/test_workflow/logs/bammarkduplicates.log"
-        self.assertEqual(self.biobambammarkdup_test.run_command, out_command)
-        # print "\n***** Testing biobambam_wrapper *****\n"
-        # for k, v in self.biobambammarkdup_test.__dict__.iteritems():
-        #     print k + ": " + str(v) +  "\n"
-
-
-class TestQualimapRna(unittest.TestCase):
-    def setUp(self):
-        self.parmsfile = "test_wrappers_pe.yaml"
-        self.rw1 = rsw(self.parmsfile)
-        # self.rw1.parse_prog_info()
-        self.wrapper_name = 'qualimap_rnaseq'
-        self.add_args = self.rw1.progs[self.wrapper_name]
-        self.qualimap_test = wr.QualiMapRnaSeq(self.wrapper_name, "test_samp", *self.add_args,
-                                               stdout=os.path.join(self.rw1.log_dir, 'qualimap.log'),
-                                               **dict(self.rw1.base_kwargs))
-
-    def test_qualimap_wrapper(self):
-        print "\n***** Testing Qualimap_wrapper command *****\n"
-        print self.qualimap_test.run_command
-        #out_command = "qualimap  -Xmx10000M rnaseq  -bam /gpfs/scratch/aragaven/test_workflow/alignments/test_samp.dup.srtd.bam  -gtf /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf  -outdir /gpfs/scratch/aragaven/test_workflow/qc/test_samp 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_qualimap_rnaseq_err.log 1>/gpfs/scratch/aragaven/test_workflow/logs/qualimap.log;  cp  /gpfs/scratch/aragaven/test_workflow/qc/test_samp/qualimapReport.html  /gpfs/scratch/aragaven/test_workflow/qc/test_samp/test_samp_qualimapReport.html "
-        #self.assertEqual(self.qualimap_test.run_command, out_command)
-
-        # print "\n***** Testing Qualimap_wrapper *****\n"
-        # for k, v in self.qualimap_test.__dict__.iteritems():
-        #     print k + ": " + str(v) +  "\n"
-
-
-class TestQualimap(unittest.TestCase):
-    def setUp(self):
-        self.parmsfile = "test_wrappers_pe.yaml"
-        self.rw1 = rsw(self.parmsfile)
-        # self.rw1.parse_prog_info()
-        self.wrapper_name = 'qualimap_bamqc'
-        self.add_args = self.rw1.progs[self.wrapper_name]
-        self.qualimap_test = wr.QualiMap(self.wrapper_name, "test_samp", *self.add_args,
-                                               stdout=os.path.join(self.rw1.log_dir, 'qualimap.log'),
-                                               **dict(self.rw1.base_kwargs))
-
-    def test_qualimap_wrapper(self):
-        print "\n***** Testing Qualimap_wrapper command *****\n"
-        print self.qualimap_test.run_command
-        #out_command = "qualimap  -Xmx10000M rnaseq  -bam /gpfs/scratch/aragaven/test_workflow/alignments/test_samp.dup.srtd.bam  -gtf /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf  -outdir /gpfs/scratch/aragaven/test_workflow/qc/test_samp 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_qualimap_rnaseq_err.log 1>/gpfs/scratch/aragaven/test_workflow/logs/qualimap.log;  cp  /gpfs/scratch/aragaven/test_workflow/qc/test_samp/qualimapReport.html  /gpfs/scratch/aragaven/test_workflow/qc/test_samp/test_samp_qualimapReport.html "
-        #self.assertEqual(self.qualimap_test.run_command, out_command)
-
-        # print "\n***** Testing Qualimap_wrapper *****\n"
-        # for k, v in self.qualimap_test.__dict__.iteritems():
-        #     print k + ": " + str(v) +  "\n"
-
 
 class TestSalmon(unittest.TestCase):
     def setUp(self):
@@ -230,29 +166,6 @@ class TestBwaMem(unittest.TestCase):
         # for k, v in self.gsnap_test.__dict__.iteritems():
         #     print k + ": " + str(v) +  "\n"
 
-class TestPicard(unittest.TestCase):
-
-    def setUp(self):
-        self.parmsfile = "test_wrappers_pe.yaml"
-        self.rw1 = rsw(self.parmsfile)
-        self.rw1.set_base_kwargs()
-        self.rw1.parse_prog_info()
-        self.wrapper_name = 'picard_CollectWgsMetrics'
-        self.add_args = self.rw1.progs[self.wrapper_name]
-        #use  *self.add_args to unroll the list
-        self.picard_test = wr.Picard(self.wrapper_name, "test_samp", *self.add_args,
-                                   **dict(self.rw1.base_kwargs))
-
-
-    def test_picard_wrapper(self):
-        print "\n***** Testing Picard_wrapper command *****\n"
-        print self.picard_test.run_command
-        print self.picard_test.job_parms
-        #out_command = "gsnap  -t 8 --gunzip -A sam -N1 --use-shared-memory=0 -d Ensembl_Mus_musculus_GRCm38 -s Mus_musculus.GRCm38.88.splicesites.iit /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_gsnap_err.log 1>/gpfs/scratch/aragaven/test_workflow/alignments/gsnap.sam"
-        #self.assertEqual(self.gsnap_test.run_command, out_command)
-        # print "\n***** Testing Gsnap_wrapper *****\n"
-        # for k, v in self.gsnap_test.__dict__.iteritems():
-        #     print k + ": " + str(v) +  "\n"
 
 
 if __name__ == '__main__':
