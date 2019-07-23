@@ -286,8 +286,6 @@ class BaseWrapper(object):
             # MAYBE redundant
         self.args.append('2>>' + stderr)
 
-        # if self.pipe:
-        # 	self.args += ('|', self.pipe, '2>>' + stderr)
 
         # Write to a stdout file if it was set by the derived class.
         # Otherwise, stdout and stderr will be combined into the log file.
@@ -532,10 +530,11 @@ class Gsnap(BaseWrapper):
             self.args += ["--use-shared-memory=0"]
         return
 
+
 class Kneaddata(BaseWrapper):
-    '''
+    """
     Wrapper class for kneaddata
-    '''
+    """
     def __init__(self, name, input, *args, **kwargs):
         self.input = input
         self.args += args
@@ -543,11 +542,11 @@ class Kneaddata(BaseWrapper):
         self.setup_run()
         return
 
-class Biobambam(BaseWrapper):
-    '''
-    Wrapper class to mark duplicates in a bam using biobambam
-    '''
 
+class Biobambam(BaseWrapper):
+    """
+    Wrapper class to mark duplicates in a bam using biobambam
+    """
     # TODO: Clean up
 
     def __init__(self, name, input, *args, **kwargs):
@@ -722,6 +721,7 @@ class SalmonCounts(BaseWrapper):
         self.add_args += updated_args
         return
 
+
 class HtSeqCounts(BaseWrapper):
     """
     A wrapper for generating counts from HTSeq
@@ -819,10 +819,6 @@ class Bwa(BaseWrapper):
 
         self.setup_run()
         return
-
-    # def setup_args(self):
-    #     self.args += ["--gunzip", "-A sam", "-N1", "--use-shared-memory=0"]
-    #     return
 
 
 class BedtoolsCounts(BaseWrapper):
@@ -1014,5 +1010,45 @@ class Trimmomatic(BaseWrapper):
         # Add all other optional trimming specification arguments
         self.args += args
         self.setup_run(add_command=add_command)
+
+        return
+
+
+class Pilon(BaseWrapper):
+    """
+        A wrapper for Pilon
+    """
+
+    def __init__(self, name, input, *args, **kwargs):
+        self.input = input
+        kwargs['target'] = input + "_" + name + "_" + hashlib.sha224(input + "_" + name).hexdigest() + ".txt"
+        kwargs['prog_id'] = name
+        name = self.prog_name_clean(name)
+
+        self.init(name, **kwargs)
+        self.update_file_suffix(input_default='.srtd.bam', output_default='', **kwargs)
+        self.reset_add_args()
+        default_args = {"--outdir": os.path.join(kwargs.get('gatk_dir')), "--output": input + "_pilon"}
+        self.add_args = self.update_default_args(default_args, *args, **kwargs)
+
+        if kwargs.get('job_parms_type') != 'default':
+            self.job_parms.update(kwargs.get('add_job_parms'))
+
+            # Update threads if cpus given
+            if 'ncpus' in kwargs.get('add_job_parms').keys():
+                self.args += [' --threads ' + str(kwargs.get('add_job_parms')['ncpus'])]
+
+            # Update memory requirements  if needed
+            if 'mem' in kwargs.get('add_job_parms').keys():
+                self.args += [' -Xmx' + str(kwargs.get('add_job_parms')['mem']) + 'M']
+
+        else:
+            # Set default memory and cpu options
+            self.job_parms.update({'mem': 10000, 'time': 80, 'ncpus': 4})
+            self.args += [' -Xmx10000M', "--threads 4"]
+
+        self.args += self.add_args
+
+        self.setup_run()
 
         return
