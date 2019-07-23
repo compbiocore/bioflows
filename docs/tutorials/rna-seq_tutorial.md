@@ -107,6 +107,7 @@ workflow_sequence:
   - samtools:
       subcommand: view
       suffix:
+        input: ".bam"
         output: ".unmapped.bam"
       options:
         -f: "0x4"
@@ -122,10 +123,6 @@ workflow_sequence:
         mem: 2000
         time: 60      
   - samtools:
-      subcommand: sort
-      suffix:
-        input: ".mapped.bam"
-  - samtools:
       subcommand: index
       suffix:
         input: ".srtd.bam"
@@ -139,10 +136,16 @@ workflow_sequence:
         mem: 2000
         time: 60
         ncpus: 4
+  - samtools:
+      subcommand: index
+      suffix:
+        input: ".dup.srtd.bam"
+      job_params:
+        time: 20 
   - qualimap:
       subcommand: rnaseq
   - htseq-count: default
-  - feature
+  - featureCounts: default
 
 ```
 

@@ -1082,7 +1082,7 @@ class GatkFlow(BaseWorkflow):
         flat_list = [item for sublist in list_to_flatten for item in sublist]
         print flat_list
 
-        if (any("gatk" in x for x in flat_list)):
+        if (any(x in ["gatk", "pilon"] in x for x in flat_list)):
 
             # Create  directory for storing GATK files
             self.gatk_dir = os.path.join(self.work_dir, 'gatk_results')
