@@ -139,13 +139,13 @@ class Picard(BaseWrapper):
             self.update_file_suffix(input_default=".rg.srtd.bam", output_default="_gc_bias_metrics.txt", **kwargs)
             self.target = input + "_" + name + "_" + hashlib.sha224(
                 input + "_" + name).hexdigest() + ".txt"
-            self.add_args_collect_alignment_summary_metrics(input, *args, **kwargs)
+            self.add_args_collect_gcbias_metrics(input, *args, **kwargs)
 
         elif name.split('_')[1] == "CollectInsertSizeMetrics":
             self.update_file_suffix(input_default=".rg.srtd.bam", output_default="_insert_size_metrics.txt", **kwargs)
             self.target = input + "_" + name + "_" + hashlib.sha224(
                 input + "_" + name).hexdigest() + ".txt"
-            self.add_args_collect_alignment_summary_metrics(input, *args, **kwargs)
+            self.add_args_collect_insert_size_metrics(input, *args, **kwargs)
         return
 
     def add_args_collect_alignment_summary_metrics(self, input, *args, **kwargs):
