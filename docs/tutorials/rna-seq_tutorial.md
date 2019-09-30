@@ -11,19 +11,22 @@ This tutorial shows how to run a standard predefined RNA-seq analysis on the Bro
 
 The workflow consists of the following programs run sequentially on each sample:
 
--  **Fastqc**: For QC of Raw Fastq reads
--  **Trimmomatic**: Quality and Adapter trimming of raw reads
--  **Fastqc**: Post trimming QC of reads
--  **GSNAP**: alignment of the reads to the reference genome
--  **Samtools**: To process alignments:
-   - convert sam to bam
-   - remove unmapped reads
-   - coordinate sort bam
-   - index bam
--  **biobambam Suite** Sort bams (`bamsort` tool)  and mark duplicates (`bammarkduplicates2` tool)
--  **Qualimap** QC of the aligments generated
--  **featureCounts/HTseq** Expression quantification based on counting mapped reads
--  **Salmon**:  Alignment free quantification of known transcripts
+*  **Fastqc**: For QC of Raw Fastq reads
+*  **Trimmomatic**: Quality and Adapter trimming of raw reads
+*  **Fastqc**: Post trimming QC of reads
+*  **GSNAP**: alignment of the reads to the reference genome
+*  **Samtools**: 
+    * To process alignments:
+    * convert sam to bam
+    * remove unmapped reads
+    * coordinate sort bam
+    * index bam
+*  **biobambam Suite** 
+    * **bamsort** Sort bams  
+    * **bammarkduplicates2** Mark duplicates 
+*  **Qualimap** QC of the aligments generated
+*  **featureCounts/HTseq** Expression quantification based on counting mapped reads
+*  **Salmon**:  Alignment free quantification of known transcripts
 
 Depending on the user's need the workflow can be adapted for just using a subset of steps or the changes in the sequence as long as they are sensible.  We povide a couple of alternative workflows using combinations of the steps in the  basic workflow
 
@@ -33,7 +36,7 @@ The basic steps to running a workflow are:
 
 1. [Create a control file](#create-the-yaml-file)
 2. Create your working directory if does not exist, here we assume it is `/users/mydir`.
-3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
+3. [Setup a screen session](../Setup_bioflows_env/#setup-gnu-screen-session)
 
 The next section provide a short how-to with all the commands to execute the test workflow on Brown University's OSCAR HPCcluster. Once you have the test case working you can implement this on your own data 
 
@@ -52,7 +55,7 @@ The next section provide a short how-to with all the commands to execute the tes
 
 #### Create the YAML file
 
-Bioflows uses YAML configuration files to run workflows. A detailed documentation of the YAML file and all the options is shown [here](#/docs/yaml_description.md). For the current example, copy the following code into a text file and save it in `/users/mydir` as `test_run.yaml`.
+Bioflows uses YAML configuration files to run workflows. A detailed documentation of the YAML file and all the options is shown [here](../../yaml_description). For the current example, copy the following code into a text file and save it in `/users/mydir` as `test_run.yaml`.
 
 !!! note
     Edit the parameters in the highlighted lines to change values specific to your username
@@ -151,10 +154,10 @@ workflow_sequence:
 
 If you haven't done so already, copy the above into a text file and save it in `/users/mydir` as `test_run.yaml`
 
-For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, thats available to all users on OSCAR. It should run within the hour and you should see that all the steps from the workflow have completed.
+For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, that's available to all users on OSCAR. It should run within the hour and you should see that all the steps from the workflow have completed.
 
 #### Create the manifest file
-We will now create the sample manifest file, which is in `csv` format. You can find more information about sample manifest files [here](#/docs/yaml_description.md). Copy the manifest below into a text file and save it in `/users/mydir` as `sample_manifest_min.csv`. As you might notice this is a comma-seperated file.
+We will now create the sample manifest file, which is in `csv` format. You can find more information about sample manifest files [here](../../yaml_description). Copy the manifest below into a text file and save it in `/users/mydir` as `sample_manifest_min.csv`. As you might notice this is a comma-seperated file.
 
 ``` bash
 samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
@@ -162,17 +165,17 @@ samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_te
 ```
 
 #### Run the workflow in a screen session
-If you haven't already started a screen session in the [setup](#/docs/tutorials/Setup_bioflows_env), start one using the following command:
+If you haven't already started a screen session in the [setup](../Setup_bioflows_env), start one using the following command:
 ``` bash
 screen -S rnaseq_tutorial
 ```
-In your screen session, run the following commands to setup your conda environment (if you have not done so previously during the [setup](#/docs/tutorials/Setup_bioflows_env) or if you just started a new screen session).
+In your screen session, run the following commands to setup your conda environment (if you have not done so previously during the [setup](../Setup_bioflows_env) or if you just started a new screen session).
 
 ``` bash
 source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
 bioflows-run test_run.yaml
 ```
-
+You can now exit the screen session or wait till you get the smiley face that provides completion
 
 ### Workflow outputs
 
@@ -191,4 +194,4 @@ For this tutorial you should see the following directories
 Within each folder you will see files that are annotated by `samplename_program_suffix`. We provide a list of outputs and their contents below
 
 ## Alternative workflow YAMLs
-These YAML's can be used as templates for alternative workflows using various combinations of programs and sequences from the programs defined in the [Basic workflow](#Basic Workflow)
+These YAML's can be used as templates for alternative workflows using various combinations of programs and sequences from the programs defined in the [Basic workflow](#basic-workflow)
