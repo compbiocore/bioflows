@@ -116,6 +116,8 @@ class BaseTask:
         jd.number_of_processes = 1
         jd.processes_per_host = 1
         jd.total_cpu_count = kwargs.get('ncpus', 1)
+        if 'condo' in kwargs.keys():
+            jd.project = kwargs.get('condo')
         jd.output = kwargs.get('out', os.path.join(jd.working_directory, "slurmlog.stdout"))
         jd.error = kwargs.get('error', "slurmlog.stderr")
         js = saga.job.Service(scheduler + "://" + host, session=session)

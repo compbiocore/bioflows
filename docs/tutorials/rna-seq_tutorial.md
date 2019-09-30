@@ -31,7 +31,7 @@ Depending on the user's need the workflow can be adapted for just using a subset
 
 The basic steps to running a workflow are:
 
-1. [Create a control file](#Create the YAML file)
+1. [Create a control file](#create-the-yaml-file)
 2. Create your working directory if does not exist, here we assume it is `/users/mydir`.
 3. [Setup a screen session](#/docs/tutorials/Setup_bioflows_env/#Setup GNU screen session)
 
