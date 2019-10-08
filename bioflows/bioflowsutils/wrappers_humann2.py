@@ -69,120 +69,60 @@ class Humann2(BaseWrapper):
             self.target = input + "_" + name + "_" + hashlib.sha224(
                 input + "_" + name).hexdigets() + ".txt"
 
-        if name.split('_')[1] == "renorm":
-            sub_option = name.split('_')[2]
-            if sub_option == "import":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_tools(sub_option, *args, **kwargs)
+        elif name.split('_',1)[1] == "renorm_table":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_renorm_table(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "demux":
-            sub_option = name.split('_')[2]
-            if sub_option == "emp-single":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_demux(sub_option, *args, **kwargs)
-            elif sub_option == "emp-paired":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_demux(sub_option, *args, **kwargs)
-            elif sub_option == "summarize":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_demux(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime Demux plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "join_tables":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_join_tables(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "dada2":
-            sub_option = name.split('_')[2]
-            if sub_option == "denoise-paired":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_dada2(sub_option, *args, **kwargs)
-            elif sub_option == "denoise-pyro":
-                print " this subcommand is not implemented for the qiime dada2 plugin"
-                sys.exit(0)
-            elif sub_option == "denoise-single":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_dada2(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime dada2 plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "databases":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_databases(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "metadata":
-            sub_option = name.split('_')[2]
-            if sub_option == "tabulate":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_metadata(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime metadata plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "config":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_config(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "phylogeny":
-            sub_option = name.split('_')[2]
-            if sub_option == "align-to-tree-mafft-fasttree":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_phylogeny(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime phylogeny plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "barplot":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_barplot(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "feature-table":
-            sub_option = name.split('_')[2]
-            if sub_option == "summarize":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_feature_table(sub_option, *args, **kwargs)
-            elif sub_option == "tabulate-seqs":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_feature_table(sub_option, *args, **kwargs)
-            elif sub_option == "filter-samples":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_feature_table(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime feature-table plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "build_custom_database":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_build_custom_database(sub_option, *args, **kwargs)
 
-        if name.split('_')[1] == "diversity":
-            sub_option = name.split('_')[2]
-            if sub_option == "core-metrics-phylogenetic":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_diversity(sub_option, *args, **kwargs)
-            elif sub_option == "alpha-group-significance":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_diversity(sub_option, *args, **kwargs)
-            elif sub_option == "beta-group-significance":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_diversity(sub_option, *args, **kwargs)
-            elif sub_option == "alpha-rarefaction":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_diversity(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime diversity plugin"
-                sys.exit(0)
-        if name.split('_')[1] == "emperor":
-            sub_option = name.split('_')[2]
-            if sub_option == "plot":
-                self.target = input + "_" + name + "_" + hashlib.sha224(
-                    input + "_" + name).hexdigest() + ".txt"
-                self.add_args_emperor(sub_option, *args, **kwargs)
-            else:
-                print "Error !!! unknown subcommand used for the Qiime emperor plugin"
-                sys.exit(0)
+        elif name.split('_',1)[1] == "gene_families_genus_level":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_gene_families_genus_level(sub_option, *args, **kwargs)
+
+        elif name.split('_',1)[1] == "infer_taxonomy":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_infer_taxonomy(sub_option, *args, **kwargs)
+
+        elif name.split('_',1)[1] == "reduce_table":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_reduce_table(sub_option, *args, **kwargs)
+
+        elif name.split('_',1)[1] == "regroup_table":
+            self.target = input + "_" + name + "_" + hashlib.sha224(
+                input + "_" + name).hexdigets() + ".txt"
+            self.add_args_regroup_table(sub_option, *args, **kwargs)
 
         return
 
-    def update_qiime_args(self, default_args, *args, **kwargs):
+# todo: all the arguments
+    def update_humann2_args(self, default_args, *args, **kwargs):
         tmp_args = []
         tmp_args += args
         args_list = [y for x in args for y in x.split()]
@@ -190,16 +130,12 @@ class Humann2(BaseWrapper):
         for k, v in default_args.iteritems():
             if k not in args_list:
                 # self.add_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
-                if '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
-                    tmp_args += [' '.join([k, os.path.join(kwargs['qiime_dir'], v)])]
+                if '--input' in k or '--output' in k:
+                    tmp_args += [' '.join([k, os.path.join(kwargs['humann2_dir'], v)])]
+                elif '--bypass-' in k:
+                    tmp_args += [' '.join([k, str(v)])] # not sure if this is how it's supposed to be done
                 else:
                     tmp_args += [' '.join([k, str(v)])]
-            elif '--i-' in k or '--o-' in k or '-file' in k or '--input-' in k or '--output-' in k:
-                k_pos = [i for i, s in enumerate(args) if k in s][0]
-                print "Printing tmp_args while updating"
-                print tmp_args[k_pos]
-                tmp_args[k_pos] = tmp_args[k_pos].replace(v, os.path.join(kwargs['qiime_dir'], v))
-                print tmp_args[k_pos]
             else:
                 pass
 
