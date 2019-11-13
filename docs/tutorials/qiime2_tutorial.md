@@ -2,9 +2,9 @@
 
 ## Overview
 
-This tutorial shows how to run a standard predefined QIIME2 analysis on the Brown HPC cluster OSCAR, using the bioflows tool. The particular analysis is the first half of the [Moving pictures tutorial](https://docs.qiime2.org/2019.1/tutorials/moving-pictures/) from QIIME2.
+This tutorial shows how to run a standard predefined QIIME2 analysis on the Brown HPC cluster OSCAR, using the bioflows tool. The particular analysis is the first half of the [Moving pictures tutorial](https://docs.qiime2.org/2019.10/tutorials/moving-pictures/) from QIIME2.
 
-We will assume that you have run through the [RNA-Seq tutorial](#/docs/tutorials/rna-seq_tutorial) and know how to set up a control file, create a working directory, and setup a screen session as well as have the prerequisites set up. The following is more details specific to the workflow and YAML setup.
+We will assume that you have run through the [RNA-Seq tutorial](../rna-seq_tutorial) and know how to set up a control file, create a working directory, and setup a screen session as well as have the prerequisites set up. The following is more details specific to the workflow and YAML setup.
 
 ## Getting Started
 
@@ -29,7 +29,7 @@ For the current example, copy the following code into a text file and save it in
 
 ```
 bioproject: Project_test_localhost # Project Name  Required
-experiment: rnaseq_pilot # Experiment type  Required
+experiment: qiime_pilot # Experiment type  Required
 sample_manifest:
   qiime:
     --type: EMPSingleEndSequences
