@@ -1,0 +1,132 @@
+Basic:
+
+humann2 --input $SAMPLE --output $OUTPUT_DIR
+humann2_renorm_table --input $SAMPLE_genefamilies.tsv --output $SAMPLE_genefamilies_relab.tsv --units relab
+humann2_join_tables --input $OUTPUT_DIR --output humann2_genefamilies.tsv --file_name genefamilies_relab
+humann2_join_tables --input $OUTPUT_DIR --output humann2_pathcoverage.tsv --file_name pathcoverage
+humann2_join_tables --input $OUTPUT_DIR --output humann2_pathabundance.tsv --file_name pathabundance_relab
+
+
+$SAMPLE = a single file of FASTQ,SAM, TSV format
+
+Bypass options:
+--bypass-translated-search
+runs all of the alignment steps except the translated search
+--bypass-nucleotide-search
+bypasses all of the alignment steps before the translated search
+--bypass-prescreen
+bypasses the taxomonic profiling step and uses the full ChocoPhlAn database
+--taxonomic-profile bugs_list.tsv
+bypasses the taxomonic profiling step and creates a custom ChocoPhlAn database of the species included in the list provided
+--bypass-nucleotide-index
+starts the workflow with the nucleotide alignment step using the indexed database from "--nucleotide-database $DIR"
+
+Other options:
+  --resume
+  --verbose
+  --threads
+  --remove-temp-output
+  --nucleotide-database $DIR
+  --protein-database $DIR
+  --taxonomic-profile $file
+  --output-basename $NAME
+  --remove-stratified-output
+  --pathways $pathway
+  --output-format $FORMAT
+  --identity-threshold $THRESH
+  --metaphlan $METAPHLAN_PATH (probably don't need this)
+  --metaphlan-options=$OPTIONS
+  --annotation-gene-index $IND
+  --search-mode
+  --o-log $LOG
+  --log-level $LEVEL
+  --prescreen-threshold $THRESH
+  --translated-subject-coverage-threshold $THRESH
+  --translated-query-coverage-threshold $THRESH
+  --bowtie2 $BOWTIE2_PATH (also don't need this)
+  --usearch $USEARCH_PATH (or this)
+  --rapsearch $RAPSEARCH_PATH
+  --diamond $DIAMOND_PATH
+  --id-mapping
+  --translated-alignment
+  --xipe
+  --minpath
+  --pick-frames
+  --output-format
+  --output-max-decimals
+  --output-basename
+  --input-format
+  --pathways-database
+  --pathways
+  --memory-use
+
+
+Example:
+
+humann2 --input /Users/aguang/miniconda3/envs/humann2/lib/python3.7/site-packages/humann2/tests/data/demo.fastq --output /var/folders/xk/1630rnpd1_9fzr8vlhxjrx_w0000gn/T/humann2_test_bgg6xhzd_fastq_custom_taxonomic_profile --taxonomic-profile /Users/aguang/miniconda3/envs/humann2/lib/python3.7/site-packages/humann2/tests/data/demo_metaphlan_bugs_list.tsv --nucleotide-database /Users/aguang/miniconda3/envs/humann2/lib/python3.7/site-packages/humann2/tests/../data/chocophlan_DEMO --protein-database /Users/aguang/miniconda3/envs/humann2/lib/python3.7/site-packages/humann2/tests/../data/uniref_DEMO
+
+PICRUSt output: (have to split table first)
+  humann2_split_table --input picrust.biom --output $OUTPUT_DIR
+  humann2 --input $SAMPLE.biom --output $OUTPUT_DIR2 --pathways-database humann1/data/keggc
+  humann2_join_tables --input $OUTPUT_DIR2 --output humann2_pathcoverage.tsv --file_name pathcoverage
+  humann2_join_tables --input $OUTPUT_DIR2 --output humann2_pathabundance.tsv --file_name pathabundance
+
+Barplot:
+  humann2_barplot --input $TABLE.tsv --feature $FEATURE --outfile $FIGURE
+
+Build_custom_database:
+
+humann2_gene_families_genus_level:
+
+
+Databases:
+  humann2_databases --download $DATABASE $BUILD $INSTALL_LOCATION
+  humann2_databases --download chocophlan full $INSTALL_LOCATION
+  humann2_databases --download uniref uniref90_diamond $INSTALL_LOCATION
+  humann2_databases --download uniref uniref90_ec_filtered_diamond $INSTALL_LOCATION
+  humann2_databases --download uniref uniref50_diamond $INSTALL_LOCATION
+  humann2_databases --download uniref uniref50_ec_filtered_diamond $INSTALL_LOCATION
+
+humann2_config:
+  humann2_config --update $SECTION $NAME $VALUE 
+  humann2_config --update database_folders nucleotide $DIR
+  humann2_config --update database_folders protein $DIR
+
+humann2_humann1_kegg: (legacy database)
+  humann2_humann1_kegg --ikoc humann1/data/koc --igenels humann1/data/genels --o legacy_kegg_idmapping.tsv
+
+humann2_gene_families_genus_level:
+  humann2_gene_families_genus_level --input $SAMPLE_genefamilies.tsv --output $SAMPLE_genefamilies_genus_level.tsv
+
+humann2_infer_taxonomy:
+  humann2_infer_taxonomy --input $INPUT_GENES.tsv --level $LEVEL --resolution $RES --output $OUTPUT.tsv
+
+humann2_join_tables:
+  humann2_join_tables --input $INPUT_DIR --output $TABLE
+
+humann2_reduce_table:
+  humann2_reduce_table --input joined_taxonomic_profile.tsv --output max_taxonomic_profile.tsv --function max --sort-by level
+
+humann2_regroup_table:
+  humann2_regroup_table --input $TABLE --groups $GROUPS --output $TABLE2
+
+humann2_rename_table:
+  humann2_rename_table --input $TABLE --names $NAMES --output $TABLE2
+
+humann2_renorm_table:
+  humann2_renorm_table --input $TABLE --units $CHOICE --output $TABLE2
+
+humann2_rna_dna_norm:
+  humann2_rna_dna_norm --input_dna $TABLE_DNA --input_rna $TABLE_RNA --output_basename $OUTPUT_BASENAME
+
+humann2_split_stratified_table:
+  humann2_split_stratified_table --input $TABLE --output $OUTPUT_DIR
+
+humann2_split_table:
+  humann2_split_table --input $TABLE --output $OUTPUT_DIR
+
+humann2_strain_profiler:
+  humann2_strain_profiler --input $TABLE
+
+humann2_unpack_pathways:
+  humann2_unpack_pathways --input-genes $INPUT_GENES.tsv --input-pathways $INPUT_PATHWAYS.tsv --output $OUTPUT.tsv
