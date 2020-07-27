@@ -7,7 +7,7 @@ This section is specifically aimed at users of Brown University's OSCAR HPC clus
 First load the **cbc_conda** environment as follows:
 
 ```
-source /gpfs/runtime/cbc_conda/activate_cbc_conda
+source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
 ```
 
 !!! note
