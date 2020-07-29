@@ -1,0 +1,815 @@
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for running Bioinformatics/Computational workflows with bioflowa">
+      
+      
+        <link rel="canonical" href="https://compbiocore.github.io/tutorials/rna-seq_tutorial/">
+      
+      
+        <meta name="author" content="Ashok Ragavendran">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.0">
+    
+    
+      
+        <title>RNA-Seq tutorial - Computational Biology Core - Brown University</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.b5d04df8.min.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9ab2c1f8.min.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../styles/dark_mode.css">
+    
+      <link rel="stylesheet" href="../../docs/assets/adm.css">
+    
+      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.0/css/all.css">
+    
+    
+      
+        
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-115983496-2","compbiocore.github.io"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview",document.location.pathname)})</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rnaseq-with-gsnap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://compbiocore.github.io/" title="Computational Biology Core - Brown University" class="md-header-nav__button md-logo" aria-label="Computational Biology Core - Brown University">
+      
+  <img src="../../assets/cbc-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            Computational Biology Core - Brown University
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              RNA-Seq tutorial
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/compbiocore/bioflows/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://compbiocore.github.io/" title="Computational Biology Core - Brown University" class="md-nav__button md-logo" aria-label="Computational Biology Core - Brown University">
+      
+  <img src="../../assets/cbc-logo.svg" alt="logo">
+
+    </a>
+    Computational Biology Core - Brown University
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/compbiocore/bioflows/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../intro/" title="Docs" class="md-nav__link">
+      Docs
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../yaml_description/" title="Specifications" class="md-nav__link">
+      Specifications
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Tutorials
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../tutorials/" title="About" class="md-nav__link">
+      About
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../Setup_bioflows_env/" title="Setup the bioflows environment" class="md-nav__link">
+      Setup the bioflows environment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        RNA-Seq tutorial
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="RNA-Seq tutorial" class="md-nav__link md-nav__link--active">
+      RNA-Seq tutorial
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-workflow" class="md-nav__link">
+    Basic workflow
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steps" class="md-nav__link">
+    Steps
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-workflow" class="md-nav__link">
+    Running the workflow
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-the-yaml-file" class="md-nav__link">
+    Create the YAML file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-manifest-file" class="md-nav__link">
+    Create the manifest file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-workflow-in-a-screen-session" class="md-nav__link">
+    Run the workflow in a screen session
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-outputs" class="md-nav__link">
+    Workflow outputs
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-workflow-yamls" class="md-nav__link">
+    Alternative workflow YAMLs
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../qiime2_tutorial/" title="Qiime2 tutorial" class="md-nav__link">
+      Qiime2 tutorial
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-workflow" class="md-nav__link">
+    Basic workflow
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steps" class="md-nav__link">
+    Steps
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-workflow" class="md-nav__link">
+    Running the workflow
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-the-yaml-file" class="md-nav__link">
+    Create the YAML file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-manifest-file" class="md-nav__link">
+    Create the manifest file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-workflow-in-a-screen-session" class="md-nav__link">
+    Run the workflow in a screen session
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-outputs" class="md-nav__link">
+    Workflow outputs
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-workflow-yamls" class="md-nav__link">
+    Alternative workflow YAMLs
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/compbiocore/bioflows/edit/master/docs/tutorials/rna-seq_tutorial.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="rnaseq-with-gsnap">RNAseq with GSNAP</h1>
+<h2 id="overview">Overview</h2>
+<p>This tutorial shows how to run a standard predefined RNA-seq analysis on the Brown HPC cluster OSCAR, using the bioflows tool. A visual overview of the workflow is shown below</p>
+<p><img alt="RNA Seq Workflow" src="../../assets/bioflows-rna-seq.png" /></p>
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="basic-workflow">Basic workflow</h3>
+<p>The workflow consists of the following programs run sequentially on each sample:</p>
+<ul>
+<li><strong>Fastqc</strong>: For QC of Raw Fastq reads</li>
+<li><strong>Trimmomatic</strong>: Quality and Adapter trimming of raw reads</li>
+<li><strong>Fastqc</strong>: Post trimming QC of reads</li>
+<li><strong>GSNAP</strong>: alignment of the reads to the reference genome</li>
+<li><strong>Samtools</strong>: <ul>
+<li>To process alignments:</li>
+<li>convert sam to bam</li>
+<li>remove unmapped reads</li>
+<li>coordinate sort bam</li>
+<li>index bam</li>
+</ul>
+</li>
+<li><strong>biobambam Suite</strong> <ul>
+<li><strong>bamsort</strong> Sort bams  </li>
+<li><strong>bammarkduplicates2</strong> Mark duplicates </li>
+</ul>
+</li>
+<li><strong>Qualimap</strong> QC of the aligments generated</li>
+<li><strong>featureCounts/HTseq</strong> Expression quantification based on counting mapped reads</li>
+<li><strong>Salmon</strong>:  Alignment free quantification of known transcripts</li>
+</ul>
+<p>Depending on the user's need the workflow can be adapted for just using a subset of steps or the changes in the sequence as long as they are sensible.  We povide a couple of alternative workflows using combinations of the steps in the  basic workflow</p>
+<h3 id="steps">Steps</h3>
+<p>The basic steps to running a workflow are:</p>
+<ol>
+<li><a href="#create-the-yaml-file">Create a control file</a></li>
+<li>Create your working directory if does not exist, here we assume it is <code>/users/mydir</code>.</li>
+<li><a href="../Setup_bioflows_env/#setup-gnu-screen-session">Setup a screen session</a></li>
+</ol>
+<p>The next section provide a short how-to with all the commands to execute the test workflow on Brown University's OSCAR HPCcluster. Once you have the test case working you can implement this on your own data </p>
+<div class="admonition note">
+<p class="admonition-title">Prerequisites</p>
+<p>Make sure you have access to the OSCAR cluster or request one by contacting support@ccv.brown.edu. If you are not comfortable with the Linux environment, you can consult the tutorial <a href="https://compbiocore.github.io/cbc-linux-tutorial/linux_explication/">here.</a> You should also <a href="#/docs/tutorials/Setup_bioflows_env">set up bioflows.</a></p>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>You need to have an priority account on OSCAR to run this with real datasets as the resources for exploratory accounts are not sufficient. </p>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>The working directory in a real example can end up being quite large: up to a few terabytes. On OSCAR, you would create the working directory in a location such as your <code>data</code> folder or the <code>scratch</code> folder.</p>
+</div>
+</div>
+<h3 id="running-the-workflow">Running the workflow</h3>
+<h4 id="create-the-yaml-file">Create the YAML file</h4>
+<p>Bioflows uses YAML configuration files to run workflows. A detailed documentation of the YAML file and all the options is shown <a href="../../yaml_description">here</a>. For the current example, copy the following code into a text file and save it in <code>/users/mydir</code> as <code>test_run.yaml</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Edit the parameters in the highlighted lines to change values specific to your username</p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="nt">bioproject</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Project_test_localhost</span>
+<span class="nt">experiment</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rnaseq_pilot</span>
+<span class="nt">sample_manifest</span><span class="p">:</span>
+  <span class="nt">fastq_file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sample_manifest_min.csv</span>
+  <span class="nt">metadata</span><span class="p">:</span>
+<span class="nt">run_parms</span><span class="p">:</span>
+  <span class="nt">conda_command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda</span>
+<span class="hll">  <span class="nt">work_dir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/users/mydir</span>
+</span>  <span class="nt">log_dir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">logs</span>
+  <span class="nt">paired_end</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">local_targets</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+  <span class="nt">saga_host</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="hll">  <span class="nt">ssh_user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ccv username</span>
+</span>  <span class="nt">saga_scheduler</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">slurm</span>
+  <span class="nt">gtf_file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/gpfs/data/cbc/cbcollab/ref_tools/Ensembl_hg_GRCh37_rel87/Homo_sapiens.GRCh37.87.gtf</span>
+<span class="nt">workflow_sequence</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">fastqc</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="p p-Indicator">-</span> <span class="nt">gsnap</span><span class="p">:</span>
+      <span class="nt">options</span><span class="p">:</span>
+       <span class="nt">-d</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Ensembl_Homo_sapiens_GRCh37</span>
+       <span class="nt">-s</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/gpfs/data/cbc/cbcollab/cbc_ref/gmapdb_2017.01.14/Ensembl_Homo_sapiens_GRCh37/Ensembl_Homo_sapiens_GRCh37.maps/Ensembl_Homo_sapiens.GRCh37.87.splicesites.iit</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">ncpus</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">8</span>
+        <span class="nt">mem</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">40000</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+  <span class="p p-Indicator">-</span> <span class="nt">samtools</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">view</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.sam&quot;</span>
+        <span class="nt">output</span><span class="p">:</span> <span class="s">&quot;.bam&quot;</span>
+      <span class="nt">options</span><span class="p">:</span>
+        <span class="nt">-Sbh</span><span class="p">:</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+  <span class="p p-Indicator">-</span> <span class="nt">samtools</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">view</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.bam&quot;</span>
+        <span class="nt">output</span><span class="p">:</span> <span class="s">&quot;.mapped.bam&quot;</span>
+      <span class="nt">options</span><span class="p">:</span>
+        <span class="nt">-bh</span><span class="p">:</span>
+        <span class="nt">-F</span><span class="p">:</span> <span class="s">&quot;0x4&quot;</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+  <span class="p p-Indicator">-</span> <span class="nt">samtools</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">view</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.bam&quot;</span>
+        <span class="nt">output</span><span class="p">:</span> <span class="s">&quot;.unmapped.bam&quot;</span>
+      <span class="nt">options</span><span class="p">:</span>
+        <span class="nt">-f</span><span class="p">:</span> <span class="s">&quot;0x4&quot;</span>
+  <span class="p p-Indicator">-</span> <span class="nt">bamsort</span><span class="p">:</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.mapped.bam&quot;</span>
+        <span class="nt">output</span><span class="p">:</span> <span class="s">&quot;.srtd.bam&quot;</span>
+      <span class="nt">options</span><span class="p">:</span>
+        <span class="nt">inputthreads=4</span><span class="p">:</span>
+        <span class="nt">outputthreads=4</span><span class="p">:</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">ncpus</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+        <span class="nt">mem</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2000</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>      
+  <span class="p p-Indicator">-</span> <span class="nt">samtools</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">index</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.srtd.bam&quot;</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>      
+  <span class="p p-Indicator">-</span> <span class="nt">bammarkduplicates2</span><span class="p">:</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.srtd.bam&quot;</span>
+        <span class="nt">output</span><span class="p">:</span> <span class="s">&quot;.dup.srtd.bam&quot;</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">mem</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2000</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+        <span class="nt">ncpus</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+  <span class="p p-Indicator">-</span> <span class="nt">samtools</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">index</span>
+      <span class="nt">suffix</span><span class="p">:</span>
+        <span class="nt">input</span><span class="p">:</span> <span class="s">&quot;.dup.srtd.bam&quot;</span>
+      <span class="nt">job_params</span><span class="p">:</span>
+        <span class="nt">time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span> 
+  <span class="p p-Indicator">-</span> <span class="nt">qualimap</span><span class="p">:</span>
+      <span class="nt">subcommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rnaseq</span>
+  <span class="p p-Indicator">-</span> <span class="nt">htseq-count</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="p p-Indicator">-</span> <span class="nt">featureCounts</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+</code></pre></div>
+
+<p>If you haven't done so already, copy the above into a text file and save it in <code>/users/mydir</code> as <code>test_run.yaml</code></p>
+<p>For this tutorial I have created a small test dataset with 10000 read pairs from human RNAseq data, that's available to all users on OSCAR. It should run within the hour and you should see that all the steps from the workflow have completed.</p>
+<h4 id="create-the-manifest-file">Create the manifest file</h4>
+<p>We will now create the sample manifest file, which is in <code>csv</code> format. You can find more information about sample manifest files <a href="../../yaml_description">here</a>. Copy the manifest below into a text file and save it in <code>/users/mydir</code> as <code>sample_manifest_min.csv</code>. As you might notice this is a comma-seperated file.</p>
+<div class="highlight"><pre><span></span><code>samp_1299,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb2_2.gz
+samp_1214,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_1.gz,/gpfs/data/cbc/rnaseq_test_data/PE_hg/Cb_2.gz
+</code></pre></div>
+
+<h4 id="run-the-workflow-in-a-screen-session">Run the workflow in a screen session</h4>
+<p>If you haven't already started a screen session in the <a href="../Setup_bioflows_env">setup</a>, start one using the following command:
+<div class="highlight"><pre><span></span><code>screen -S rnaseq_tutorial
+</code></pre></div>
+In your screen session, run the following commands to setup your conda environment (if you have not done so previously during the <a href="../Setup_bioflows_env">setup</a> or if you just started a new screen session).</p>
+<p><div class="highlight"><pre><span></span><code><span class="nb">source</span> /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
+bioflows-run test_run.yaml
+</code></pre></div>
+You can now exit the screen session or wait till you get the smiley face that provides completion</p>
+<h3 id="workflow-outputs">Workflow outputs</h3>
+<p>The <code>bioflows-run</code> call will automatically generate several directories, which may or may not have any outputs directed to them depending on which analyses have been run in bioflows. These directories include: <code>sra</code>, <code>fastq</code>, <code>alignments</code>, <code>qc</code>, <code>slurm_scripts</code>, <code>logs</code>, <code>expression</code>, and <code>checkpoints</code>.</p>
+<p>For this tutorial you should see the following directories</p>
+<ul>
+<li><code>fastq</code> symlinks to fastq files.</li>
+<li><code>alignments</code> SAM and BAM files from GSNAP alignments.</li>
+<li><code>qc</code> QC reports from fastqc and qualimap.</li>
+<li><code>slurm_scripts</code> Records of the commands sent to slurm.</li>
+<li><code>logs</code> Log files from various bioflows processes (including the standard error and standard out).</li>
+<li><code>expression</code> Expression values from featureCounts/Salmon/htseq depending on whats specified.</li>
+<li><code>checkpoints</code> Contains checkpoint records to confirm that bioflows has progressed through each step of the analysis.</li>
+</ul>
+<p>Within each folder you will see files that are annotated by <code>samplename_program_suffix</code>. We provide a list of outputs and their contents below</p>
+<h2 id="alternative-workflow-yamls">Alternative workflow YAMLs</h2>
+<p>These YAML's can be used as templates for alternative workflows using various combinations of programs and sequences from the programs defined in the <a href="#basic-workflow">Basic workflow</a></p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../Setup_bioflows_env/" title="Setup the bioflows environment" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Setup the bioflows environment
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../qiime2_tutorial/" title="Qiime2 tutorial" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Qiime2 tutorial
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.92ffa368.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5123e3d4.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.a68abb33.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

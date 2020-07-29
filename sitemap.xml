@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
+     <loc>https://compbiocore.github.io/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/intro/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/yaml_description/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/tutorials/tutorials/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/tutorials/Setup_bioflows_env/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/tutorials/rna-seq_tutorial/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://compbiocore.github.io/tutorials/qiime2_tutorial/</loc>
+     <lastmod>2020-07-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+</urlset>
