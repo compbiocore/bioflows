@@ -16,7 +16,7 @@ sample_manifest:
   sra:  
       id: SRS594907
       entrez_email: your_email@email.com
-      downloads: True
+      downloads: False
 run_parms:
   conda_command: source /gpfs/runtime/cbc_conda/bin/activate_cbc_conda
   work_dir: /gpfs/data/cbc/qcdb_populate
