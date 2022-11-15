@@ -49,6 +49,7 @@ workflow_sequence:
 - qualimap:
     subcommand: rnaseq
 - salmon:
+    subcommand: quant
     options:
       -g: /gpfs/data/cbc/cbcollab/ref_tools/Ensembl_mus_GRCm38.p5_rel89/Mus_musculus.GRCm38.89.gtf
       -i: /gpfs/data/cbc/cbcollab/cbc_ref/salmon_index/Mus_musculus.GRCm38.cdna.all_transcripts_sal_index

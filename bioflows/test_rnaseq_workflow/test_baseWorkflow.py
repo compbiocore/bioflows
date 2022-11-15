@@ -1,30 +1,57 @@
-from unittest import TestCase
-import unittest,saga
+import unittest,pytest
 from bioflows.definedworkflows.rnaseq.rnaseqworkflow import BaseWorkflow as bwf
+from bioflows.definedworkflows.rnaseq.rnaseqworkflow import GatkFlow as mainwf
 
-class TestBaseWorkflow(TestCase):
+@pytest.fixture(params=["/Users/aragaven/PycharmProjects/bioflows/bioflows/test_rnaseq_workflow/test_run_localhost_slurm_pe_celegans.yaml"])
+def baseWF(request):
+    '''
+    Create a baseworkflow instance for testing units
+    :return:
+    '''
+    return bwf(request.param)
 
-    def setUp(self):
-        self.parmsfile = "/Users/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run.yaml"
-        self.rw1 = bwf(self.parmsfile)
+def test_find_command_rounds(baseWF):
+    '''
+    :param bwf:
+    :return:
+    '''
+    new_key = 'fastqc'
+    prog_list = ['fastqc_1','gsnap','fastqc_2']
+    assert baseWF.find_command_rounds(new_key,prog_list) == 2
+    return
 
-    def test_parse_config(self):
-        self.rw1.parse_config(self.parmsfile)
+def test_remove_prog_round_suffix(baseWF):
+    assert baseWF.remove_prog_round_suffix('fastqc_round2') == 'fastqc'
+    assert baseWF.remove_prog_round_suffix('samtools_view_round3') == 'samtools_view'
+    return
 
-        for k,v in self.rw1.__dict__.iteritems():
-            print k,v
+def test_set_saga_parms(baseWF):
+    baseWF.set_saga_parms()
+    assert baseWF.job_params['saga_host'] == "localhost"
+    assert baseWF.job_params['saga_scheduler'] == "slurm"
 
-        return
+def test_parse_prog_info(baseWF):
+    baseWF.parse_prog_info()
+    print baseWF.prog_input_suffix
+    print baseWF.prog_job_parms
+    print baseWF.prog_output_suffix
+    print baseWF.prog_suffix_type
 
-    # def test_create_catalog(self):
-    #     self.rw1.create_catalog()
-    #     print "\n============================\n"
-    #     print CatalogMain.__table__
-    #     for t in cb.Base.metadata.sorted_tables:
-    #         print "Table name: ", t.name
-    #         for column in t.columns:
-    #             print "\tColumn(name , type): %s\t%s " %(column.name, column.type)
-    #     return
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.fixture(params=["/Users/aragaven/PycharmProjects/bioflows/bioflows/test_rnaseq_workflow/test_run_localhost_slurm_pe_celegans.yaml"])
+def mainWF(request):
+    '''
+    Create a baseworkflow instance for testing units
+    :return:
+    '''
+    return mainwf(request.param)
+
+def test_chain_commands(mainWF):
+        mainWF.sample_fastq_work = {'N2': '/gpfs/scratch/aragaven/test_workflow/sampN2.fq.gz',
+                                      'N3': '/gpfs/scratch/aragaven/test_workflow/sampN3.fq.gz'}
+        mainWF.set_base_kwargs()
+        mainWF.parse_prog_info()
+        print mainWF.prog_args
+        print "\n***** Printing Chained Commands ******\n"
+        #self.rw1.set_base_kwargs()
+        mainWF.chain_commands()

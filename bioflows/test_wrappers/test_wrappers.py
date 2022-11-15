@@ -1,36 +1,10 @@
 import os
 import unittest
 
-import bioflows.bioflowsutils.wrappers as wr
+import bioflows.bioflowsutils.wrappers_samtools as wr
 from bioflows.definedworkflows.rnaseq.rnaseqworkflow import RnaSeqFlow as rsw
 
 
-#
-# class TestWrapper(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.wrapper_name = "fastqc"
-#         self.parmsfile = "/Users/aragaven/PycharmProjects/biobrewlite/tests/test_rnaseq_workflow/test_run.yaml"
-#         self.rw1 = bwflw(self.parmsfile)
-#         self.test_wrap = wr.BaseWrapper(self.wrapper_name,cwd=self.rw1.run_parms['work_dir'],
-#                                         stdout=os.path.join(self.rw1.run_parms['work_dir'],'fastqc.log'))
-#
-#     def test_wrapper(self):
-#         print "\n***** Testing  the Base wrapper class *****\n"
-#         for k, v in self.test_wrap.__dict__.iteritems():
-#             print k + ": " + str(v) +  "\n"
-#         #print "**** Using inspect ***\n"
-#         # for x in inspect.getmembers(self.test_wrap):
-#         #     print x[0], x[1], "\n"n
-#         #test_wrap.run('fastqc')
-#
-#     def test_check_version(self):
-#         self.test_wrap.version()
-#
-#     def test_run(self):
-#         self.test_wrap.setup_run()
-#         self.assertEqual(self.test_wrap.cmd[0],"fastqc")
-#
 class TestFastqc(unittest.TestCase):
 
     def setUp(self):
@@ -160,11 +134,6 @@ class TestBwaMem(unittest.TestCase):
         print "\n***** Testing Bwa_wrapper command *****\n"
         print self.bwa_test.run_command
         print self.bwa_test.job_parms
-        #out_command = "gsnap  -t 8 --gunzip -A sam -N1 --use-shared-memory=0 -d Ensembl_Mus_musculus_GRCm38 -s Mus_musculus.GRCm38.88.splicesites.iit /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_gsnap_err.log 1>/gpfs/scratch/aragaven/test_workflow/alignments/gsnap.sam"
-        #self.assertEqual(self.gsnap_test.run_command, out_command)
-        # print "\n***** Testing Gsnap_wrapper *****\n"
-        # for k, v in self.gsnap_test.__dict__.iteritems():
-        #     print k + ": " + str(v) +  "\n"
 
 
 

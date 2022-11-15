@@ -7,12 +7,11 @@ from collections import OrderedDict, defaultdict
 
 import jsonpickle
 import luigi
-import radical.saga as saga
+import saga
 import yaml
 from luigi.parameter import ParameterVisibility
 
 import bioflows.bioflowsutils.wrappers as wr
-import bioflows.bioflowsutils.new_wrappers as nwr
 import bioflows.bioflowsutils.wrappers_gatk as wr_gatk
 import bioflows.bioflowsutils.wrappers_picard as wr_picard
 import bioflows.bioflowsutils.wrappers_qiime2 as wr_qiime2
@@ -220,7 +219,7 @@ class BaseWorkflow:
     new_base_kwargs = ''
     sample_fastq = ''
     sample_fastq_work = dict()
-    prog_args = OrderedDict()
+    progs = OrderedDict()
     sra_info = ''
     multi_run_var = "round"
     qiime_info = ''
@@ -235,55 +234,52 @@ class BaseWorkflow:
 
     def __init__(self, parmsfile):
         self.parse_config(parmsfile)
-        # self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
-        #                       'gsnap': wr.Gsnap,
-        #                       'fastqc': wr.FastQC,
-        #                       'qualimap_rnaseq': wr.QualiMap,
-        #                       'qualimap_bamqc': wr.QualiMap,
-        #                       'samtools_view': wr_samtools.SamTools,
-        #                       'samtools_index': wr_samtools.SamTools,
-        #                       'samtools_sort': wr_samtools.SamTools,
-        #                       'bammarkduplicates2': wr.Biobambam,
-        #                       'bamsort': wr.Biobambam,
-        #                       'salmon': wr.SalmonCounts,
-        #                       'htseq-count': wr.HtSeqCounts,
-        #                       'featureCounts': wr.FeatureCounts,
-        #                       'bwa_mem': wr.Bwa,
-        #                       'picard_CollectWgsMetrics': wr_picard.Picard,
-        #                       'picard_MarkDuplicates': wr_picard.Picard,
-        #                       'picard_BuildBamIndex': wr_picard.Picard,
-        #                       'picard_AddOrReplaceReadGroups': wr_picard.Picard,
-        #                       'picard_CollectHsMetrics': wr_picard.Picard,
-        #                       'picard_CollectAlignmentSummaryMetrics': wr_picard.Picard,
-        #                       'picard_CollectInsertSizeMetrics': wr_picard.Picard,
-        #                       'picard_CollectGcBiasMetrics': wr_picard.Picard,
-        #                       'picard_SamToFastq': wr_picard.Picard,
-        #                       'gatk_RealignerTargetCreator': wr_gatk.Gatk,
-        #                       'gatk_IndelRealigner': wr_gatk.Gatk,
-        #                       'gatk_BaseRecalibrator': wr_gatk.Gatk,
-        #                       'gatk4_BaseRecalibrator': wr_gatk.Gatk,
-        #                       'gatk_PrintReads': wr_gatk.Gatk,
-        #                       'gatk4_PrintReads': wr_gatk.Gatk,
-        #                       'gatk_HaplotypeCaller': wr_gatk.Gatk,
-        #                       'gatk4_HaplotypeCaller': wr_gatk.Gatk,
-        #                       'gatk_AnalyzeCovariates': wr_gatk.Gatk,
-        #                       'trimmomatic_PE': wr.Trimmomatic,
-        #                       'trimmomatic_SE': wr.Trimmomatic,
-        #                       'fastq_screen': wr.FastqScreen,
-        #                       'qiime_tools_import': wr_qiime2.Qiime2,
-        #                       'qiime_demux_emp-single': wr_qiime2.Qiime2,
-        #                       'qiime_demux_emp-paired': wr_qiime2.Qiime2,
-        #                       'qiime_demux_summarize': wr_qiime2.Qiime2,
-        #                       'qiime_dada2_denoise-single': wr_qiime2.Qiime2,
-        #                       'qiime_dada2_denoise-paired': wr_qiime2.Qiime2,
-        #                       'qiime_metadata_tabulate': wr_qiime2.Qiime2,
-        #                       'qiime_feature-table_summarize': wr_qiime2.Qiime2,
-        #                       'qiime_feature-table_tabulate-seqs': wr_qiime2.Qiime2,
-        #                       'qiime_phylogeny_align-to-tree-mafft-fasttree': wr_qiime2.Qiime2
-        #                       }
-
-        self.prog_wrappers = nwr.create_wrapper_class(os.path.abspath('../bioflowsutils/programs_config.yaml'))
-        print self.prog_wrappers
+        self.prog_wrappers = {'feature_counts': wr.BedtoolsCounts,
+                              'gsnap': wr.Gsnap,
+                              'fastqc': wr.FastQC,
+                              'qualimap_rnaseq': wr.QualiMap,
+                              'qualimap_bamqc': wr.QualiMap,
+                              'samtools_view': wr_samtools.SamTools,
+                              'samtools_index': wr_samtools.SamTools,
+                              'samtools_sort': wr_samtools.SamTools,
+                              'bammarkduplicates2': wr.Biobambam,
+                              'bamsort': wr.Biobambam,
+                              'salmon': wr.SalmonCounts,
+                              'htseq-count': wr.HtSeqCounts,
+                              'featureCounts': wr.FeatureCounts,
+                              'bwa_mem': wr.Bwa,
+                              'picard_CollectWgsMetrics': wr_picard.Picard,
+                              'picard_MarkDuplicates': wr_picard.Picard,
+                              'picard_BuildBamIndex': wr_picard.Picard,
+                              'picard_AddOrReplaceReadGroups': wr_picard.Picard,
+                              'picard_CollectHsMetrics': wr_picard.Picard,
+                              'picard_CollectAlignmentSummaryMetrics': wr_picard.Picard,
+                              'picard_CollectInsertSizeMetrics': wr_picard.Picard,
+                              'picard_CollectGcBiasMetrics': wr_picard.Picard,
+                              'picard_SamToFastq': wr_picard.Picard,
+                              'gatk_RealignerTargetCreator': wr_gatk.Gatk,
+                              'gatk_IndelRealigner': wr_gatk.Gatk,
+                              'gatk_BaseRecalibrator': wr_gatk.Gatk,
+                              'gatk4_BaseRecalibrator': wr_gatk.Gatk,
+                              'gatk_PrintReads': wr_gatk.Gatk,
+                              'gatk4_PrintReads': wr_gatk.Gatk,
+                              'gatk_HaplotypeCaller': wr_gatk.Gatk,
+                              'gatk4_HaplotypeCaller': wr_gatk.Gatk,
+                              'gatk_AnalyzeCovariates': wr_gatk.Gatk,
+                              'trimmomatic_PE': wr.Trimmomatic,
+                              'trimmomatic_SE': wr.Trimmomatic,
+                              'fastq_screen': wr.FastqScreen,
+                              'qiime_tools_import': wr_qiime2.Qiime2,
+                              'qiime_demux_emp-single': wr_qiime2.Qiime2,
+                              'qiime_demux_emp-paired': wr_qiime2.Qiime2,
+                              'qiime_demux_summarize': wr_qiime2.Qiime2,
+                              'qiime_dada2_denoise-single': wr_qiime2.Qiime2,
+                              'qiime_dada2_denoise-paired': wr_qiime2.Qiime2,
+                              'qiime_metadata_tabulate': wr_qiime2.Qiime2,
+                              'qiime_feature-table_summarize': wr_qiime2.Qiime2,
+                              'qiime_feature-table_tabulate-seqs': wr_qiime2.Qiime2,
+                              'qiime_phylogeny_align-to-tree-mafft-fasttree': wr_qiime2.Qiime2
+                              }
         self.job_params = {'work_dir': self.run_parms['work_dir'],
                            'time': 80,
                            'mem': 3000,
@@ -334,12 +330,9 @@ class BaseWorkflow:
     """A shortcut for calling the BaseWrapper __init__ from a subclass."""
     init = __init__
 
-    def parse_config(self, fileHandle):
-
-
-        for k, v in ordered_load(open(fileHandle, 'r'), yaml.SafeLoader).iteritems():
+    def parse_config(self, file_handle):
+        for k, v in ordered_load(open(file_handle, 'r'), yaml.SafeLoader).iteritems():
             setattr(self, k, v)
-
         return
 
 
@@ -925,14 +918,18 @@ class BaseWorkflow:
         ## This whole section needs to be refactored
         ## to allow for program options to be updated
 
-        self.tool_prefix = [] # A list to keep track of the programs called
-
+        tool_prefix = []
         for p in self.workflow_sequence:
 
             # round_counter = 0
             for k, v in p.iteritems():
                 new_key = k
                 if isinstance(v, dict):
+                    # Add the specific program options
+                    # Need to modify to dict so that default values can be updated
+                    # Right now program options are directly added as text
+                    # Also need to edit this in wrappers so that two sets of arg dicts are used
+                    # one for options and one for job parms
 
                     if 'subcommand' in v.keys():
                         # Update current program name by adding the subcommand
@@ -943,22 +940,34 @@ class BaseWorkflow:
                             new_key = '_'.join([k, '_'.join(v['subcommand'].split())])
 
                     # search if the same command was used before
-                    self.tool_prefix.append(new_key)
-                    round_counter = self.find_command_rounds(new_key, self.tool_prefix)
+                    tool_prefix.append(new_key)
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
 
                     # If this command is a repeat update the program key to include the times it was called
 
-                    if len(self.prog_args.keys()) > 0 and round_counter > 1:
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
                         # Update Current Program name by adding the number of times called
                         new_key += "_" + self.multi_run_var + "_" + str(round_counter)
 
+                    # Gather all arguments for the program in this list
+                    self.progs[new_key] = []
 
-                    suffixes = v['suffix'] if 'suffix' in v.keys() else {'default': ''}
-                    self.prog_suffix_type[new_key] = "custom" if 'suffix' in v.keys() else 'default'
-                    self.prog_input_suffix[new_key] = suffixes['input'] if 'input' in suffixes.keys() else 'default'
-                    self.prog_output_suffix[new_key] = suffixes['output'] if 'output' in suffixes.keys() else 'default'
+                    self.prog_suffix_type[new_key] = 'default'
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
 
-                    self.prog_args[new_key] = []
+
+                    if 'suffix' in v.keys():
+                        suffixes = v['suffix']
+                        self.prog_suffix_type[new_key] = "custom"
+
+                        if 'input' in suffixes.keys():
+                            self.prog_input_suffix[new_key] = suffixes['input']
+                        if 'output' in suffixes.keys():
+                            self.prog_output_suffix[new_key] = suffixes['output']
+
+                    #todo add an else here
+
                     if 'options' in v.keys():
                         for k1, v1 in v['options'].iteritems():
                             # Should we test for flag options?
@@ -968,16 +977,15 @@ class BaseWorkflow:
                                 # in GATK -knownSites can be specified multiple times
 
                                 if not isinstance(v1, list):
-                                    self.prog_args[new_key].append("%s %s" % (k1, v1))
+                                    self.progs[new_key].append("%s %s" % (k1, v1))
                                 else:  # isinstance(v1, list):
                                     for v11 in v1:
-                                        self.prog_args[new_key].append("%s %s" % (k1, v11))
+                                        self.progs[new_key].append("%s %s" % (k1, v11))
                             else:
                                 #print "Flag type argument " + k1
-                                self.prog_args[new_key].append("%s" % (k1))
-
+                                self.progs[new_key].append("%s" % (k1))
                     else:
-                        self.prog_args[new_key].append('')
+                        self.progs[new_key].append('')
 
                     # Add the specific program job parameters
                     if 'job_params' in v.keys():
@@ -985,35 +993,26 @@ class BaseWorkflow:
                     else:
                         self.prog_job_parms[new_key] = 'default'
 
-                else:
-                    self.setup_prog_defaults(new_key,v)
-        self.prog_args = OrderedDict(reversed(self.prog_args.items()))
-        print "\n\n Printing Prog_args \n\n"
-        print self.prog_args
-        return
+                # Todo should we use an else here instead of elif
+                elif v == 'default':
 
-    def  setup_prog_defaults(self, new_key,v):
-        '''
-        Setup the default variables for the program
-        :param new_key:
-        :return:
-        '''
-        if v=="default" or v is None:
-            self.tool_prefix.append(new_key)
-            round_counter = self.find_command_rounds(new_key, self.tool_prefix)
-            if len(self.prog_args.keys()) > 0 and round_counter > 1:
-                # Update Current Program name by adding the number of times called
-                new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+                    tool_prefix.append(new_key)
+                    round_counter = self.find_command_rounds(new_key, tool_prefix)
 
-            self.prog_args[new_key] = []
-            self.prog_args[new_key].append('')
-            self.prog_job_parms[new_key] = 'default'
-            self.prog_input_suffix[new_key] = 'default'
-            self.prog_output_suffix[new_key] = 'default'
-            self.prog_suffix_type[new_key] = 'default'
-        else:
-            print "\n\n ERROR!!!! use either one of 'default' or leave blank for program options \n\n"
-            sys.exit(1)
+                    if len(self.progs.keys()) > 0 and round_counter > 1:
+                        # Update Current Program name by adding the number of times called
+                        new_key += "_" + self.multi_run_var + "_" + str(round_counter)
+
+                    self.progs[new_key] = []
+                    self.progs[new_key].append('')
+                    self.prog_job_parms[new_key] = 'default'
+                    self.prog_input_suffix[new_key] = 'default'
+                    self.prog_output_suffix[new_key] = 'default'
+                    self.prog_suffix_type[new_key] = 'default'
+
+
+        self.progs = OrderedDict(reversed(self.progs.items()))
+        # print self.progs
         return
 
     def find_command_rounds(self, new_key, prog_list):
@@ -1025,6 +1024,7 @@ class BaseWorkflow:
         """
         round_cnt = sum([new_key in S for S in prog_list])
         return round_cnt
+
 
     def update_job_parms(self, key):
         self.new_base_kwargs = copy.deepcopy(self.base_kwargs)
@@ -1068,18 +1068,6 @@ class BaseWorkflow:
         subprocess.check_output(ln_com, shell=True)
         return
 
-    def remove_prog_round_suffix(self, key):
-        '''
-        Remove the rounds suffix from the key when programs are called mulitple times
-        For example if `fastqc` is called twice the key are `fastqc_round_1` and `fastqc_round_2`. We need to remove the
-        `_round_` portion to be able to call the fastqc wrapper class
-        :return:
-        '''
-        input_list = key.split('_')
-        idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
-        del input_list[idx_to_rm:]
-        new_key = '_'.join(input_list)
-        return new_key
 
 class GatkFlow(BaseWorkflow):
     allTasks = []
@@ -1088,7 +1076,6 @@ class GatkFlow(BaseWorkflow):
     def __init__(self, parmsfile):
 
         self.init(parmsfile)
-        # main_prog =
         list_to_flatten = [x.keys() for x in self.workflow_sequence]
         flat_list = [item for sublist in list_to_flatten for item in sublist]
         print flat_list
@@ -1136,21 +1123,33 @@ class GatkFlow(BaseWorkflow):
             print "\n *******Commands for Sample:%s ***** \n" % (samp)
             samp_progs = []
 
-            for key in self.prog_args.keys():
+            for key in self.progs.keys():
+                # print "Printing original Parms\n"
+                #print self.prog_job_parms
                 self.update_job_parms(key)
                 self.update_prog_suffixes(key)
+                if self.multi_run_var in key:
+                    input_list = key.split('_')
+                    idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                    del input_list[idx_to_rm:]
+                    new_key = '_'.join(input_list)
+                    tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
 
-                wrapper_key = lambda x: x if self.multi_run_var not in x else self.remove_prog_round_suffix(x)
-                print "\n******* printing *self.prog_args[key]: " +  key+ "********\n"
-                print self.prog_args[key]
-                print
-                "\n********* printing tmp_prog **********\n"
-                ## Get an instantiated object of class wrapper_key(key) that is created from a dictionary of prog_wrapper class
-                ## definitions. So for example the we can get a fastqc object created and returned from the
-                ## `prog_wrapper['fastqc'] class definition
-                tmp_prog = self.prog_wrappers[wrapper_key(key)](key, samp, *self.prog_args[key], **dict(self.new_base_kwargs))
-                print tmp_prog.__dict__
-                samp_progs.append(jsonpickle.encode(tmp_prog))
+                    # print "new_key", new_key, key
+                    # print self.progs[key], self.progs[new_key]
+                    # print tmp_prog.run_command
+                    # print tmp_prog.job_parms
+
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
+                else:
+                    # print "\n**** Base kwargs *** \n"
+                    # print self.base_kwargs
+                    tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                    # print self.progs[key]
+                    # print tmp_prog.run_command
+                    # print tmp_prog.job_parms
+                    samp_progs.append(jsonpickle.encode(tmp_prog))
 
             self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
 
@@ -1172,25 +1171,37 @@ class GatkFlow(BaseWorkflow):
         # print "Sample Name"
         # print samp
 
-        for key in self.prog_args.keys():
+        for key in self.progs.keys():
             print "Printing original Parms\n"
             print self.prog_job_parms
             self.update_job_parms(key)
             self.update_prog_suffixes(key)
+            if self.multi_run_var in key:
+                input_list = key.split('_')
+                idx_to_rm = [i for i, s in enumerate(input_list) if self.multi_run_var in s][0]
+                del input_list[idx_to_rm:]
+                new_key = '_'.join(input_list)
+                tmp_prog = self.prog_wrappers[new_key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
 
-            wrapper_key = lambda key: key if self.multi_run_var not in key else self.remove_prog_round_suffix(key)
+                # print "new_key", new_key, key
+                # print self.progs[key], self.progs[new_key]
+                # print tmp_prog.run_command
+                #print tmp_prog.job_parms
 
-            # if self.multi_run_var in key:
-            #     wrapper_key = self.remove_prog_round_suffix(key)
-            # else:
-            #     wrapper_key = key
-            tmp_prog = self.prog_wrappers[wrapper_key](key, samp, *self.prog_args[key], **dict(self.new_base_kwargs))
-            samp_progs.append(jsonpickle.encode(tmp_prog))
+                samp_progs.append(jsonpickle.encode(tmp_prog))
+            else:
+                # print "\n**** Base kwargs *** \n"
+                # print self.base_kwargs
+                tmp_prog = self.prog_wrappers[key](key, samp, *self.progs[key], **dict(self.new_base_kwargs))
+
+                # print self.progs[key]
+                # print tmp_prog.run_command
+                #print tmp_prog.job_parms
+                samp_progs.append(jsonpickle.encode(tmp_prog))
 
             self.allTasks.append(jsonpickle.encode(TaskSequence(prog_parms=samp_progs, n_tasks=len(samp_progs))))
 
         return
-
 
 
 def gatk_main():
@@ -1226,8 +1237,8 @@ def gatk_main():
     # luigi_srv = subprocess.Popen([luigi_exe,'--port=9000'], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     # print "ProcessID:", luigi_srv.pid
 
-    #luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
-    #            workers=min(50, luigi_workers), lock_size=1, log_level='INFO')
+    luigi.build([TaskFlow(tasks=gt1.allTasks, task_name=gt1.bioproject)], local_scheduler=True,
+                workers=min(50, luigi_workers), lock_size=1, log_level='INFO')
 
     # luigi_srv.terminate()
     # print luigi_srv.communicate()

@@ -387,7 +387,13 @@ class BaseWrapper(object):
         """
         tmp_args = []
         tmp_args += args
+        print "\n\n printing args \n\n"
+        print tmp_args
+
         args_list = [y for x in args for y in x.split()]
+        args_dict = {}
+        print "\n\n printing args_list \n\n"
+        print args_list
 
         for k, v in default_args.iteritems():
             if k not in args_list:
@@ -492,8 +498,9 @@ class Gsnap(BaseWrapper):
         else:
             kwargs['source'] = hashlib.sha224(input + '_fastqc.gzip').hexdigest() + ".txt"
 
+        default_pre_args = {}
+        self.add_pre_args = self.update_default_args(default_pre_args, *args, **kwargs)
         self.setup_args(*args)
-
         self.args += args
 
         if self.paired_end:
@@ -732,6 +739,8 @@ class HtSeqCounts(BaseWrapper):
     args = []
 
     def __init__(self, name, input, *args, **kwargs):
+
+        ## *args is  ['-r name', '--secondary-alignments=ignore']
         self.input = input
 
         # Update input/output suffixes here

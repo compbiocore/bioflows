@@ -1,0 +1,109 @@
+gsnap:
+  function_text: function_text1
+  command_setup:
+    call: "gsnap"
+    default_pre_args: 'default_pre_args={"--gunzip": "","-A": "sam", "-N1": "" , "--use-shared-memory=0": ""}'
+    inputs:
+      - "if self.paired_end:"
+      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + "_1" + self.in_suffix)'
+      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + "_2" + self.in_suffix)'
+      - 'else:'
+      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + self.in_suffix)'
+    outputs:
+      - '">1 " + os.path.join(self.align_dir, input + ".sam")'
+    logs:
+      - '">>2 " + os.path.join(self.log_dir, input + "_" + self.prog_id + "_err.log" )'
+  test_value: "gsnap  -t 8 --gunzip -A sam -N1 --use-shared-memory=0 -d Ensembl_Mus_musculus_GRCm38 -s Mus_musculus.GRCm38.88.splicesites.iit\
+                /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz\
+                 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_gsnap_err.log 1>/gpfs/scratch/aragaven/test_workflow/alignments/gsnap.sam"
+#samtools_sort:
+#  command_setup:
+#    call: "samtools sort"
+#    inputs:
+#      - "os.path.join(self.align_dir, input + self.in_suffix )"
+#    outputs:
+#      - "'-o ' + os.path.join(self.align_dir, input + self.out_suffix)"
+#    logs:
+#      - "'1> ' + os.path.join(self.log_dir,input + name + '.log')"
+#      - '"2>> " + os.path.join(self.log_dir, input + name + "_err.log") '
+#  test_value: "samtools sort -o /gpfs/scratch/alignments/test_samp.tst.srtd.bam /gpfs/scratch/alignments/test_samp.mapped.bam\
+#              2>>/gpfs/scratch/logs/test_samp_samtools_sort_err.log 1>/gpfs/scratch/logs/test_samp_samtools_sort.log"
+#
+#bwa_mem:
+#  command_setup:
+#    call: "bwa mem"
+#    inputs:
+#      - "if self.paired_end:"
+#      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + "_1" + self.in_suffix)'
+#      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + "_2" + self.in_suffix)'
+#      - 'else:'
+#      - '   self.cmd += os.path.join(self.work_dir, "fastq", input + self.in_suffix)'
+#    outputs:
+#      - '" -o" + os.path.join(self.align_dir, input + ".sam")'
+#    logs:
+#      - '">1 " + os.path.join(self.log_dir, input + "_" + prog_id + ".stdout")'
+#      - '">>2 " + os.path.join(self.align_dir, input + "_" + prog_id + ".stderr")'
+#  test_value:
+
+#gatk_RealignerTargetCreator:
+#  command_setup:
+#    call: "gatk -T RealignerTargetCreator"
+
+# picard AddOrReplaceReadGroups  -Xmx10000M
+#    order:
+#      - 'call'
+#      - 'self.add_args'
+#      - 'inputs'
+#      - 'outputs'
+#bwa_mem:
+#  out_command:
+#    default_args: '-t 16'
+#    constructed_args:
+#      - input1 : "
+#    test_value: "bwa mem  -t 16 index.db /gpfs/scratch/fastq/test_samp_1.fq.gz /gpfs/scratch/fastq/test_samp_2.fq.gz \
+#                  2>>/gpfs/scratch/logs/test_samp_bwa_mem_err.log\
+#                  1>/gpfs/scratch/alignments/test_samp.sam"
+#      se_pe_code: '''if self.paired_end:
+#                        self.args.append(os.path.join(self.cwd, "fastq", input + "_1" + self.in_suffix))
+#                        self.setup_run()
+#                        run_cmd1 = self.run_command
+#                        self.init(name, **kwargs)
+#                        self.args += [" -o " + self.qc_dir]
+#                        self.args += args
+#                        self.args.append(os.path.join(self.cwd, "fastq", input + "_2" + self.in_suffix))
+#                        self.setup_run()
+#                        run_cmd2 = self.run_command
+#                        self.run_command = run_cmd1 + "; " + run_cmd2
+#                      else:
+#                        self.args.append(os.path.join(self.cwd, "fastq", input + self.in_suffix))
+#                        self.setup_run()
+#                    '''
+#htseq-count:
+#  command_setup:
+#    - call: "htseq-count"
+#    - default_pre_args: 'default_pre_args = { "-f": "bam", "-r": "pos", "-a": "0", "-t": "exon", "-i": "gene_id",
+#                                 "--additional-attr=gene_name": "", "--nonunique=all": "",
+#                                 "--secondary-alignments=score": "" }'
+#    - inputs:
+#        - "os.path.join(self.align_dir, input + self.in_suffix )"
+#    - outputs:
+#        - '>1 os.path.join(self.align_dir,"expression", input + "_htseq_counts")'
+#        - '>>2 os.path.join(self.log_dir, input + "_" + self.prog_id + "_err.log" )'
+#  test_value: "htseq-count  -t exon -f bam -a 0 -r pos --additional-attr=gene_name  --nonunique=all\
+#                -i gene_id --secondary-alignments=score  /gpfs/scratch/alignments/test_samp.dup.srtd.bam\
+#                /gpfs/scratch/aragaven/lapierre/caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.gtf\
+#                2>>/gpfs/scratch/logs/test_samp_htseq-count.log 1>/gpfs/scratch/expression/test_samp_htseq_counts"
+#samtools:
+#  subcommand: sort
+#  out_command: "samtools sort -o /gpfs/scratch/alignments/test_samp.tst.srtd.bam /gpfs/scratch/alignments/test_samp.mapped.bam\
+#                2>>/gpfs/scratch/logs/test_samp_samtools_sort_err.log 1>/gpfs/scratch/logs/test_samp_samtools_sort.log"
+#samtools:
+#  subcommand: index
+#  out_command: "samtools index /gpfs/scratch/alignments/test_samp.srtd.bam /gpfs/scratch/alignments/test_samp.srtd.bam.bai\
+#   2>>/gpfs/scratch/logs/test_samp_samtools_index_err.log 1>/gpfs/scratch/logs/test_samp_samtools_index.log"
+#
+#fastqc:
+#  out_command: "fastqc  -o /gpfs/scratch/aragaven/test_workflow/qc /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_1.fq.gz\
+#                2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_fastqc_err.log 1>/gpfs/scratch/aragaven/test_workflow/fastqc.log;\
+#                fastqc /gpfs/scratch/aragaven/test_workflow/fastq/test_samp_2.fq.gz 2>>/gpfs/scratch/aragaven/test_workflow/logs/test_samp_fastqc_err.log\
+#                1>/gpfs/scratch/aragaven/test_workflow/fastqc.log"

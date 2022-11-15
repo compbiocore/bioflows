@@ -21,6 +21,8 @@ class SamTools(BaseWrapper):
     stdout_as_output = False
 
     def __init__(self, name, input, *args, **kwargs):
+ 
+
         self.reset_add_args()
         self.input = input
         self.make_target(name, input, *args, **kwargs)
@@ -30,6 +32,7 @@ class SamTools(BaseWrapper):
         else:
             kwargs['stdout'] = os.path.join(kwargs['log_dir'], input + "_" + name + '.log')
         kwargs['prog_id'] = name
+
         name = self.prog_name_clean(name)
 
         new_name = ' '.join(name.split("_"))

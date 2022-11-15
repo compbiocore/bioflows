@@ -43,6 +43,7 @@ workflow_sequence:
     options:
       -d: c_elegans_Ws8
       -s: caenorhabditis_elegans.PRJNA13758.WBPS8.canonical_geneset.splicesites.iit
+      -N: 0
     job_params:
       ncpus: 16
       mem: 40000
